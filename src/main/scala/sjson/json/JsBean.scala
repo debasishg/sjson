@@ -1,0 +1,218 @@
+package sjson.json
+
+import dispatch.json._
+
+object JsBean {
+  
+  implicit def string2Class[T<:AnyRef](name: String): Class[T] = {
+    val clazz = Class.forName(name)
+    clazz.asInstanceOf[Class[T]]
+  }
+  
+  private [json] def lookupType[T](parent: Class[T], name: String): Class[_] = {
+    parent.getDeclaredField(name).getType
+  }
+  
+  class NiceObject[T <: AnyRef](x : T) {
+    def niceClass : Class[_ <: T] = x.getClass.asInstanceOf[Class[T]]
+  }
+  implicit def toNiceObject[T <: AnyRef](x : T) = new NiceObject(x)
+  
+  import java.beans._
+  
+  import java.lang.reflect._
+  import dispatch.json._
+  import dispatch.json.Js._
+  
+  /**
+   * Convert the <tt>JsValue</tt> to an instance of the class <tt>context</tt>. Returns a <tt>Tuple3</tt> 
+   * consisting of <tt>(_id, _rev, T )</tt> if the <tt>JsValue</tt> contains properties of the names _id
+   * and _rev.
+   */
+  def fromJSON[T](js: JsValue, context: Option[Class[T]]): T = { 
+    if (!js.isInstanceOf[JsObject] || !context.isDefined) js.self.asInstanceOf[T]
+    else {
+      val m = js.self.asInstanceOf[Map[JsString, JsValue]]
+      val fields = context.get.getDeclaredFields
+    
+      // property names for the bean
+      val props = fields map(_.getName)
+
+      /**
+       * for some bean properties, json property may have different names by virtue of
+       * being annotated with <tt>JSONProperty</tt>. Keep a map of the two names for
+       * later substitution.
+       */
+      val annotatedProps =
+        (Map[String, String]() /: fields)((b, a) => 
+          if (a.getAnnotation(classOf[JSONProperty]) != null)
+            b + (a.getAnnotation(classOf[JSONProperty]).value -> a.getName)
+          else b)
+    
+      val info = m.map {e =>
+        e._2.self match {
+        
+          /**
+           * ignore additional properties in JSON that don't match bean property and
+           * do not have <tt>JSONProperty</tt> annotation. If a JSON property name is
+           * not found directly in the bean, but exists as the target value of a 
+           * <tt>JSONProperty</tt> annotation in the bean, then it needs to be considered.
+           */
+          case x if (props.exists(y => y.equals(e._1.self)) == false) => 
+            annotatedProps get(e._1.self) match {
+              case Some(y) => (Some(context.get.getDeclaredField(y)), 
+                               fromJSON(e._2.asInstanceOf[JsValue], Some(context.get.getDeclaredField(y).getType)))
+              case _ => (None, null)
+            }
+        
+          /**
+           * Can be a Map in either of the following cases:
+           * 1. the data members is really a scala.Collection.Map 
+           *    e.g. """{
+           *              "_id": "4d3a0a5104c072e8bde5d92d3d2a66ee",
+           *              "_rev": "3749830312",
+           *              "item": "apple",
+           *              "prices": {"Fresh Mart":1.59,"Price Max":5.99,"Apples Express":0.79}
+           *    }"""
+           * 
+           * 2. the data member can be an object which comes in JSON as a Map
+           *    e.g. """{
+           *              "title": "Effective C++",
+           *              "author": {
+           *                "lastName": "Myers",
+           *                "firstName": "Scott"
+           *               }
+           *    }"""
+           */
+          case x: Map[_, _] => {
+            val cl = lookupType(context.get, e._1.self)
+            val inner = 
+              if (cl.isAssignableFrom(classOf[Option[_]])) {
+                val an = context.get.getDeclaredField(e._1.self).getAnnotation(classOf[OptionTypeHint])
+                an match {
+                  case null =>
+                    throw new IllegalArgumentException("cannot get type information")
+                  case _ =>
+                    an.value
+                }
+              } else { cl }
+          
+            // data member is a Map
+            if (inner.isAssignableFrom(classOf[Map[_, _]])) {
+              // the value of the Map may have an annotated type
+              val ann = context.get.getDeclaredField(e._1.self).getAnnotation(classOf[JSONTypeHint])
+              (Some(context.get.getDeclaredField(e._1.self)), 
+                    Map() ++ 
+                      (ann match {
+                        case null => {
+                          e._2.self.asInstanceOf[Map[_, _]]
+                                   .map(y => (y._1.asInstanceOf[JsValue].self, y._2.asInstanceOf[JsValue].self))
+                          }
+                        case _ =>
+                          e._2.self.asInstanceOf[Map[_, _]]
+                                   .map(y => (y._1.asInstanceOf[JsValue].self, fromJSON(y._2.asInstanceOf[JsValue], Some(ann.value))))
+                      }))
+                    
+            } else {
+              // data member is an object which comes as Map in JSON
+              (Some(context.get.getDeclaredField(e._1.self)), fromJSON(e._2.asInstanceOf[JsValue], Some(inner)))
+            }
+          }
+          
+          case x: List[_] => {
+            val ann = context.get.getDeclaredField(e._1.self).getAnnotation(classOf[JSONTypeHint])
+            ann match {
+              case null => 
+                (Some(context.get.getDeclaredField(e._1.self)), 
+                 e._2.self.asInstanceOf[List[_]].map(y => y.asInstanceOf[JsValue].self))
+              case _ =>
+                (Some(context.get.getDeclaredField(e._1.self)), 
+                 e._2.self.asInstanceOf[List[_]].map(y => fromJSON(y.asInstanceOf[JsValue], Some(ann.value))))
+            }
+          }
+        
+          case _ => (Some(context.get.getDeclaredField(e._1.self)), e._2.self)
+        }
+      }
+      val instance = context.get.newInstance
+      info.foreach {x => x match {
+          case (None, _) =>
+          case (Some(y), z) => {
+            y.setAccessible(true)
+            if (y.getType.isAssignableFrom(classOf[scala.Option[_]]))
+            y.set(instance, Some(z)) else y.set(instance, z)
+          }
+        }
+      }
+      instance
+    }
+  }
+  
+  
+  /**
+   * Generate a JSON representation of the object <tt>obj</tt> and return the string.
+   */
+  import Util._
+  
+  def toJSON[T <: AnyRef](obj: T)(implicit ignoreProps: List[String]): String = {
+    if (obj == null) quote("null")
+    else {
+    
+      val clazz = obj.niceClass
+    
+      // handle primitives
+      if (clazz.isPrimitive || classOf[Number].isAssignableFrom(clazz) || clazz.equals(classOf[Boolean])) obj.toString
+    
+      // handle string
+      else if (obj.isInstanceOf[String]) quote(obj.asInstanceOf[String])
+      
+      // handle sequences & maps
+      else if (obj.isInstanceOf[Seq[_ <: AnyRef]]) {
+        obj.asInstanceOf[Seq[_ <: AnyRef]]
+           .map(e => toJSON(e))
+           .mkString("[", ",", "]")
+      }
+      else if (obj.isInstanceOf[Map[_ <: AnyRef, _ <: AnyRef]]) {
+        obj.asInstanceOf[Map[_ <: AnyRef, _ <: AnyRef]]
+           .map(e => toJSON(e._1.toString) + ":" + toJSON(e._2))
+           .mkString("{", ",", "}")
+      }
+    
+      // handle beans
+      else {
+        val pds = 
+          Introspector.getBeanInfo(clazz)
+            .getPropertyDescriptors
+            .filter(e => ignoreProps.exists(_.equals(e.getName)) == false)
+        
+        val props = 
+          for {
+            pd <- pds
+            val rm = pd.getReadMethod
+            val rv = rm.invoke(obj, null)
+            
+            // Option[] needs to be treated differently
+            val isOption = rv.isInstanceOf[Option[_]]
+            
+            // Use the value if the option is defined, otherwise ignore
+            val rval =
+              if (isOption) {
+                val o = rv.asInstanceOf[Option[_]]
+                if (o.isDefined) o.get.asInstanceOf[AnyRef] else null
+              }
+              else rv
+            
+            val ann = rm.getAnnotation(classOf[JSONProperty])
+            val v = 
+              if (ann == null || ann.value == null || ann.value.length == 0) pd.getName 
+              else ann.value
+            val ignore = 
+              if (ann != null) ann.ignore || (rv == null && ann.ignoreIfNull) else false
+            if ((ignore == false) && (!isOption || (isOption && rval != null)))
+          } yield toJSON(v) + ":" + toJSON(rval)
+      
+        props.mkString("{", ",", "}")
+      }
+    }
+  }
+}

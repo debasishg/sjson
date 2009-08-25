@@ -43,3 +43,7 @@ I can also serialize in without specifying the class .. I get back a data struct
   val z(_zip) = a
   assertEquals(_zip, "956871")
 
+LICENSE
+-------
+
+This software is licensed under the Apache 2 license as per http://www.apache.org/licenses/LICENSE-2.0.

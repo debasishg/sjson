@@ -22,19 +22,16 @@ object TestBeans {
   }
 
   @BeanInfo
-  case class Address(st: String, ct: String, zp: String) {
-    val street = st
-    val city = ct
-    val zip = zp
-  
+  case class Address(street: String, city: String, zip: String) {
     private [json] def this() = this(null, null, null)
   
     override def toString = "address = " + street + "/" + city + "/" + zip
   }
 
   @BeanInfo
-  case class InternationalAddress(override val st: String, override val ct: String, override val zp: String, cnt: String)
+  case class InternationalAddress(st: String, ct: String, zp: String, cnt: String)
     extends Address(st, ct, zp) {
+
     override val street = st
     override val city = ct
     override val zip = zp
@@ -42,7 +39,7 @@ object TestBeans {
 
     private [json] def this() = this(null, null, null, null)
   
-    override def toString = "address = " + super.toString + "/" + country
+    override def toString = super.toString + "/" + country
   }
   
   @BeanInfo

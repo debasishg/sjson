@@ -210,11 +210,9 @@ class SerializerSpec extends Spec with ShouldMatchers {
       a3.street should equal(addr.street)
       a3.zip should equal(addr.zip)
 
-      /**
       new Address(addr.street, addr.city, addr.zip) should equal(
         serializer.in(
-        serializer.out(addr), Some(classOf[Address])))
-      **/
+          serializer.out(addr), Some(classOf[Address])))
     }
     it("should support anonymous deserialization and extraction") {
       val a = serializer.in(

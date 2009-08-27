@@ -10,7 +10,8 @@ object Serializer {
     import dispatch.json.Js._
     import Implicits._
   
-    def deepClone(obj: AnyRef): AnyRef = in(out(obj), None)
+    import scala.reflect.Manifest
+    def deepClone[T](obj: T)(implicit m: Manifest[T]): AnyRef = in[T](out(obj.asInstanceOf[AnyRef]))
   
     def out(obj: AnyRef): Array[Byte] = {
       try {
@@ -21,14 +22,22 @@ object Serializer {
       }
     }
   
-    def in[T](bytes: Array[Byte], clazz: Option[Class[T]]): AnyRef = clazz match {
-      case None =>
-        Js(new String(bytes, "UTF-8"))
-      case _ =>
-        JsBean.fromJSON(Js(new String(bytes, "UTF-8")), clazz).asInstanceOf[AnyRef]
-      }
+    def in[T](bytes: Array[Byte])(implicit m: Manifest[T]): AnyRef = {
+      in[T](new String(bytes, "UTF-8"))(m)
+    }
     
-    def in(json: String): AnyRef = Js(json).asInstanceOf[AnyRef]
+    def in[T](json: String)(implicit m: Manifest[T]): AnyRef = m.toString match {
+      case "java.lang.Object" =>
+        Js(json)
+      case "scala.runtime.Nothing$" =>
+        Js(json)
+      case "None.type" =>
+        Js(json)
+      case _ =>
+        JsBean.fromJSON(Js(json), Some(m.erasure)).asInstanceOf[AnyRef]
+    }
+
+    // def in(json: String): AnyRef = Js(json) 
   }
 }
   

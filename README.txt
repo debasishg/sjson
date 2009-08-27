@@ -22,13 +22,22 @@ I can serialize out and in specifying the class. What I get back is another inst
   // serialize in with class specification
   assertEquals(
     addr,
-    serializer.in(
-      serializer.out(addr), Some(classOf[Address])))
+    serializer.in[Address](serializer.out(addr)))
 
 I can also serialize in without specifying the class .. I get back a data structure JsValue, which comes with a set of extractors for extracting stuff from within it ..
 
   // serialize in without class specification
-  val a = serializer.in(serializer.out(addr), None)
+  val a = serializer.in(serializer.out(addr))
+
+   OR
+
+  val a = serializer.in[AnyRef](serializer.out(addr))
+
+   OR
+
+  val a = serializer.in[None.type](serializer.out(addr))
+
+In all the above cases we get back a JsValue, which can be deconstructed using extractors :-
 
   // use extractors
   val c = 'city ? str

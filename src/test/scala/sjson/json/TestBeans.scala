@@ -103,10 +103,18 @@ object TestBeans {
   }
 
   @BeanInfo
-  case class Journal(id: Int, 
+  case class Journal(id: BigDecimal, 
                      title: String, 
                      author: String, 
                      @JSONProperty {val ignore = true} issn: String) {
+
+    private [json] def this() = this(0, null, null, null)
+    override def toString =
+      "Journal: " + id + "/" + title + "/" + author + 
+        (issn match {
+            case null => ""
+            case _ => "/" + issn
+          })
   }
 
   @BeanInfo

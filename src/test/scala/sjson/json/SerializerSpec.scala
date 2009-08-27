@@ -253,4 +253,11 @@ class SerializerSpec extends Spec with ShouldMatchers {
       _cnt should equal("USA")
     }
   }
+
+  describe("Serialization with ignore properties") {
+    it("should ignore issn field") {
+      val j = Journal(100, "IEEE Computer", "Alex Payne", "012-456372")
+      serializer.in[Journal](serializer.out(j)).asInstanceOf[Journal].issn should equal(null)
+    }
+  }
 }

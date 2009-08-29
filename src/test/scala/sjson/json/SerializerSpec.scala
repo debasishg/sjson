@@ -27,28 +27,33 @@ class SerializerSpec extends Spec with ShouldMatchers {
 
   describe("Number serialization") {
     it("should give an instance of JsNumber") {
-      serializer.in[AnyRef](
-        serializer.out(BigDecimal(20))).asInstanceOf[JsValue].self.asInstanceOf[BigDecimal] should equal(BigDecimal(20))
+      val JsNumber(n) = serializer.in[AnyRef](serializer.out(BigDecimal(20))).asInstanceOf[JsValue]
+      n should equal(20)
+
+      val JsNumber(n1) = serializer.in[AnyRef](serializer.out(BigInt(20))).asInstanceOf[JsValue]
+      n1 should equal(20)
     }
     it("should give an instance of BigDecimal") {
       serializer.in[BigDecimal](
         serializer.out(BigDecimal(20))) should equal(BigDecimal(20))
+
+      serializer.in[BigDecimal](
+        serializer.out(BigDecimal(20))) should equal(20)
     }
   }
 
   describe("List serialization") {
     it("should give an instance of JsArray") {
-      val l = serializer.in[AnyRef](serializer.out(List(1, 2, 3)))
-                .asInstanceOf[JsValue].self
-                .asInstanceOf[List[_]]
-                .map(x => JsBean.fromJSON(x.asInstanceOf[JsValue], Some(classOf[BigDecimal])))
-      l should equal(List(BigDecimal(1), BigDecimal(2), BigDecimal(3)))
+      val l = serializer.in[AnyRef](serializer.out(List(1, 2, 3))).asInstanceOf[JsValue]
+      val num_list = list ! num
+      val num_list(l0) = l
+      l0 should equal(List(1, 2, 3))
     }
     it("should give an instance of List") {
       val l = serializer.in[List[BigDecimal]](serializer.out(List(1, 2, 3)))
                 .asInstanceOf[List[_]]
                 .map(x => JsBean.fromJSON(x.asInstanceOf[JsValue], Some(classOf[BigDecimal])))
-      l should equal(List(BigDecimal(1), BigDecimal(2), BigDecimal(3)))
+      l should equal(List(1, 2, 3))
     }
     it("should give an instance of JsArray containing JsString") {
       val l = serializer.in[AnyRef](serializer.out(List("ab", "bc", "cd")))

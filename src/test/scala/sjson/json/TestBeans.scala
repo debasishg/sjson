@@ -194,5 +194,15 @@ object TestBeans {
   ) {
     private [json] def this() = this(null, null, null, Nil, null)
   }
+
+  @BeanInfo
+  case class Foo(str: String, valid: Boolean) {
+    private [json] def this() = this(null, false)
+  }
+
+  @BeanInfo
+  case class Bar(str: String, int: Int, lng: Long, flt: Float, valid: Boolean) {
+    private [json] def this() = this(null, 0, 0l, 0f, false)
+  }
 }
 

@@ -140,7 +140,7 @@ object JsBean {
           case (Some(y), z) => {
             y.setAccessible(true)
             if (y.getType.isAssignableFrom(classOf[scala.Option[_]]))
-            y.set(instance, Some(z)) else y.set(instance, z)
+              y.set(instance, Some(z)) else y.set(instance, z)  // @fixme: will create problems with number vals
           }
         }
       }
@@ -161,7 +161,10 @@ object JsBean {
       val clazz = obj.niceClass
     
       // handle primitives
-      if (clazz.isPrimitive || classOf[Number].isAssignableFrom(clazz) || clazz.equals(classOf[Boolean])) obj.toString
+      if (clazz.isPrimitive || 
+        classOf[Number].isAssignableFrom(clazz) || 
+        clazz.equals(classOf[Boolean]) ||
+        clazz.equals(classOf[java.lang.Boolean])) obj.toString
     
       // handle string
       else if (obj.isInstanceOf[String]) quote(obj.asInstanceOf[String])

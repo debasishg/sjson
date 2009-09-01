@@ -265,4 +265,21 @@ class SerializerSpec extends Spec with ShouldMatchers {
       serializer.in[Journal](serializer.out(j)).asInstanceOf[Journal].issn should equal(null)
     }
   }
+
+  describe("Serialization of Boolean") {
+    it("should serialize properly") {
+      val b = Foo("debasish", true)
+      serializer.in[Foo](serializer.out(b)).asInstanceOf[Foo] should equal(b)
+    }
+  }
+
+  /**
+  describe("Serialization of vals") {
+    it("should serialize properly") {
+      val b = Bar("debasish", 12, 100l, 123.65f, true)
+      println(new String(serializer.out(b)))
+      serializer.in[Bar](serializer.out(b)).asInstanceOf[Bar] should equal(b)
+    }
+  }
+  **/
 }

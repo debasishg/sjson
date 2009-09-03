@@ -45,5 +45,27 @@ object Util {
     while (c != '\n' && c != -1)
     str.toString
   }
+
+  import java.lang.reflect._
+  def newInstance[T](clazz: Class[T]): T = {
+    // need to access private default constructor .. hack!
+    val constructor = 
+      clazz.getDeclaredConstructors.filter(_.getParameterTypes.length == 0).first
+
+    if (!Modifier.isPublic(constructor.getModifiers()) ||
+		  !Modifier.isPublic(constructor.getDeclaringClass().getModifiers()))
+        constructor.setAccessible(true)
+
+    constructor.newInstance(null).asInstanceOf[T]
+  }
+
+  def mkNum(v: BigDecimal, c: Class[_]): Any = {
+    if (c.isAssignableFrom(classOf[Int])) v.asInstanceOf[BigDecimal].intValue
+    else if (c.isAssignableFrom(classOf[Long])) v.asInstanceOf[BigDecimal].longValue
+    else if (c.isAssignableFrom(classOf[Float])) v.asInstanceOf[BigDecimal].floatValue
+    else if (c.isAssignableFrom(classOf[Double])) v.asInstanceOf[BigDecimal].doubleValue
+    else if (c.isAssignableFrom(classOf[Short])) v.asInstanceOf[BigDecimal].shortValue
+    else v
+  }
 }
 

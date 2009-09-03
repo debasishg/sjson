@@ -23,6 +23,7 @@ object JsBean {
   import java.lang.reflect._
   import dispatch.json._
   import dispatch.json.Js._
+  import Util._
   
   /**
    * Convert the <tt>JsValue</tt> to an instance of the class <tt>context</tt>. Returns a <tt>Tuple3</tt> 
@@ -68,21 +69,7 @@ object JsBean {
           /**
            * Can be a Map in either of the following cases:
            * 1. the data members is really a scala.Collection.Map 
-           *    e.g. """{
-           *              "_id": "4d3a0a5104c072e8bde5d92d3d2a66ee",
-           *              "_rev": "3749830312",
-           *              "item": "apple",
-           *              "prices": {"Fresh Mart":1.59,"Price Max":5.99,"Apples Express":0.79}
-           *    }"""
-           * 
            * 2. the data member can be an object which comes in JSON as a Map
-           *    e.g. """{
-           *              "title": "Effective C++",
-           *              "author": {
-           *                "lastName": "Myers",
-           *                "firstName": "Scott"
-           *               }
-           *    }"""
            */
           case x: Map[_, _] => {
             val cl = lookupType(context.get, e._1.self)
@@ -134,26 +121,31 @@ object JsBean {
           case _ => (Some(context.get.getDeclaredField(e._1.self)), e._2.self)
         }
       }
-      val instance = context.get.newInstance
+
+      val instance = newInstance(context.get)
+
       info.foreach {x => x match {
           case (None, _) =>
           case (Some(y), z) => {
             y.setAccessible(true)
+
+            // json parser makes BigDecimal out of all numbers
+            val num = 
+              if (z.isInstanceOf[BigDecimal]) mkNum(z.asInstanceOf[BigDecimal], y.getType) else z
+
+            // need to handle Option[] in individual fields
             if (y.getType.isAssignableFrom(classOf[scala.Option[_]]))
-              y.set(instance, Some(z)) else y.set(instance, z)  // @fixme: will create problems with number vals
+              y.set(instance, Some(num)) else y.set(instance, num) 
           }
         }
       }
       instance
     }
   }
-  
-  
+
   /**
    * Generate a JSON representation of the object <tt>obj</tt> and return the string.
    */
-  import Util._
-  
   def toJSON[T <: AnyRef](obj: T)(implicit ignoreProps: List[String]): String = {
     if (obj == null) quote("null")
     else {

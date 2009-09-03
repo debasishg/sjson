@@ -6,7 +6,7 @@ object TestBeans {
   @BeanInfo
   case class Shop(store: String, item: String, price: Number) {
   
-    private [json] def this() = this(null, null, null)
+    private def this() = this(null, null, null)
   
     override def toString = "shop = " + store + " for item " + item + " @ " + price
   }
@@ -16,14 +16,14 @@ object TestBeans {
                      @JSONTypeHint(classOf[Address])
                      addresses: Map[String, Address]) {
   
-    private [json] def this() = this(null, null)
+    private def this() = this(null, null)
   
     override def toString = "name = " + name + " addresses = " + addresses.map(a => a._1 + ":" + a._2.toString).mkString(",")
   }
 
   @BeanInfo
   case class Address(street: String, city: String, zip: String) {
-    private [json] def this() = this(null, null, null)
+    private def this() = this(null, null, null)
   
     override def toString = "address = " + street + "/" + city + "/" + zip
   }
@@ -37,7 +37,7 @@ object TestBeans {
     override val zip = zp
     val country = cnt
 
-    private [json] def this() = this(null, null, null, null)
+    private def this() = this(null, null, null, null)
   
     override def toString = super.toString + "/" + country
   }
@@ -45,7 +45,7 @@ object TestBeans {
   @BeanInfo
   case class AddressWithOptionalCity(street: String, city: Option[String], zip: String) {
   
-    private [json] def this() = this(null, None, null)
+    private def this() = this(null, None, null)
   
     override def toString = "address = " + street + "/" + 
       (city match {
@@ -61,7 +61,7 @@ object TestBeans {
                                 @OptionTypeHint(classOf[Map[_,_]])
                                 addresses: Option[Map[String, Address]]) {
   
-    private [json] def this() = this(null, None)
+    private def this() = this(null, None)
   
     override def toString = "name = " + name + " " + 
       (addresses match {
@@ -93,13 +93,13 @@ object TestBeans {
   @BeanInfo
   case class Author(lastName: String, firstName: String) {
   
-    private [json] def this() = this(null, null)
+    private def this() = this(null, null)
   }
 
   @BeanInfo
   case class Book_1(title: String, author: Author) {
   
-    private [json] def this() = this(null, null)
+    private def this() = this(null, null)
   }
 
   @BeanInfo
@@ -108,7 +108,7 @@ object TestBeans {
                      author: String, 
                      @JSONProperty {val ignore = true} issn: String) {
 
-    private [json] def this() = this(0, null, null, null)
+    private def this() = this(0, null, null, null)
     override def toString =
       "Journal: " + id + "/" + title + "/" + author + 
         (issn match {
@@ -157,7 +157,7 @@ object TestBeans {
     @JSONProperty("TYPE"){val ignoreIfNull = false, val ignore = false}
     val typ: String) {
     
-    private [json] def this() = this(null, null, null)
+    private def this() = this(null, null, null)
     override def toString = "id: " + id + " name: " + name + " type: " + typ
   }
   
@@ -168,13 +168,13 @@ object TestBeans {
     val ins: Instrument,
     val amount: Number) {
       
-    private [json] def this() = this(null, null, null)
+    private def this() = this(null, null, null)
     override def toString = "ref: " + ref + " ins: " + ins + " amount: " + amount
   }
   
   @BeanInfo
   case class Salary(val basic: Number, val allowance: Number) {
-    private [json] def this() = this(null, null)
+    private def this() = this(null, null)
   }
   
   @BeanInfo
@@ -192,17 +192,17 @@ object TestBeans {
     @JSONProperty("Salary")
     val sal: Salary
   ) {
-    private [json] def this() = this(null, null, null, Nil, null)
+    private def this() = this(null, null, null, Nil, null)
   }
 
   @BeanInfo
   case class Foo(str: String, valid: Boolean) {
-    private [json] def this() = this(null, false)
+    private def this() = this(null, false)
   }
 
   @BeanInfo
   case class Bar(str: String, int: Int, lng: Long, flt: Float, valid: Boolean) {
-    private [json] def this() = this(null, 0, 0l, 0f, false)
+    private def this() = this(null, 0, 0l, 0f, false)
   }
 }
 

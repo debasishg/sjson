@@ -131,7 +131,9 @@ object JsBean {
 
             // json parser makes BigDecimal out of all numbers
             val num = 
-              if (z.isInstanceOf[BigDecimal]) mkNum(z.asInstanceOf[BigDecimal], y.getType) else z
+              if (z.isInstanceOf[BigDecimal]) mkNum(z.asInstanceOf[BigDecimal], y.getType) 
+              else if (y.getType.isAssignableFrom(classOf[java.util.Date])) mkDate(z.asInstanceOf[String])
+              else z
 
             // need to handle Option[] in individual fields
             if (y.getType.isAssignableFrom(classOf[scala.Option[_]]))
@@ -160,6 +162,9 @@ object JsBean {
     
       // handle string
       else if (obj.isInstanceOf[String]) quote(obj.asInstanceOf[String])
+
+      // handle date
+      else if (obj.isInstanceOf[java.util.Date]) quote(obj.asInstanceOf[java.util.Date].getTime.toString)
       
       // handle sequences & maps
       else if (obj.isInstanceOf[Seq[_ <: AnyRef]]) {

@@ -279,4 +279,12 @@ class SerializerSpec extends Spec with ShouldMatchers {
       serializer.in[Bar](serializer.out(b)).asInstanceOf[Bar] should equal(b)
     }
   }
+
+  import java.util.Date
+  describe("Serialization of date") {
+    it("should serialize properly") {
+      val t = SecurityTrade("T-123", new Date, new Date, 1000)
+      serializer.in[SecurityTrade](serializer.out(t)).asInstanceOf[SecurityTrade] should equal(t)
+    }
+  }
 }

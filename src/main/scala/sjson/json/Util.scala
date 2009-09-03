@@ -67,5 +67,10 @@ object Util {
     else if (c.isAssignableFrom(classOf[Short])) v.asInstanceOf[BigDecimal].shortValue
     else v
   }
+
+  import java.util.Date
+  def mkDate(v: String): Date = {
+    new Date(v.toLong.longValue)
+  }
 }
 

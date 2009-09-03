@@ -204,5 +204,11 @@ object TestBeans {
   case class Bar(str: String, int: Int, lng: Long, flt: Float, valid: Boolean) {
     private def this() = this(null, 0, 0l, 0f, false)
   }
+
+  import java.util.Date
+  @BeanInfo
+  case class SecurityTrade(no: String, tdate: Date, sdate: Date, amount: BigDecimal) {
+    private def this() = this(null, null, null, null)
+  }
 }
 

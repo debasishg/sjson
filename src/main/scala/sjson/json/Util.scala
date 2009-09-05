@@ -47,7 +47,8 @@ object Util {
   }
 
   import java.lang.reflect._
-  def newInstance[T](clazz: Class[T]): T = {
+
+  def newInstance[T](clazz: Class[T])(op: T => Unit): T = {
     // need to access private default constructor .. hack!
     val constructor = 
       clazz.getDeclaredConstructors.filter(_.getParameterTypes.length == 0).first
@@ -56,7 +57,9 @@ object Util {
 		  !Modifier.isPublic(constructor.getDeclaringClass().getModifiers()))
         constructor.setAccessible(true)
 
-    constructor.newInstance(null).asInstanceOf[T]
+    val v = constructor.newInstance(null).asInstanceOf[T]
+    op(v)
+    v
   }
 
   def mkNum(v: BigDecimal, c: Class[_]): Any = {

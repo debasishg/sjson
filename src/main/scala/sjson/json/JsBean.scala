@@ -122,26 +122,26 @@ object JsBean {
         }
       }
 
-      val instance = newInstance(context.get)
+      newInstance(context.get) { instance =>
+        info.foreach {x => 
+          x match {
+            case (None, _) =>
+            case (Some(y), z) => {
+              y.setAccessible(true)
 
-      info.foreach {x => x match {
-          case (None, _) =>
-          case (Some(y), z) => {
-            y.setAccessible(true)
+              // json parser makes BigDecimal out of all numbers
+              val num = 
+                if (z.isInstanceOf[BigDecimal]) mkNum(z.asInstanceOf[BigDecimal], y.getType) 
+                else if (y.getType.isAssignableFrom(classOf[java.util.Date])) mkDate(z.asInstanceOf[String])
+                else z
 
-            // json parser makes BigDecimal out of all numbers
-            val num = 
-              if (z.isInstanceOf[BigDecimal]) mkNum(z.asInstanceOf[BigDecimal], y.getType) 
-              else if (y.getType.isAssignableFrom(classOf[java.util.Date])) mkDate(z.asInstanceOf[String])
-              else z
-
-            // need to handle Option[] in individual fields
-            if (y.getType.isAssignableFrom(classOf[scala.Option[_]]))
-              y.set(instance, Some(num)) else y.set(instance, num) 
+              // need to handle Option[] in individual fields
+              if (y.getType.isAssignableFrom(classOf[scala.Option[_]]))
+                y.set(instance, Some(num)) else y.set(instance, num) 
+            }
           }
         }
       }
-      instance
     }
   }
 

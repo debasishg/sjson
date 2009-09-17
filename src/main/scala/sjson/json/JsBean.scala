@@ -26,9 +26,8 @@ object JsBean {
   import Util._
   
   /**
-   * Convert the <tt>JsValue</tt> to an instance of the class <tt>context</tt>. Returns a <tt>Tuple3</tt> 
-   * consisting of <tt>(_id, _rev, T )</tt> if the <tt>JsValue</tt> contains properties of the names _id
-   * and _rev.
+   * Convert the <tt>JsValue</tt> to an instance of the class <tt>context</tt>. Returns an instance of
+   * <tt>T</tt>.
    */
   def fromJSON[T](js: JsValue, context: Option[Class[T]]): T = { 
     if (!js.isInstanceOf[JsObject] || !context.isDefined) js.self.asInstanceOf[T]
@@ -133,6 +132,7 @@ object JsBean {
               val num = 
                 if (z.isInstanceOf[BigDecimal]) mkNum(z.asInstanceOf[BigDecimal], y.getType) 
                 else if (y.getType.isAssignableFrom(classOf[java.util.Date])) mkDate(z.asInstanceOf[String])
+                else if (z.isInstanceOf[String] && (z == "null")) null
                 else z
 
               // need to handle Option[] in individual fields

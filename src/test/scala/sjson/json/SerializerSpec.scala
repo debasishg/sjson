@@ -23,6 +23,12 @@ class SerializerSpec extends Spec with ShouldMatchers {
       serializer.in[String](
         serializer.out("debasish ghosh")) should equal("debasish ghosh")
     }
+    it("should give a null instance of String") {
+      serializer.in[String](
+        serializer.out(null)) should equal(null)
+      serializer.in[String](
+        serializer.out("null")) should equal("null")
+    }
   }
 
   describe("Number serialization") {
@@ -115,6 +121,33 @@ class SerializerSpec extends Spec with ShouldMatchers {
       val z = 'zip ? str
       val z(_zip) = a
       _zip should equal("956871")
+    }
+  }
+
+  describe("Simple bean with null objects serialization") {
+    val addr = Address("Market Street", "San Francisco", null)
+
+    it("should give an instance of Address") {
+      serializer.in[Address](
+        serializer.out(addr)) should equal(addr)
+    }
+
+    it("should match extracted values") {
+      val a = serializer.in[AnyRef](
+        serializer.out(addr))
+
+      // use extractors
+      val c = 'city ? str
+      val c(_city) = a
+      _city should equal("San Francisco")
+
+      val s = 'street ? str
+      val s(_street) = a
+      _street should equal("Market Street")
+
+      val z = 'zip ? str
+      val z(_zip) = a
+      _zip should equal("null") // should be JsNull since de-serialized with AnyRef
     }
   }
 

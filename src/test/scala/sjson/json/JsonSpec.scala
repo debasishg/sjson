@@ -395,5 +395,43 @@ class JsonSpec extends Spec with ShouldMatchers {
       x should equal(List(JsString("x\"x")))                                    
     }
   }
+
+  describe("Testing tuples") {
+    it("should convert tuple2[string, string] properly") {
+      JsBean.toJSON(("dg", "gh")) should equal("{\"dg\":\"gh\"}")
+    }
+    it("should convert tuple2[string, List] properly") {
+      JsBean.toJSON(("dg", List(1,2,3,4))) should equal("{\"dg\":[1,2,3,4]}")
+    }
+    it("should convert tuple2[string, Map] properly") {
+      JsBean.toJSON(("dg", Map(1->"a", 2->"b"))) should equal("{\"dg\":{\"1\":\"a\",\"2\":\"b\"}}")
+    }
+    it("should convert tuple2[string, Int] properly") {
+      JsBean.toJSON(("dg", 100)) should equal("""{"dg":100}""")
+    }
+    it("should convert tuple2[int, Int] properly") {
+      JsBean.toJSON((100, 1000)) should equal("""{"100":1000}""")
+    }
+    it("should convert tuple2[string, bean] properly") {
+      val e = 
+        new Employee(
+          100,
+          "Jason Alexander",
+          null,
+          addresses,
+          Salary(4500, 245)
+        )
+      val expected_e_js_1 = """{"Addresses":[{"city":"San Francisco, CA","street":"10 Market Street","zip":"94111"},{"city":"Denver, CO","street":"3300 Tamarac Drive","zip":"98301"}],"id":100,"name":"Jason Alexander","Salary":{"allowance":245,"basic":4500}}"""
+      JsBean.toJSON(("dg", e)) should equal("""{"dg":""" + expected_e_js_1 + "}")
+    }
+    it("should throw UnsupportedOperationException") {
+      try {
+        JsBean.toJSON((100, 1000, 2000))
+      } catch {
+        case e: Exception =>
+          e.isInstanceOf[UnsupportedOperationException] should equal(true)
+      }
+    }
+  }
 }
 

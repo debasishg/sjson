@@ -177,6 +177,10 @@ object JsBean {
            .map(e => toJSON(e._1.toString) + ":" + toJSON(e._2))
            .mkString("{", ",", "}")
       }
+      else if (obj.isInstanceOf[Tuple2[_ <: AnyRef, _ <: AnyRef]]) {
+        val (e1, e2) = obj.asInstanceOf[Tuple2[_ <: AnyRef, _ <: AnyRef]]
+        "{" + toJSON(e1.toString) + ":" + toJSON(e2) + "}"
+      }
     
       // handle beans
       else {
@@ -184,6 +188,10 @@ object JsBean {
           Introspector.getBeanInfo(clazz)
             .getPropertyDescriptors
             .filter(e => ignoreProps.exists(_.equals(e.getName)) == false)
+
+        if (pds.isEmpty) {
+          throw new UnsupportedOperationException("Class " + clazz + " not supported for conversion")
+        }
         
         val props = 
           for {

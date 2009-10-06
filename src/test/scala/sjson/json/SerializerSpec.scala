@@ -320,4 +320,40 @@ class SerializerSpec extends Spec with ShouldMatchers {
       serializer.in[SecurityTrade](serializer.out(t)).asInstanceOf[SecurityTrade] should equal(t)
     }
   }
+
+  describe("Serialization of tuple") {
+    it("should serialize tuple2[string, string]") {
+      val m = ("debasish", "ghosh")
+
+      val m1 = serializer.in[AnyRef](serializer.out(m))
+                         .asInstanceOf[JsValue].self
+                         .asInstanceOf[Map[_,_]]
+      val m2 = Map(m1.map {x => 
+        (JsBean.fromJSON(x._1.asInstanceOf[JsValue], Some(classOf[String])), 
+          JsBean.fromJSON(x._2.asInstanceOf[JsValue], Some(classOf[String])))}.toList: _*)
+
+      Map(m).values.toList should equal(m2.values.toList)
+    }
+    it("should serialize tuple2[string, Int]") {
+      val m = ("debasish", 1000)
+
+      val m1 = serializer.in[AnyRef](serializer.out(m))
+                         .asInstanceOf[JsValue].self
+                         .asInstanceOf[Map[_,_]]
+      val m2 = Map(m1.map {x => 
+        (JsBean.fromJSON(x._1.asInstanceOf[JsValue], Some(classOf[String])), 
+          JsBean.fromJSON(x._2.asInstanceOf[JsValue], Some(classOf[String])))}.toList: _*)
+
+      Map(m).values.toList should equal(m2.values.toList)
+    }
+    it("should serialize tuple2[string, List]") {
+      val m = ("debasish", List(1,2,3,4))
+
+      val e = serializer.in(
+        serializer.out(m))
+
+      val JsObject(o) = e
+      o(JsString("debasish")) should equal(JsArray(List(JsNumber(1),JsNumber(2),JsNumber(3),JsNumber(4))))
+    }
+  }
 }

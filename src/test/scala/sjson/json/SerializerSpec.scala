@@ -2,10 +2,13 @@ package sjson.json
 
 import org.scalatest.Spec
 import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.junit.JUnitRunner
+import org.junit.runner.RunWith
 import scala.reflect.BeanInfo
 
 import TestBeans._
 
+@RunWith(classOf[JUnitRunner])
 class SerializerSpec extends Spec with ShouldMatchers {
 
   import dispatch.json._

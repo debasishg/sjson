@@ -57,7 +57,7 @@
 
   <build>
     <sourceDirectory>src/main/scala</sourceDirectory>
-    <testSourceDirectory>src/test/scala</testSourceDirectory>
+    <testSourceDirectory>src/test/scala/sjson/json</testSourceDirectory>
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -244,9 +244,9 @@
     </dependency>
     <!-- For Testing -->
     <dependency>
-      <groupId>org.scala-tools.testing</groupId>
+      <groupId>org.scalatest</groupId>
       <artifactId>scalatest</artifactId>
-      <version>0.9.5</version>
+      <version>1.0</version>
       <scope>test</scope>
     </dependency>
     <dependency>

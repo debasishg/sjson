@@ -11,6 +11,9 @@ Test Cases in src/test/scala/sjson/json/JsonSpec.scala
 - to run tests
   $ mvn exec java
 
+  Or you can run individual tests using:
+  $ mvn test -Dtest=sjson.json.SerializerSpec
+
 Here's the idea ..
 
 I have a Scala object as ..

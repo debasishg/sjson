@@ -4,12 +4,16 @@ package sjson.json
  * @author <a href="http://debasishg.blogspot.com">Debasish Ghosh</a>
  */
 object Serializer {
-  object SJSON {
+  trait SJSON {
   
     import dispatch.json._
     import dispatch.json.Js._
     import Implicits._
-  
+    import java.io.{ObjectInputStream, ObjectOutputStream, ByteArrayInputStream, ByteArrayOutputStream}
+    import org.apache.commons.io.input.ClassLoaderObjectInputStream
+
+    val classLoader: Option[ClassLoader]
+
     import scala.reflect.Manifest
     def deepClone[T](obj: T)(implicit m: Manifest[T]): AnyRef = in[T](out(obj.asInstanceOf[AnyRef]))
   
@@ -21,18 +25,31 @@ object Serializer {
      * contains the value "null".
      */
     def out(obj: AnyRef): Array[Byte] = {
+      val bos = new ByteArrayOutputStream
+      val out = new ObjectOutputStream(bos)
+
       try {
-        JsValue.toJson(JsValue.apply(obj)).getBytes("UTF-8")
+        out.writeUTF(JsValue.toJson(JsValue.apply(obj)))
+        out.close
+        bos.toByteArray
       } catch {
         case e: scala.MatchError =>
-          JsBean.toJSON(obj).getBytes("UTF-8")
+          out.writeUTF(JsBean.toJSON(obj))
+          out.close
+          bos.toByteArray
       }
     }
   
     def in[T](bytes: Array[Byte])(implicit m: Manifest[T]): AnyRef = {
-      in[T](new String(bytes, "UTF-8"))(m)
+      val ins = 
+        if (classLoader.isDefined) 
+          new ClassLoaderObjectInputStream(
+            classLoader.get, new ByteArrayInputStream(bytes))
+        else new ObjectInputStream(new ByteArrayInputStream(bytes))
+
+      in[T](ins.readUTF)(m)
     }
-    
+
     /**
      * Serialize in a JSON into a Scala object. 
      * <p/>
@@ -74,6 +91,10 @@ object Serializer {
     }
 
     // def in(json: String): AnyRef = Js(json) 
+  }
+
+  object SJSON extends SJSON {
+    val classLoader = None
   }
 }
   

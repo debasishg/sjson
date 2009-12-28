@@ -4,8 +4,8 @@ import dispatch.json._
 
 object JsBean {
   
-  implicit def string2Class[T<:AnyRef](name: String): Class[T] = {
-    val clazz = Class.forName(name)
+  implicit def string2Class[T<:AnyRef](name: String)(implicit classLoader: ClassLoader): Class[T] = {
+    val clazz = Class.forName(name, true, classLoader)
     clazz.asInstanceOf[Class[T]]
   }
   

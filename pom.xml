@@ -4,11 +4,11 @@
   <groupId>sjson.json</groupId>
   <artifactId>sjson</artifactId>
   <packaging>jar</packaging>
-  <version>0.2</version>
+  <version>0.3</version>
   <name>sjson</name>
 
   <properties>
-    <sjson.version>0.1</sjson.version>
+    <sjson.version>0.3</sjson.version>
     <sjson.groupId>sjson</sjson.groupId>
     <scala.version>2.7.5</scala.version>
   </properties>

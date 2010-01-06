@@ -380,6 +380,24 @@ class SerializerSpec extends Spec with ShouldMatchers {
     }
   }
 
+  object MyObjenesisSJSON extends Serializer.SJSON with Objenesis {
+    val classLoader = Some(this.getClass.getClassLoader)
+  }
+
+  describe("Bean with no default constructor using Objenesis") {
+    it("should serialize properly and de-serialize") {
+      val s = MyObjenesisSJSON.out("joewalnes")
+      MyObjenesisSJSON.in(s, "java.lang.String") should equal("joewalnes")
+
+      val shop = ShopWithNoDefaultConstructor("Shoppers Stop", "Gold", 120)
+      val sh = MyObjenesisSJSON.out(shop)
+      val insh = MyObjenesisSJSON.in(sh, "sjson.json.TestBeans$ShopWithNoDefaultConstructor").asInstanceOf[ShopWithNoDefaultConstructor]
+      insh.store should equal(shop.store)
+      insh.item should equal(shop.item)
+      insh.price should equal(shop.price)
+    }
+  }
+
   describe("Bean serialization with class loading") {
     val addr = Address("Market Street", "San Francisco", "956871")
     it("should give an instance of Address") {

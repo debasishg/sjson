@@ -247,3 +247,24 @@ trait DefaultConstructor {
     v
   }
 }
+
+/**
+ * Use this trait with JsBean to instantiate classes using Objenesis. 
+ *
+ * This is faster and negates the need for a default no-args constructor. 
+ * However it adds a runtime dependency on objenesis.jar.
+ *
+ * @see http://objenesis.googlecode.com/svn/docs/index.html
+ * @author Joe Walnes
+ */
+trait Objenesis {
+  import org.objenesis.ObjenesisStd
+  
+  val objenesis = new ObjenesisStd
+  
+  def newInstance[T](clazz: Class[T])(op: T => Unit): T = {
+    val v = objenesis.newInstance(clazz).asInstanceOf[T]
+    op(v)
+    v
+  }
+}

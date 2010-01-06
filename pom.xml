@@ -254,6 +254,11 @@
       <artifactId>dispatch-http</artifactId>
       <version>0.5.2</version>
     </dependency>
+    <dependency>
+      <groupId>org.objenesis</groupId>
+      <artifactId>objenesis</artifactId>
+      <version>1.2</version>
+    </dependency>
     <!-- For Testing -->
     <dependency>
       <groupId>org.scalatest</groupId>

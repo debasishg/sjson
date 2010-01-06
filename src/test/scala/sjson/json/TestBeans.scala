@@ -12,6 +12,11 @@ object TestBeans {
   }
   
   @BeanInfo
+  case class ShopWithNoDefaultConstructor(store: String, item: String, price: Number) {
+    override def toString = "shop = " + store + " for item " + item + " @ " + price
+  }
+  
+  @BeanInfo
   case class Contact(name: String, 
                      @JSONTypeHint(classOf[Address])
                      addresses: Map[String, Address]) {

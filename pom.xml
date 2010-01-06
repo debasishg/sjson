@@ -240,11 +240,6 @@
       <version>2.7.5</version>
     </dependency>
     <dependency>
-      <groupId>net.lag</groupId>
-      <artifactId>configgy</artifactId>
-      <version>1.3</version>
-    </dependency>
-    <dependency>
       <groupId>dispatch.json</groupId>
       <artifactId>dispatch-json</artifactId>
       <version>0.5.2</version>

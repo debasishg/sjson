@@ -26,9 +26,6 @@ object Serializer {
      * in(out(l)) => ["ab", "cd"]
      * in[List[String]](out(l)) => List("ab", "cd")
      * </pre>
-     * <em>Warning:</em>
-     * Converting the output <tt>Array[Byte]</tt> to <tt>String</tt> will not give a valid JSON string. To
-     * get a valid JSON string of an object, use <tt>#toJSON</tt>
      * <em>Caveat</em>
      * Nulls are serialized as String null ("null"). This may create problems if a String field
      * contains the value "null".
@@ -111,4 +108,3 @@ object Serializer {
     val classLoader = Some(this.getClass.getClassLoader)
   }
 }
-  

@@ -2,7 +2,7 @@ package sjson.json
 
 import dispatch.json._
 
-object JsBean {
+trait JsBean {
   
   implicit def string2Class[T<:AnyRef](name: String)(implicit classLoader: ClassLoader): Class[T] = {
     val clazz = Class.forName(name, true, classLoader)

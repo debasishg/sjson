@@ -4,7 +4,7 @@ package sjson.json
  * @author <a href="http://debasishg.blogspot.com">Debasish Ghosh</a>
  */
 object Serializer {
-  trait SJSON {
+  trait SJSON extends JsBean {
   
     import dispatch.json._
     import dispatch.json.Js._
@@ -37,8 +37,7 @@ object Serializer {
       try {
         JsValue.toJson(JsValue.apply(obj)).getBytes("UTF-8")
       } catch {
-        case e: scala.MatchError =>
-          JsBean.toJSON(obj).getBytes("UTF-8")
+        case e: scala.MatchError => toJSON(obj).getBytes("UTF-8")
       }
     }
   
@@ -83,7 +82,7 @@ object Serializer {
       case "None.type" =>
         Js(json)
       case _ =>
-        JsBean.fromJSON(Js(json), Some(m.erasure)).asInstanceOf[AnyRef]
+        fromJSON(Js(json), Some(m.erasure)).asInstanceOf[AnyRef]
     }
 
     /**
@@ -104,7 +103,7 @@ object Serializer {
           case None =>
             Class.forName(clazzName)
         }
-      JsBean.fromJSON(Js(new String(json)), Some(clazz)).asInstanceOf[AnyRef]
+      fromJSON(Js(new String(json)), Some(clazz)).asInstanceOf[AnyRef]
     }
   }
 

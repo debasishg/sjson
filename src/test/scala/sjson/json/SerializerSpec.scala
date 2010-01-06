@@ -17,6 +17,8 @@ class SerializerSpec extends Spec with ShouldMatchers {
 
   private[this] val serializer = Serializer.SJSON
 
+  val jsBean = new Object with JsBean
+
   describe("String serialization") {
     it("should give an instance of JsString") {
       serializer.in[AnyRef](
@@ -61,14 +63,14 @@ class SerializerSpec extends Spec with ShouldMatchers {
     it("should give an instance of List") {
       val l = serializer.in[List[BigDecimal]](serializer.out(List(1, 2, 3)))
                 .asInstanceOf[List[_]]
-                .map(x => JsBean.fromJSON(x.asInstanceOf[JsValue], Some(classOf[BigDecimal])))
+                .map(x => jsBean.fromJSON(x.asInstanceOf[JsValue], Some(classOf[BigDecimal])))
       l should equal(List(1, 2, 3))
     }
     it("should give an instance of JsArray containing JsString") {
       val l = serializer.in[AnyRef](serializer.out(List("ab", "bc", "cd")))
                 .asInstanceOf[JsValue].self
                 .asInstanceOf[List[_]]
-                .map(x => JsBean.fromJSON(x.asInstanceOf[JsValue], Some(classOf[String])))
+                .map(x => jsBean.fromJSON(x.asInstanceOf[JsValue], Some(classOf[String])))
       l should equal(List("ab", "bc", "cd"))
     }
 
@@ -82,7 +84,7 @@ class SerializerSpec extends Spec with ShouldMatchers {
     it("should give an instance of List of String") {
       val l = serializer.in[List[String]](serializer.out(List("ab", "bc", "cd")))
                 .asInstanceOf[List[_]]
-                .map(x => JsBean.fromJSON(x.asInstanceOf[JsValue], Some(classOf[String])))
+                .map(x => jsBean.fromJSON(x.asInstanceOf[JsValue], Some(classOf[String])))
       l should equal(List("ab", "bc", "cd"))
     }
   }
@@ -94,8 +96,8 @@ class SerializerSpec extends Spec with ShouldMatchers {
                          .asInstanceOf[JsValue].self
                          .asInstanceOf[Map[_,_]]
       val m2 = Map(m1.map {x => 
-        (JsBean.fromJSON(x._1.asInstanceOf[JsValue], Some(classOf[String])), 
-          JsBean.fromJSON(x._2.asInstanceOf[JsValue], Some(classOf[String])))}.toList: _*)
+        (jsBean.fromJSON(x._1.asInstanceOf[JsValue], Some(classOf[String])), 
+          jsBean.fromJSON(x._2.asInstanceOf[JsValue], Some(classOf[String])))}.toList: _*)
 
       m.keySet.toList should equal(m2.keySet.toList)
     }
@@ -181,7 +183,7 @@ class SerializerSpec extends Spec with ShouldMatchers {
       val res(_raddr) = _addresses
 
       // make an Address bean out of _raddr
-      val address = JsBean.fromJSON(_raddr, Some(classOf[Address]))
+      val address = jsBean.fromJSON(_raddr, Some(classOf[Address]))
       a1 should equal(address)
 
       object r { def ># [T](f: JsF[T]) = f(a.asInstanceOf[JsValue]) }
@@ -225,7 +227,7 @@ class SerializerSpec extends Spec with ShouldMatchers {
         serializer.in[AnyRef](serializer.out(List(a1, a2, a3)))
                   .asInstanceOf[JsValue].self
                   .asInstanceOf[List[_]]
-                  .map(x => JsBean.fromJSON(x.asInstanceOf[JsValue], Some(classOf[Address]))))
+                  .map(x => jsBean.fromJSON(x.asInstanceOf[JsValue], Some(classOf[Address]))))
     }
   }
 
@@ -332,8 +334,8 @@ class SerializerSpec extends Spec with ShouldMatchers {
                          .asInstanceOf[JsValue].self
                          .asInstanceOf[Map[_,_]]
       val m2 = Map(m1.map {x => 
-        (JsBean.fromJSON(x._1.asInstanceOf[JsValue], Some(classOf[String])), 
-          JsBean.fromJSON(x._2.asInstanceOf[JsValue], Some(classOf[String])))}.toList: _*)
+        (jsBean.fromJSON(x._1.asInstanceOf[JsValue], Some(classOf[String])), 
+          jsBean.fromJSON(x._2.asInstanceOf[JsValue], Some(classOf[String])))}.toList: _*)
 
       Map(m).values.toList should equal(m2.values.toList)
     }
@@ -344,8 +346,8 @@ class SerializerSpec extends Spec with ShouldMatchers {
                          .asInstanceOf[JsValue].self
                          .asInstanceOf[Map[_,_]]
       val m2 = Map(m1.map {x => 
-        (JsBean.fromJSON(x._1.asInstanceOf[JsValue], Some(classOf[String])), 
-          JsBean.fromJSON(x._2.asInstanceOf[JsValue], Some(classOf[String])))}.toList: _*)
+        (jsBean.fromJSON(x._1.asInstanceOf[JsValue], Some(classOf[String])), 
+          jsBean.fromJSON(x._2.asInstanceOf[JsValue], Some(classOf[String])))}.toList: _*)
 
       Map(m).values.toList should equal(m2.values.toList)
     }

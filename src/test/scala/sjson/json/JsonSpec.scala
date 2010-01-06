@@ -17,7 +17,9 @@ class JsonSpec extends Spec with ShouldMatchers {
   implicit def ignoreProps = List[String]("class")
   
   val addr = new Address("garer math", "kolkata", "700075")
-  val jsAddr = Js(JsBean.toJSON(addr))
+
+  val jsBean = new Object with JsBean
+  val jsAddr = Js(jsBean.toJSON(addr))
   
   val expected_map = Map(
     JsString("city") -> JsString("kolkata"), 
@@ -30,7 +32,7 @@ class JsonSpec extends Spec with ShouldMatchers {
     new Address("3300 Tamarac Drive", "Denver, CO", "98301")
   )
   val person = new Person("Ghosh", "Debasish", addresses)
-  val jsPerson = Js(JsBean.toJSON(person))
+  val jsPerson = Js(jsBean.toJSON(person))
   
   val expected_person_map = Map(
     JsString("lastName") -> JsString("Ghosh"),
@@ -53,7 +55,7 @@ class JsonSpec extends Spec with ShouldMatchers {
   )
   
   val b = new Book(100, "A Beautiful Mind", "012-456372")
-  val jsBook = Js(JsBean.toJSON(b))
+  val jsBook = Js(jsBean.toJSON(b))
   val expected_book_map = Map(
     JsString("id") -> JsNumber(100),
     JsString("title") -> JsString("A Beautiful Mind"),
@@ -61,7 +63,7 @@ class JsonSpec extends Spec with ShouldMatchers {
   )
   
   val j = new Journal(100, "IEEE Computer", "Alex Payne", "012-456372")
-  val jsJournal = Js(JsBean.toJSON(j))
+  val jsJournal = Js(jsBean.toJSON(j))
   val expected_journal_map = Map(
     JsString("id") -> JsNumber(100),
     JsString("title") -> JsString("IEEE Computer"),
@@ -69,7 +71,7 @@ class JsonSpec extends Spec with ShouldMatchers {
   )
   
   val j_1 = new Journal_1(100, "IEEE Computer", "Alex Payne", null)
-  val jsJournal_1 = Js(JsBean.toJSON(j_1))
+  val jsJournal_1 = Js(jsBean.toJSON(j_1))
   val expected_journal_1_map = Map(
     JsString("id") -> JsNumber(100),
     JsString("title") -> JsString("IEEE Computer"),
@@ -77,7 +79,7 @@ class JsonSpec extends Spec with ShouldMatchers {
   )
   
   val j_2 = new Journal_2(100, "IEEE Computer", "Alex Payne", "012-456372")
-  val jsJournal_2 = Js(JsBean.toJSON(j_2))
+  val jsJournal_2 = Js(jsBean.toJSON(j_2))
   val expected_journal_2_map = Map(
     JsString("id") -> JsNumber(100),
     JsString("title") -> JsString("IEEE Computer"),
@@ -86,7 +88,7 @@ class JsonSpec extends Spec with ShouldMatchers {
   )
   
   val b_1 = new Book_1("Programming Scala", new Author("Odersky", "Martin"))
-  val jsBook_1 = Js(JsBean.toJSON(b_1))
+  val jsBook_1 = Js(jsBean.toJSON(b_1))
   val expected_book_1_map = Map(
     JsString("title") -> JsString("Programming Scala"),
     JsString("author") -> JsObject(Map(
@@ -126,7 +128,7 @@ class JsonSpec extends Spec with ShouldMatchers {
   }
   
   val addressStr = """{"street": "garer math", "city": "kolkata", "zip": "700075"}"""
-  val addrBean = JsBean.fromJSON(Js(addressStr), Some(classOf[Address]))
+  val addrBean = jsBean.fromJSON(Js(addressStr), Some(classOf[Address]))
   
   describe("Simple bean from Json string") {
     it("should equal addr") {
@@ -138,7 +140,7 @@ class JsonSpec extends Spec with ShouldMatchers {
   }
   
   val addressOptCityStr = """{"street": "garer math", "city": "kolkata", "zip": "700075"}"""
-  val addrOptCityBean = JsBean.fromJSON(Js(addressOptCityStr), Some(classOf[AddressWithOptionalCity]))
+  val addrOptCityBean = jsBean.fromJSON(Js(addressOptCityStr), Some(classOf[AddressWithOptionalCity]))
   val addrOptCity = new AddressWithOptionalCity("garer math", Some("kolkata"), "700075")
   
   describe("Simple bean with Option from Json string") {
@@ -151,7 +153,7 @@ class JsonSpec extends Spec with ShouldMatchers {
   }
   
   val addrStr = """{"street": "garer math", "city": "kolkata", "zip": "700075", "ignore1": "debasish", "ignore2": 324}"""
-  val addrBean1 = JsBean.fromJSON(Js(addrStr), Some(classOf[Address]))
+  val addrBean1 = jsBean.fromJSON(Js(addrStr), Some(classOf[Address]))
   
   describe("Bean from Json string with additional key/values") {
     it("should equal addr and ignore additional properties from json") {
@@ -170,7 +172,7 @@ class JsonSpec extends Spec with ShouldMatchers {
       {"street": "3300 Tamarac Drive", "city": "Denver, CO", "zip": "98301"}
     ]
   }"""
-  val personBean = JsBean.fromJSON(Js(personStr), Some(classOf[Person]))
+  val personBean = jsBean.fromJSON(Js(personStr), Some(classOf[Person]))
   
   describe("Bean with aggregate member from Json string") {
     it("should equal person") {
@@ -191,7 +193,7 @@ class JsonSpec extends Spec with ShouldMatchers {
       "firstName": "Scott"
     }
   }"""
-  val bookBean = JsBean.fromJSON(Js(bookStr), Some(classOf[Book_1]))
+  val bookBean = jsBean.fromJSON(Js(bookStr), Some(classOf[Book_1]))
   val expected_book = new Book_1("Effective C++", new Author("Myers", "Scott"))
   
   describe("Bean with class object data member from Json string") {
@@ -210,7 +212,7 @@ class JsonSpec extends Spec with ShouldMatchers {
     "prices": {"Fresh Mart":1.59,"Price Max":5.99,"Apples Express":0.79}
   }"""
 
-  val itemBean_1 = JsBean.fromJSON(Js(itemStr_1), Some(classOf[Item_1]))
+  val itemBean_1 = jsBean.fromJSON(Js(itemStr_1), Some(classOf[Item_1]))
   val expected_item_1 = new Item_1("apple", Map("Fresh Mart" -> 1.59, "Price Max" -> 5.99, "Apples Express" -> 0.79))
   
   describe("Bean with Map data member from Json string") {
@@ -229,7 +231,7 @@ class JsonSpec extends Spec with ShouldMatchers {
     "prices": [1.59,5.99,0.79]
   }"""
 
-  val itemBean_2 = JsBean.fromJSON(Js(itemStr_2), Some(classOf[Item_2]))
+  val itemBean_2 = jsBean.fromJSON(Js(itemStr_2), Some(classOf[Item_2]))
   val expected_item_2 = new Item_2("apple", List(1.59, 5.99, 0.79))
   
   describe("Bean with List data member from Json string") {
@@ -248,7 +250,7 @@ class JsonSpec extends Spec with ShouldMatchers {
     }
   }"""
   
-  val contactBean = JsBean.fromJSON(Js(contactStr), Some(classOf[Contact]))
+  val contactBean = jsBean.fromJSON(Js(contactStr), Some(classOf[Contact]))
   val expected_contact = 
     new Contact("Debasish Ghosh",
       Map("primary" -> new Address("10 Market Street", "San Francisco, CA", "94111"),
@@ -263,7 +265,7 @@ class JsonSpec extends Spec with ShouldMatchers {
     }
   }
   
-  val contactBeanOptionalAddr = JsBean.fromJSON(Js(contactStr), Some(classOf[ContactWithOptionalAddr]))
+  val contactBeanOptionalAddr = jsBean.fromJSON(Js(contactStr), Some(classOf[ContactWithOptionalAddr]))
   val expected_contact_with_addr = 
     new ContactWithOptionalAddr("Debasish Ghosh",
       Some(Map("primary" -> new Address("10 Market Street", "San Francisco, CA", "94111"),
@@ -285,7 +287,7 @@ class JsonSpec extends Spec with ShouldMatchers {
     var j: JsValue = null
     
     it("should equal expected_js_str") {
-      val js = JsBean.toJSON(ins)
+      val js = jsBean.toJSON(ins)
       js should equal(expected_js_str)
       j = Js(js)
       val s = (Symbol("TYPE") ? str)
@@ -293,7 +295,7 @@ class JsonSpec extends Spec with ShouldMatchers {
       _s should equal("Equity")
     }
     it("should create the bean and be equal to ins") {
-      val in = JsBean.fromJSON(j, Some(classOf[Instrument]))
+      val in = jsBean.fromJSON(j, Some(classOf[Instrument]))
       in.typ should equal(ins.typ)
     }
   }
@@ -305,7 +307,7 @@ class JsonSpec extends Spec with ShouldMatchers {
     var j: JsValue = null
     
     it("should equal expected_js_str") {
-      val js = JsBean.toJSON(trd)
+      val js = jsBean.toJSON(trd)
       js should equal(expected_js_str)
       j = Js(js)
       val s = (Symbol("Instrument") ? obj)
@@ -313,7 +315,7 @@ class JsonSpec extends Spec with ShouldMatchers {
       _s should equal(Js("""{"id":123,"name":"IBM Securities","TYPE":"Equity"}"""))
     }
     it("should create the bean and be equal to ins") {
-      val tr = JsBean.fromJSON(j, Some(classOf[Trade]))
+      val tr = jsBean.fromJSON(j, Some(classOf[Trade]))
       tr.ref should equal(trd.ref)
       tr.amount should equal(trd.amount)
       tr.ins.id should equal(trd.ins.id)
@@ -323,19 +325,19 @@ class JsonSpec extends Spec with ShouldMatchers {
   
   describe("Generating JSON from non-beans") {
     it("should generate correct JSON") {
-      JsBean.toJSON("Debasish Ghosh") should equal("\"Debasish Ghosh\"")
-      JsBean.toJSON(new java.math.BigDecimal("120.98")) should equal("120.98")
-      JsBean.toJSON(List(1, 2, 3)) should equal("[1,2,3]")
-      JsBean.toJSON(Map(1 -> "dg", 2 -> "mc")) should equal("""{"1":"dg","2":"mc"}""")
+      jsBean.toJSON("Debasish Ghosh") should equal("\"Debasish Ghosh\"")
+      jsBean.toJSON(new java.math.BigDecimal("120.98")) should equal("120.98")
+      jsBean.toJSON(List(1, 2, 3)) should equal("[1,2,3]")
+      jsBean.toJSON(Map(1 -> "dg", 2 -> "mc")) should equal("""{"1":"dg","2":"mc"}""")
     }
     it("should pass for empty Map") {
-      JsBean.toJSON(Map()) should equal("{}")
+      jsBean.toJSON(Map()) should equal("{}")
     }
     it("should pass for empty List in value") {
-      JsBean.toJSON(Map("nil" -> Nil)) should equal("""{"nil":[]}""")
+      jsBean.toJSON(Map("nil" -> Nil)) should equal("""{"nil":[]}""")
     }
     it("should pass for empty Map in value") {
-      JsBean.toJSON(Map("empty" -> Map())) should equal("""{"empty":{}}""")
+      jsBean.toJSON(Map("empty" -> Map())) should equal("""{"empty":{}}""")
     }
       
   }
@@ -354,11 +356,11 @@ class JsonSpec extends Spec with ShouldMatchers {
           addresses,
           Salary(4500, 245)
         )
-      js = JsBean.toJSON(e)
+      js = jsBean.toJSON(e)
       js should equal(expected_e_js)
     }
     it("generating bean from js should give back e") { 
-      val e_b = JsBean.fromJSON(Js(js), Some(classOf[Employee]))
+      val e_b = jsBean.fromJSON(Js(js), Some(classOf[Employee]))
       e_b.name should equal(e.name)
       e_b.addresses.size should equal(e.addresses.size)
     }
@@ -372,7 +374,7 @@ class JsonSpec extends Spec with ShouldMatchers {
           addresses,
           Salary(4500, 245)
         )
-      js = JsBean.toJSON(e)
+      js = jsBean.toJSON(e)
       js should equal(expected_e_js_1)
     }
   }
@@ -401,19 +403,19 @@ class JsonSpec extends Spec with ShouldMatchers {
 
   describe("Testing tuples") {
     it("should convert tuple2[string, string] properly") {
-      JsBean.toJSON(("dg", "gh")) should equal("{\"dg\":\"gh\"}")
+      jsBean.toJSON(("dg", "gh")) should equal("{\"dg\":\"gh\"}")
     }
     it("should convert tuple2[string, List] properly") {
-      JsBean.toJSON(("dg", List(1,2,3,4))) should equal("{\"dg\":[1,2,3,4]}")
+      jsBean.toJSON(("dg", List(1,2,3,4))) should equal("{\"dg\":[1,2,3,4]}")
     }
     it("should convert tuple2[string, Map] properly") {
-      JsBean.toJSON(("dg", Map(1->"a", 2->"b"))) should equal("{\"dg\":{\"1\":\"a\",\"2\":\"b\"}}")
+      jsBean.toJSON(("dg", Map(1->"a", 2->"b"))) should equal("{\"dg\":{\"1\":\"a\",\"2\":\"b\"}}")
     }
     it("should convert tuple2[string, Int] properly") {
-      JsBean.toJSON(("dg", 100)) should equal("""{"dg":100}""")
+      jsBean.toJSON(("dg", 100)) should equal("""{"dg":100}""")
     }
     it("should convert tuple2[int, Int] properly") {
-      JsBean.toJSON((100, 1000)) should equal("""{"100":1000}""")
+      jsBean.toJSON((100, 1000)) should equal("""{"100":1000}""")
     }
     it("should convert tuple2[string, bean] properly") {
       val e = 
@@ -425,11 +427,11 @@ class JsonSpec extends Spec with ShouldMatchers {
           Salary(4500, 245)
         )
       val expected_e_js_1 = """{"Addresses":[{"city":"San Francisco, CA","street":"10 Market Street","zip":"94111"},{"city":"Denver, CO","street":"3300 Tamarac Drive","zip":"98301"}],"id":100,"name":"Jason Alexander","Salary":{"allowance":245,"basic":4500}}"""
-      JsBean.toJSON(("dg", e)) should equal("""{"dg":""" + expected_e_js_1 + "}")
+      jsBean.toJSON(("dg", e)) should equal("""{"dg":""" + expected_e_js_1 + "}")
     }
     it("should throw UnsupportedOperationException") {
       try {
-        JsBean.toJSON((100, 1000, 2000))
+        jsBean.toJSON((100, 1000, 2000))
       } catch {
         case e: Exception =>
           e.isInstanceOf[UnsupportedOperationException] should equal(true)

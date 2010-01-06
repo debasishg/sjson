@@ -17,7 +17,7 @@ class SerializerSpec extends Spec with ShouldMatchers {
 
   private[this] val serializer = Serializer.SJSON
 
-  val jsBean = new Object with JsBean
+  val jsBean = new Object with JsBean with DefaultConstructor
 
   describe("String serialization") {
     it("should give an instance of JsString") {
@@ -362,7 +362,7 @@ class SerializerSpec extends Spec with ShouldMatchers {
     }
   }
 
-  object MySJSON extends Serializer.SJSON {
+  object MySJSON extends Serializer.SJSON with DefaultConstructor {
     val classLoader = Some(this.getClass.getClassLoader)
   }
 

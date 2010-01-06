@@ -18,7 +18,7 @@ class JsonSpec extends Spec with ShouldMatchers {
   
   val addr = new Address("garer math", "kolkata", "700075")
 
-  val jsBean = new Object with JsBean
+  val jsBean = new Object with JsBean with DefaultConstructor 
   val jsAddr = Js(jsBean.toJSON(addr))
   
   val expected_map = Map(

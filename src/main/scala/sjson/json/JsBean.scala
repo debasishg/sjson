@@ -223,4 +223,27 @@ trait JsBean {
       }
     }
   }
+
+  def newInstance[T](clazz: Class[T])(op: T => Unit): T
+}
+
+/**
+ * Use this trait with JsBean to instantiate classes using a default private constructor. This is the default.
+ */
+trait DefaultConstructor {
+  import java.lang.reflect._
+
+  def newInstance[T](clazz: Class[T])(op: T => Unit): T = {
+    // need to access private default constructor .. hack!
+    val constructor =
+      clazz.getDeclaredConstructors.filter(_.getParameterTypes.length == 0).first
+
+     if (!Modifier.isPublic(constructor.getModifiers()) ||
+      !Modifier.isPublic(constructor.getDeclaringClass().getModifiers()))
+        constructor.setAccessible(true)
+
+    val v = constructor.newInstance().asInstanceOf[T]
+    op(v)
+    v
+  }
 }

@@ -18,36 +18,32 @@ object Serializer {
     def deepClone[T](obj: T)(implicit m: Manifest[T]): AnyRef = in[T](out(obj.asInstanceOf[AnyRef]))
   
     /**
-     * Serialize out a Scala object into JSON.
+     * Serialize out a Scala object. It can be serialized back in to the object using
+     * <tt>in</tt> method.
      * <p/>
+     * <pre>
+     * val l = List("ab", "cd")
+     * in(out(l)) => ["ab", "cd"]
+     * in[List[String]](out(l)) => List("ab", "cd")
+     * </pre>
+     * <em>Warning:</em>
+     * Converting the output <tt>Array[Byte]</tt> to <tt>String</tt> will not give a valid JSON string. To
+     * get a valid JSON string of an object, use <tt>#toJSON</tt>
      * <em>Caveat</em>
      * Nulls are serialized as String null ("null"). This may create problems if a String field
      * contains the value "null".
      */
     def out(obj: AnyRef): Array[Byte] = {
-      val bos = new ByteArrayOutputStream
-      val out = new ObjectOutputStream(bos)
-
       try {
-        out.writeUTF(JsValue.toJson(JsValue.apply(obj)))
-        out.close
-        bos.toByteArray
+        JsValue.toJson(JsValue.apply(obj)).getBytes("UTF-8")
       } catch {
         case e: scala.MatchError =>
-          out.writeUTF(JsBean.toJSON(obj))
-          out.close
-          bos.toByteArray
+          JsBean.toJSON(obj).getBytes("UTF-8")
       }
     }
   
     def in[T](bytes: Array[Byte])(implicit m: Manifest[T]): AnyRef = {
-      val ins = 
-        if (classLoader.isDefined) 
-          new ClassLoaderObjectInputStream(
-            classLoader.get, new ByteArrayInputStream(bytes))
-        else new ObjectInputStream(new ByteArrayInputStream(bytes))
-
-      in[T](ins.readUTF)(m)
+      in[T](new String(bytes, "UTF-8"))(m)
     }
 
     /**
@@ -90,11 +86,30 @@ object Serializer {
         JsBean.fromJSON(Js(json), Some(m.erasure)).asInstanceOf[AnyRef]
     }
 
-    // def in(json: String): AnyRef = Js(json) 
+    /**
+     * Serialize in a JSON into a Scala object, specifying a class that can be loaded
+     * through an externally specified class loader. 
+     * In order to specify the class loader, do the following :
+     * <pre>
+     * object SJSON extends SJSON {
+     *   val classLoader = None
+     * }
+     * </pre>
+     */
+    def in(json: Array[Byte], clazzName: String): AnyRef = {
+      val clazz =
+        classLoader match {
+          case Some(cl) =>
+            Class.forName(clazzName, true, cl)
+          case None =>
+            Class.forName(clazzName)
+        }
+      JsBean.fromJSON(Js(new String(json)), Some(clazz)).asInstanceOf[AnyRef]
+    }
   }
 
   object SJSON extends SJSON {
-    val classLoader = None
+    val classLoader = Some(this.getClass.getClassLoader)
   }
 }
   

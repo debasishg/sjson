@@ -359,4 +359,41 @@ class SerializerSpec extends Spec with ShouldMatchers {
       o(JsString("debasish")) should equal(JsArray(List(JsNumber(1),JsNumber(2),JsNumber(3),JsNumber(4))))
     }
   }
+
+  object MySJSON extends Serializer.SJSON {
+    val classLoader = Some(this.getClass.getClassLoader)
+  }
+
+  describe("Serialization with classloader API") {
+    it("should serialize properly and de-serialize") {
+      val s = MySJSON.out("debasish")
+      MySJSON.in(s, "java.lang.String") should equal("debasish")
+
+      val shop = Shop("Shoppers Stop", "Gold", 120)
+      val sh = MySJSON.out(shop)
+      val insh = MySJSON.in(sh, "sjson.json.TestBeans$Shop").asInstanceOf[Shop]
+      insh.store should equal(shop.store)
+      insh.item should equal(shop.item)
+      insh.price should equal(shop.price)
+    }
+  }
+
+  describe("Bean serialization with class loading") {
+    val addr = Address("Market Street", "San Francisco", "956871")
+    it("should give an instance of Address") {
+      MySJSON.in(
+        MySJSON.out(addr), "sjson.json.TestBeans$Address") should equal(addr)
+    }
+  }
+
+  describe("Bean with optional bean member serialization with class loading") {
+    it("should serialize with Option defined") {
+      val c = new ContactWithOptionalAddr("Debasish Ghosh",
+        Some(Map("primary" -> new Address("10 Market Street", "San Francisco, CA", "94111"),
+            "secondary" -> new Address("3300 Tamarac Drive", "Denver, CO", "98301"))))
+      c should equal(
+        MySJSON.in(MySJSON.out(c), "sjson.json.TestBeans$ContactWithOptionalAddr"))
+    }
+  }
+
 }

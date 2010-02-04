@@ -215,5 +215,11 @@ object TestBeans {
   case class SecurityTrade(no: String, tdate: Date, sdate: Date, amount: BigDecimal) {
     private def this() = this(null, null, null, null)
   }
+
+  @BeanInfo
+  case class MyMessage(val id: String, val value: Tuple2[String, Int]) {
+    private def this() = this(null, null)
+  }
+
 }
 

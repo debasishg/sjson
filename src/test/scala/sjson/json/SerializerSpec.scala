@@ -360,6 +360,12 @@ class SerializerSpec extends Spec with ShouldMatchers {
       val JsObject(o) = e
       o(JsString("debasish")) should equal(JsArray(List(JsNumber(1),JsNumber(2),JsNumber(3),JsNumber(4))))
     }
+    it("should serialize an object with Tuple2") {
+      val message = MyMessage("id", ("hello", 34))
+      val json = new String(serializer.out(message))
+      json should equal("""{"id":"id","value":{"hello":34}}""")
+    }
+
   }
 
   object MySJSON extends Serializer.SJSON with DefaultConstructor {
@@ -377,6 +383,11 @@ class SerializerSpec extends Spec with ShouldMatchers {
       insh.store should equal(shop.store)
       insh.item should equal(shop.item)
       insh.price should equal(shop.price)
+    }
+    it("should serialize an object with Tuple2") {
+      val message = MyMessage("id", ("hello", 34))
+      val json = new String(MySJSON.out(message))
+      json should equal("""{"id":"id","value":{"hello":34}}""")
     }
   }
 

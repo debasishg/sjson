@@ -48,7 +48,7 @@ trait JsBean {
           if (a.getAnnotation(classOf[JSONProperty]) != null)
             b + (a.getAnnotation(classOf[JSONProperty]).value -> a.getName)
           else b)
-    
+
       val info = m.map {e =>
         e._2.self match {
         
@@ -110,14 +110,16 @@ trait JsBean {
             ann match {
               case null => 
                 (Some(context.get.getDeclaredField(e._1.self)), 
-                 e._2.self.asInstanceOf[List[_]].map(y => y.asInstanceOf[JsValue].self))
+                  x.asInstanceOf[List[_]].map(y => y.asInstanceOf[JsValue].self))
+
               case _ =>
                 (Some(context.get.getDeclaredField(e._1.self)), 
-                 e._2.self.asInstanceOf[List[_]].map(y => fromJSON(y.asInstanceOf[JsValue], Some(ann.value))))
+                  x.asInstanceOf[List[_]].map(y => fromJSON(y.asInstanceOf[JsValue], Some(ann.value))))
             }
           }
         
-          case _ => (Some(context.get.getDeclaredField(e._1.self)), e._2.self)
+          case x => 
+            (Some(context.get.getDeclaredField(e._1.self)), e._2.self)
         }
       }
 
@@ -128,10 +130,25 @@ trait JsBean {
             case (Some(y), z) => {
               y.setAccessible(true)
 
-              // json parser makes BigDecimal out of all numbers
+              // type conversion hacks
               val num = 
+                // json parser makes BigDecimal out of all numbers
                 if (z.isInstanceOf[BigDecimal]) mkNum(z.asInstanceOf[BigDecimal], y.getType) 
+
+                // if it's date, need to make one from JSON string
                 else if (y.getType.isAssignableFrom(classOf[java.util.Date])) mkDate(z.asInstanceOf[String])
+
+                // as ugly as it gets
+                // arrays in Scala are boxed sometimes: need to unbox before set
+                // kludge to take care of the fact that both array and List have the same JSON representation
+                // here the field is an Array but the value is a List
+                else if (y.getType.isArray) {
+                  z.asInstanceOf[List[_]]
+                   .toArray.asInstanceOf[scala.runtime.BoxedAnyArray]
+                   .unbox(y.getType.getComponentType)
+                }
+                  
+                // special treatment for JSON "nulls"
                 else if (z.isInstanceOf[String] && (z == "null")) null
                 else z
 
@@ -235,6 +252,9 @@ trait DefaultConstructor {
 
   def newInstance[T](clazz: Class[T])(op: T => Unit): T = {
     // need to access private default constructor .. hack!
+    // println("clazz = " + clazz)
+    // clazz.getDeclaredConstructors.foreach(println)
+    // println("after")
     val constructor =
       clazz.getDeclaredConstructors.filter(_.getParameterTypes.length == 0).first
 

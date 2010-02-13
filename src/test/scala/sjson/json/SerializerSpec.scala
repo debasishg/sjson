@@ -427,4 +427,26 @@ class SerializerSpec extends Spec with ShouldMatchers {
     }
   }
 
+  describe("Testing Array serialization") {
+    it ("should do proper Array serialization") {
+      val a = ArrayTest(100, "debasish", Array("a", "b", "c"))
+      val out = serializer.out(a)
+      new String(out) should equal("""{"addresses":["a","b","c"],"id":100,"name":"debasish"}""")
+      val in = serializer.in[ArrayTest](out)
+      in.asInstanceOf[ArrayTest].addresses should equal(Array("a", "b", "c"))
+    }
+  }
+
+  describe("Testing object array serialization") {
+    val a1 = Address("Market Street", "San Francisco", "956871")
+    val a2 = Address("Monroe Street", "Denver", "80231")
+    val a3 = Address("North Street", "Atlanta", "987671")
+
+    it("should do proper serialization of object arrays") {
+      val a = ObjectArrayTest(100, "debasish", Array(a1, a2, a3))
+      val out = serializer.out(a)
+      val in = serializer.in[ObjectArrayTest](out)
+      in.asInstanceOf[ObjectArrayTest].addresses should equal(Array(a1, a2, a3))
+    }
+  }
 }

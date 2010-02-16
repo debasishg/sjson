@@ -268,6 +268,8 @@ trait DefaultConstructor {
   }
 }
 
+object JsBean extends JsBean with DefaultConstructor
+
 /**
  * Use this trait with JsBean to instantiate classes using Objenesis. 
  *

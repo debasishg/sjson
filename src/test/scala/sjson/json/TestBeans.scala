@@ -217,7 +217,9 @@ object TestBeans {
   }
 
   @BeanInfo
-  case class MyMessage(val id: String, val value: Tuple2[String, Int]) {
+  case class MyMessage(
+    val id: String, 
+    val value: Tuple2[String, Int]) {
     private def this() = this(null, null)
   }
 
@@ -228,7 +230,7 @@ object TestBeans {
     @JSONTypeHint(classOf[String])
     var addresses: Array[String]) {
     def this() = this(0, null, null)
-    }
+  }
 
   @BeanInfo
   case class ObjectArrayTest(
@@ -237,6 +239,6 @@ object TestBeans {
     @JSONTypeHint(classOf[Address])
     var addresses: Array[Address]) {
     def this() = this(0, null, null)
-    }
+  }
 }
 

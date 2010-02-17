@@ -362,10 +362,11 @@ class SerializerSpec extends Spec with ShouldMatchers {
     }
     it("should serialize an object with Tuple2") {
       val message = MyMessage("id", ("hello", 34))
-      val json = new String(serializer.out(message))
-      json should equal("""{"id":"id","value":{"hello":34}}""")
+      val json = serializer.out(message)
+      new String(json) should equal("""{"id":"id","value":{"hello":34}}""")
+      val f = serializer.in[MyMessage](json).asInstanceOf[MyMessage]
+      f should equal(message)
     }
-
   }
 
   object MySJSON extends Serializer.SJSON with DefaultConstructor {

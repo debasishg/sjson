@@ -203,7 +203,7 @@ trait JsBean {
       }
       else if (obj.isInstanceOf[Tuple2[_ <: AnyRef, _ <: AnyRef]]) {
         val (e1, e2) = obj.asInstanceOf[Tuple2[_ <: AnyRef, _ <: AnyRef]]
-        "{" + toJSON(e1.toString) + ":" + toJSON(e2) + "}"
+        "{" + toJSON(e1) + ":" + toJSON(e2) + "}"
       }
     
       // handle beans

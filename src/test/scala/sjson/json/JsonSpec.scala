@@ -415,7 +415,7 @@ class JsonSpec extends Spec with ShouldMatchers {
       jsBean.toJSON(("dg", 100)) should equal("""{"dg":100}""")
     }
     it("should convert tuple2[int, Int] properly") {
-      jsBean.toJSON((100, 1000)) should equal("""{"100":1000}""")
+      jsBean.toJSON((100, 1000)) should equal("""{100:1000}""")
     }
     it("should convert tuple2[string, bean] properly") {
       val e = 

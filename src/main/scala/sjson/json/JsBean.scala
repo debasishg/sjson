@@ -172,79 +172,63 @@ trait JsBean {
   /**
    * Generate a JSON representation of the object <tt>obj</tt> and return the string.
    */
-  def toJSON[T <: AnyRef](obj: T)(implicit ignoreProps: List[String]): String = {
-    if (obj == null) quote("null")
-    else {
-    
-      val clazz = obj.niceClass
-    
-      // handle primitives
-      if (clazz.isPrimitive || 
-        classOf[Number].isAssignableFrom(clazz) || 
-        clazz.equals(classOf[Boolean]) ||
-        clazz.equals(classOf[java.lang.Boolean])) obj.toString
-    
-      // handle string
-      else if (obj.isInstanceOf[String]) quote(obj.asInstanceOf[String])
+  def toJSON[T <: AnyRef](obj: T)(implicit ignoreProps: List[String]): String = obj match {
+    case null => quote("null")
+    case (n: Number) => obj.toString
+    case (b: java.lang.Boolean) => obj.toString
+    case (s: String) => quote(obj.asInstanceOf[String])
+    case (d: java.util.Date) => 
+      quote(obj.asInstanceOf[java.util.Date].getTime.toString)
 
-      // handle date
-      else if (obj.isInstanceOf[java.util.Date]) quote(obj.asInstanceOf[java.util.Date].getTime.toString)
-      
-      // handle sequences & maps
-      else if (obj.isInstanceOf[Seq[_ <: AnyRef]]) {
-        obj.asInstanceOf[Seq[_ <: AnyRef]]
-           .map(e => toJSON(e))
-           .mkString("[", ",", "]")
-      }
-      else if (obj.isInstanceOf[Map[_ <: AnyRef, _ <: AnyRef]]) {
-        obj.asInstanceOf[Map[_ <: AnyRef, _ <: AnyRef]]
-           .map(e => toJSON(e._1.toString) + ":" + toJSON(e._2))
-           .mkString("{", ",", "}")
-      }
-      else if (obj.isInstanceOf[Tuple2[_ <: AnyRef, _ <: AnyRef]]) {
-        val (e1, e2) = obj.asInstanceOf[Tuple2[_ <: AnyRef, _ <: AnyRef]]
-        "{" + toJSON(e1) + ":" + toJSON(e2) + "}"
-      }
-    
+    case (s: Seq[AnyRef]) =>
+      s.map(e => toJSON(e)).mkString("[", ",", "]")
+
+    case (m: Map[AnyRef, AnyRef]) =>
+      m.map(e => toJSON(e._1.toString) + ":" + toJSON(e._2))
+       .mkString("{", ",", "}")
+
+    case (t: Tuple2[AnyRef, AnyRef]) =>
+        "{" + toJSON(t._1) + ":" + toJSON(t._2) + "}"
+
+    case _ => {
       // handle beans
-      else {
-        val pds = 
-          Introspector.getBeanInfo(clazz)
-            .getPropertyDescriptors
-            .filter(e => ignoreProps.exists(_.equals(e.getName)) == false)
+      val clazz = obj.niceClass
+      val pds = 
+        Introspector.getBeanInfo(clazz)
+          .getPropertyDescriptors
+          .filter(e => ignoreProps.exists(_.equals(e.getName)) == false)
 
-        if (pds.isEmpty) {
-          throw new UnsupportedOperationException("Class " + clazz + " not supported for conversion")
-        }
-        
-        val props = 
-          for {
-            pd <- pds
-            val rm = pd.getReadMethod
-            val rv = rm.invoke(obj, null)
-            
-            // Option[] needs to be treated differently
-            val isOption = rv.isInstanceOf[Option[_]]
-            
-            // Use the value if the option is defined, otherwise ignore
-            val rval =
-              if (isOption) {
-                val o = rv.asInstanceOf[Option[_]]
-                if (o.isDefined) o.get.asInstanceOf[AnyRef] else null
-              }
-              else rv
-            
-            val ann = rm.getAnnotation(classOf[JSONProperty])
-            val v = 
-              if (ann == null || ann.value == null || ann.value.length == 0) pd.getName 
-              else ann.value
-            val ignore = 
-              if (ann != null) ann.ignore || (rv == null && ann.ignoreIfNull) else false
-            if ((ignore == false) && (!isOption || (isOption && rval != null)))
-          } yield toJSON(v) + ":" + toJSON(rval)
-      
-        props.mkString("{", ",", "}")
+      if (pds.isEmpty) {
+        throw new UnsupportedOperationException("Class " + clazz + " not supported for conversion")
       }
+        
+      val props = 
+        for {
+          pd <- pds
+          val rm = pd.getReadMethod
+          val rv = rm.invoke(obj, null)
+            
+          // Option[] needs to be treated differently
+          val isOption = rv.isInstanceOf[Option[_]]
+            
+          // Use the value if the option is defined, otherwise ignore
+          val rval =
+            if (isOption) {
+              val o = rv.asInstanceOf[Option[_]]
+              if (o.isDefined) o.get.asInstanceOf[AnyRef] else null
+            }
+            else rv
+            
+          val ann = rm.getAnnotation(classOf[JSONProperty])
+          val v = 
+            if (ann == null || ann.value == null || ann.value.length == 0) pd.getName 
+            else ann.value
+          val ignore = 
+            if (ann != null) ann.ignore || (rv == null && ann.ignoreIfNull) else false
+          if ((ignore == false) && (!isOption || (isOption && rval != null)))
+        } yield toJSON(v) + ":" + toJSON(rval)
+      
+      props.mkString("{", ",", "}")
     }
   }
 

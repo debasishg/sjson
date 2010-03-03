@@ -72,9 +72,10 @@ trait JsBean {
            */
           case x: Map[_, _] => {
             val cl = lookupType(context.get, e._1.self)
+            val field = context.get.getDeclaredField(e._1.self)
             val inner = 
               if (cl.isAssignableFrom(classOf[Option[_]])) {
-                val an = context.get.getDeclaredField(e._1.self).getAnnotation(classOf[OptionTypeHint])
+                val an = field.getAnnotation(classOf[OptionTypeHint])
                 an match {
                   case null =>
                     throw new IllegalArgumentException("cannot get type information")
@@ -86,41 +87,39 @@ trait JsBean {
             // data member is a Map
             if (inner.isAssignableFrom(classOf[Map[_, _]])) {
               // the value of the Map may have an annotated type
-              val ann = context.get.getDeclaredField(e._1.self).getAnnotation(classOf[JSONTypeHint])
-              (Some(context.get.getDeclaredField(e._1.self)), 
+              val ann = field.getAnnotation(classOf[JSONTypeHint])
+              (Some(field), 
                     Map() ++ 
                       (ann match {
-                        case null => {
-                          x.asInstanceOf[Map[_, _]]
-                           .map(y => (y._1.asInstanceOf[JsValue].self, y._2.asInstanceOf[JsValue].self))
-                          }
+                        case null =>
+                          x.map {case (y1: JsValue, y2: JsValue) => (y1.self, y2.self)}
                         case _ =>
                           x.asInstanceOf[Map[_, _]]
-                           .map(y => (y._1.asInstanceOf[JsValue].self, fromJSON(y._2.asInstanceOf[JsValue], Some(ann.value))))
+                          x.map {case (y1: JsValue, y2: JsValue) => (y1.self, fromJSON(y2, Some(ann.value)))}
                       }))
                     
             } else {
               if (inner.isAssignableFrom(classOf[Tuple2[_, _]])) {
                 // fixme: ignoring annotations and generic types for the time being
-                val tup = x.asInstanceOf[Map[_, _]].toList.first.asInstanceOf[Tuple2[_, _]]
-                (Some(context.get.getDeclaredField(e._1.self)), 
-                  (tup._1.asInstanceOf[JsValue].self, tup._2.asInstanceOf[JsValue].self))
+                val (t1: JsValue, t2: JsValue) = x.toList.first
+                (Some(field), (t1.self, t2.self))
               }
               else
                 // data member is an object which comes as Map in JSON
-                (Some(context.get.getDeclaredField(e._1.self)), fromJSON(e._2.asInstanceOf[JsValue], Some(inner)))
+                (Some(field), fromJSON(e._2.asInstanceOf[JsValue], Some(inner)))
             }
           }
           
           case x: List[_] => {
-            val ann = context.get.getDeclaredField(e._1.self).getAnnotation(classOf[JSONTypeHint])
+            val field = context.get.getDeclaredField(e._1.self)
+            val ann = field.getAnnotation(classOf[JSONTypeHint])
             ann match {
               case null => 
-                (Some(context.get.getDeclaredField(e._1.self)), 
+                (Some(field), 
                   x.asInstanceOf[List[_]].map(y => y.asInstanceOf[JsValue].self))
 
               case _ =>
-                (Some(context.get.getDeclaredField(e._1.self)), 
+                (Some(field), 
                   x.asInstanceOf[List[_]].map(y => fromJSON(y.asInstanceOf[JsValue], Some(ann.value))))
             }
           }
@@ -184,7 +183,7 @@ trait JsBean {
       s.map(e => toJSON(e)).mkString("[", ",", "]")
 
     case (m: Map[AnyRef, AnyRef]) =>
-      m.map(e => toJSON(e._1.toString) + ":" + toJSON(e._2))
+      m.map(e => toJSON(e._1) + ":" + toJSON(e._2))
        .mkString("{", ",", "}")
 
     case (t: Tuple2[AnyRef, AnyRef]) =>
@@ -193,6 +192,10 @@ trait JsBean {
     case _ => {
       // handle beans
       val clazz = obj.niceClass
+
+      // just an observation:
+      // if the class is not at the top most level, then annotating the class
+      // with @BeanInfo does not work. Need to annotate every property with @BeanProperty
       val pds = 
         Introspector.getBeanInfo(clazz)
           .getPropertyDescriptors
@@ -209,15 +212,11 @@ trait JsBean {
           val rv = rm.invoke(obj, null)
             
           // Option[] needs to be treated differently
-          val isOption = rv.isInstanceOf[Option[_]]
-            
-          // Use the value if the option is defined, otherwise ignore
-          val rval =
-            if (isOption) {
-              val o = rv.asInstanceOf[Option[_]]
-              if (o.isDefined) o.get.asInstanceOf[AnyRef] else null
-            }
-            else rv
+          val (rval, isOption) = rv match {
+            case (o: Option[_]) =>
+              if (o.isDefined) (o.get.asInstanceOf[AnyRef], true) else (null, true)
+            case x => (x, false)
+          }
             
           val ann = rm.getAnnotation(classOf[JSONProperty])
           val v = 
@@ -225,6 +224,7 @@ trait JsBean {
             else ann.value
           val ignore = 
             if (ann != null) ann.ignore || (rv == null && ann.ignoreIfNull) else false
+
           if ((ignore == false) && (!isOption || (isOption && rval != null)))
         } yield toJSON(v) + ":" + toJSON(rval)
       

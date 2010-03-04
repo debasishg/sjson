@@ -450,5 +450,18 @@ class JsonSpec extends Spec with ShouldMatchers {
       obj.name should equal("Uncle Sam Shop")
     }
   }
+
+  describe("Objects with tuple2 having embedded objects") {
+    it("should serialize the embedded oject too") {
+      val m = MyTuple2Message("debasish", ("message-1", Shop("mum shop", "refrigerator", 1000)))
+      val json = jsBean.toJSON(m)
+      json should equal("""{"id":"debasish","value":{"message-1":{"item":"refrigerator","price":1000,"store":"mum shop"}}}""")
+      val obj = jsBean.fromJSON(Js(json), Some(classOf[MyTuple2Message]))
+      obj.id should equal("debasish")
+      obj.value._1 should equal("message-1")
+      obj.value._2.store should equal("mum shop")
+      obj.value._2.item should equal("refrigerator")
+    }
+  }
 }
 

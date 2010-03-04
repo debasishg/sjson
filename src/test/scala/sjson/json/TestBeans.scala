@@ -249,5 +249,13 @@ object TestBeans {
     country: String) {
     private def this() = this(null, null, null)
   }
+
+  @BeanInfo
+  case class MyTuple2Message(
+    val id: String, 
+    @JSONTypeHint(classOf[Shop])
+    val value: Tuple2[String, Shop]) {
+    private def this() = this(null, null)
+  }
 }
 

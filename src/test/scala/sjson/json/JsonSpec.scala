@@ -328,7 +328,7 @@ class JsonSpec extends Spec with ShouldMatchers {
       jsBean.toJSON("Debasish Ghosh") should equal("\"Debasish Ghosh\"")
       jsBean.toJSON(new java.math.BigDecimal("120.98")) should equal("120.98")
       jsBean.toJSON(List(1, 2, 3)) should equal("[1,2,3]")
-      jsBean.toJSON(Map(1 -> "dg", 2 -> "mc")) should equal("""{1:"dg",2:"mc"}""")
+      jsBean.toJSON(Map("1" -> "dg", "2" -> "mc")) should equal("""{"1":"dg","2":"mc"}""")
     }
     it("should pass for empty Map") {
       jsBean.toJSON(Map()) should equal("{}")
@@ -409,7 +409,7 @@ class JsonSpec extends Spec with ShouldMatchers {
       jsBean.toJSON(("dg", List(1,2,3,4))) should equal("{\"dg\":[1,2,3,4]}")
     }
     it("should convert tuple2[string, Map] properly") {
-      jsBean.toJSON(("dg", Map(1->"a", 2->"b"))) should equal("""{"dg":{1:"a",2:"b"}}""")
+      jsBean.toJSON(("dg", Map("1"->"a", "2"->"b"))) should equal("""{"dg":{"1":"a","2":"b"}}""")
     }
     it("should convert tuple2[string, Int] properly") {
       jsBean.toJSON(("dg", 100)) should equal("""{"dg":100}""")
@@ -436,6 +436,18 @@ class JsonSpec extends Spec with ShouldMatchers {
         case e: Exception =>
           e.isInstanceOf[UnsupportedOperationException] should equal(true)
       }
+    }
+  }
+
+  describe("Objects with embedded maps") {
+    it("should serialize properly") {
+      val m = Market("Uncle Sam Shop",
+        Map(1 -> Shop("st-1", "it-1", 100.00), 2 -> Shop("st-2", "it-2", 200)),
+        "USA")
+      val json = jsBean.toJSON(m)
+      json should equal("""{"country":"USA","name":"Uncle Sam Shop","shops":{"1":{"item":"it-1","price":100.0,"store":"st-1"},"2":{"item":"it-2","price":200,"store":"st-2"}}}""")
+      val obj = jsBean.fromJSON(Js(json), Some(classOf[Market]))
+      obj.name should equal("Uncle Sam Shop")
     }
   }
 }

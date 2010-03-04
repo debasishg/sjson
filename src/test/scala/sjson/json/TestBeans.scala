@@ -240,5 +240,14 @@ object TestBeans {
     var addresses: Array[Address]) {
     def this() = this(0, null, null)
   }
+
+  @BeanInfo
+  case class Market(
+    name: String, 
+    @JSONTypeHint(classOf[Shop])
+    shops: Map[Int, Shop], 
+    country: String) {
+    private def this() = this(null, null, null)
+  }
 }
 

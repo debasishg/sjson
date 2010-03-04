@@ -24,6 +24,55 @@ trait JsBean {
   import dispatch.json._
   import dispatch.json.Js._
   import Util._
+
+  private def getProps[T](clazz: Class[T]) = {
+    val fields = clazz.getDeclaredFields
+    Map() ++
+    fields.map {field =>
+      val a = field.getAnnotation(classOf[JSONProperty])
+      a match {
+        case null => (field.getName, field.getName)
+        case x => (a.value, field.getName)
+      }
+    }
+  }
+
+  private def getInnerTypeForOption[T](clazz: Class[T], field: Field) = {
+    if (clazz.isAssignableFrom(classOf[Option[_]])) {
+      // get the inner type from the OptionTypeHint annotation
+      val an = field.getAnnotation(classOf[OptionTypeHint])
+      an match {
+        case null =>
+          throw new IllegalArgumentException("cannot get type information")
+        case _ =>
+          an.value
+      }
+    } else { clazz }
+  }
+
+  private def processMap(m: Map[_,_], field: Field) = {
+    val ann = field.getAnnotation(classOf[JSONTypeHint])
+    (Some(field), 
+      Map() ++ 
+        (ann match {
+          case null =>
+            m.map {case (y1: JsValue, y2: JsValue) => (y1.self, y2.self)}
+          case _ =>
+            m.map {case (y1: JsValue, y2: JsValue) => (y1.self, fromJSON(y2, Some(ann.value)))}
+         }))
+  }
+
+  private def processTuple2(t: Tuple2[_,_], field: Field) = {
+    val (t1: JsValue, t2: JsValue) = t
+    val ann = field.getAnnotation(classOf[JSONTypeHint])
+    (Some(field), 
+      (ann match {
+        case null =>
+          (t1.self, t2.self)
+        case _ =>
+          (t1.self, fromJSON(t2, Some(ann.value)))
+       }))
+  }
   
   /**
    * Convert the <tt>JsValue</tt> to an instance of the class <tt>context</tt>. Returns an instance of
@@ -32,100 +81,68 @@ trait JsBean {
   def fromJSON[T](js: JsValue, context: Option[Class[T]]): T = { 
     if (!js.isInstanceOf[JsObject] || !context.isDefined) js.self.asInstanceOf[T]
     else {
-      val m = js.self.asInstanceOf[Map[JsString, JsValue]]
-      val fields = context.get.getDeclaredFields
+      // bean as a map from json
+      val bean = js.self.asInstanceOf[Map[JsString, JsValue]]
     
-      // property names for the bean
-      val props = fields map(_.getName)
+      // properties of the bean class
+      // as a map to take care of mappings for JSONProperty annotation
+      val props = getProps(context.get)
 
-      /**
-       * for some bean properties, json property may have different names by virtue of
-       * being annotated with <tt>JSONProperty</tt>. Keep a map of the two names for
-       * later substitution.
-       */
-      val annotatedProps =
-        (Map[String, String]() /: fields)((b, a) => 
-          if (a.getAnnotation(classOf[JSONProperty]) != null)
-            b + (a.getAnnotation(classOf[JSONProperty]).value -> a.getName)
-          else b)
-
-      val info = m.map {e =>
-        e._2.self match {
+      // iterate on name/value pairs of the bean
+      val info = bean map {case (JsString(name), value) =>
+        value.self match {
+        
+          // need to ignore properties in json that are not in props
+          case x if (props.get(name).isDefined == false) =>
+            (None, null)
         
           /**
-           * ignore additional properties in JSON that don't match bean property and
-           * do not have <tt>JSONProperty</tt> annotation. If a JSON property name is
-           * not found directly in the bean, but exists as the target value of a 
-           * <tt>JSONProperty</tt> annotation in the bean, then it needs to be considered.
-           */
-          case x if (props.exists(y => y.equals(e._1.self)) == false) => 
-            annotatedProps get(e._1.self) match {
-              case Some(y) => (Some(context.get.getDeclaredField(y)), 
-                               fromJSON(e._2.asInstanceOf[JsValue], Some(context.get.getDeclaredField(y).getType)))
-              case _ => (None, null)
-            }
-        
-          /**
-           * Can be a Map in either of the following cases:
-           * 1. the data members is really a scala.Collection.Map 
-           * 2. the data member can be an object which comes in JSON as a Map
+           * Can be a Map in any of the following cases:
+           * 1. the data member is really a scala.Collection.Map 
+           * 2. tha data member is a Tuple2 which also we serialize as a Map
+           * 3. the data member can be an object which comes in JSON as a Map
            */
           case x: Map[_, _] => {
-            val cl = lookupType(context.get, e._1.self)
-            val field = context.get.getDeclaredField(e._1.self)
-            val inner = 
-              if (cl.isAssignableFrom(classOf[Option[_]])) {
-                val an = field.getAnnotation(classOf[OptionTypeHint])
-                an match {
-                  case null =>
-                    throw new IllegalArgumentException("cannot get type information")
-                  case _ =>
-                    an.value
-                }
-              } else { cl }
+            // type of the property from the bean class
+            val cl = lookupType(context.get, props.get(name).get)
 
-            // data member is a Map
-            if (inner.isAssignableFrom(classOf[Map[_, _]])) {
-              // the value of the Map may have an annotated type
-              val ann = field.getAnnotation(classOf[JSONTypeHint])
-              (Some(field), 
-                    Map() ++ 
-                      (ann match {
-                        case null =>
-                          x.map {case (y1: JsValue, y2: JsValue) => (y1.self, y2.self)}
-                        case _ =>
-                          x.asInstanceOf[Map[_, _]]
-                          x.map {case (y1: JsValue, y2: JsValue) => (y1.self, fromJSON(y2, Some(ann.value)))}
-                      }))
-                    
-            } else {
-              if (inner.isAssignableFrom(classOf[Tuple2[_, _]])) {
-                // fixme: ignoring annotations and generic types for the time being
-                val (t1: JsValue, t2: JsValue) = x.toList.first
-                (Some(field), (t1.self, t2.self))
-              }
-              else
-                // data member is an object which comes as Map in JSON
-                (Some(field), fromJSON(e._2.asInstanceOf[JsValue], Some(inner)))
+            // field
+            val field = context.get.getDeclaredField(props.get(name).get)
+
+            // can be an Option[_]
+            val inner = getInnerTypeForOption(cl, field)
+
+            inner match {
+              // case 1
+              case m if (m isAssignableFrom(classOf[Map[_,_]])) =>
+                processMap(x, field)
+
+              // case 2
+              case t if (t isAssignableFrom(classOf[Tuple2[_,_]])) =>
+                processTuple2(x.toList.first, field)
+
+              // case 3
+              case _ =>
+                (Some(field), fromJSON(value, Some(inner)))
             }
           }
           
           case x: List[_] => {
-            val field = context.get.getDeclaredField(e._1.self)
+            val field = context.get.getDeclaredField(props.get(name).get)
             val ann = field.getAnnotation(classOf[JSONTypeHint])
             ann match {
               case null => 
                 (Some(field), 
-                  x.asInstanceOf[List[_]].map(y => y.asInstanceOf[JsValue].self))
+                  x.map(y => y.asInstanceOf[JsValue].self))
 
               case _ =>
                 (Some(field), 
-                  x.asInstanceOf[List[_]].map(y => fromJSON(y.asInstanceOf[JsValue], Some(ann.value))))
+                  x.map(y => fromJSON(y.asInstanceOf[JsValue], Some(ann.value))))
             }
           }
         
           case x => 
-            (Some(context.get.getDeclaredField(e._1.self)), e._2.self)
+            (Some(context.get.getDeclaredField(props.get(name).get)), value.self)
         }
       }
 
@@ -183,7 +200,7 @@ trait JsBean {
       s.map(e => toJSON(e)).mkString("[", ",", "]")
 
     case (m: Map[AnyRef, AnyRef]) =>
-      m.map(e => toJSON(e._1) + ":" + toJSON(e._2))
+      m.map(e => toJSON(e._1.toString) + ":" + toJSON(e._2))
        .mkString("{", ",", "}")
 
     case (t: Tuple2[AnyRef, AnyRef]) =>

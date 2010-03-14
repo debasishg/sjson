@@ -32,7 +32,9 @@ trait JsBean {
       val a = field.getAnnotation(classOf[JSONProperty])
       a match {
         case null => (field.getName, field.getName)
-        case x => (a.value, field.getName)
+        case x if x.value.length > 0 => 
+          (x.value, field.getName)
+        case x => (field.getName, field.getName)
       }
     }
   }

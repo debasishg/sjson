@@ -1,5 +1,6 @@
 package sjson.json
 
+import java.util.TimeZone
 import org.scalatest.Spec
 import org.scalatest.matchers.ShouldMatchers
 import org.scalatest.junit.JUnitRunner
@@ -315,6 +316,25 @@ class SerializerSpec extends Spec with ShouldMatchers {
     it("should serialize properly") {
       val b = Bar("debasish", 12, 100l, 123.65f, true)
       serializer.in[Bar](serializer.out(b)).asInstanceOf[Bar] should equal(b)
+    }
+  }
+
+  describe("Serialization of timezones") {
+    it("should serialize properly") {
+      val t = TimeZoneBean( TimeZone.getTimeZone( "UTC"))
+      serializer.in[TimeZoneBean](serializer.out(t)).asInstanceOf[TimeZoneBean] should equal(t)
+    }
+  }
+
+  describe("Serialization of enumerations") {
+    it("should serialize properly") {
+      // val b = EnumTest( TestEnum.One)
+      import WeekDay._
+      import Shape._
+      val b = EnumTest(Mon, Circle, List(Mon, Tue, Wed))
+      val o = serializer.in[EnumTest](serializer.out(b)).asInstanceOf[EnumTest] 
+      b.start should equal(o.start)
+      b.shape should equal(o.shape)
     }
   }
 

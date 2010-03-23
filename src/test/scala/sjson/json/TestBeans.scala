@@ -257,5 +257,53 @@ object TestBeans {
     val value: Tuple2[String, Shop]) {
     private def this() = this(null, null)
   }
+
+  @BeanInfo
+  case class View(
+    @JSONProperty {val ignoreIfNull = true}
+    val map: String, 
+  
+    @JSONProperty {val ignoreIfNull = true}
+    val reduce: String) {
+  
+    private def this() = this(null, null)
+  
+    override def toString = 
+      "map: " + map + " reduce: " + reduce
+  }
+
+  @BeanInfo
+  case class EnumTest(
+    @EnumTypeHint("sjson.json.WeekDay") start: WeekDay.Value, 
+    @EnumTypeHint("sjson.json.Shape") shape: Shape.Value,
+    @JSONTypeHint(classOf[sjson.json.WeekDay.WeekDay])
+    @EnumTypeHint("sjson.json.WeekDay") 
+    work: List[WeekDay.Value]) {
+    private def this() = this(null, null, null)
+  }
+
+  import java.util.TimeZone
+
+  @BeanInfo
+  case class TimeZoneBean(
+    val value: TimeZone
+  ) {
+    private def this() = this(null)
+  }
 }
 
+object Shape extends Enumeration {
+  type Shape = Value
+  val Rectangle, Square, Circle, Pentagon, Rhombus = Value
+}
+
+object WeekDay extends Enumeration {
+  type WeekDay = Value
+  val Mon = Value("Monday")
+  val Tue = Value("Tuesday")
+  val Wed = Value("Wednesday")
+  val Thu = Value("Thursday")
+  val Fri = Value("Friday")
+  val Sat = Value("Saturday")
+  val Sun = Value("Sunday")
+}

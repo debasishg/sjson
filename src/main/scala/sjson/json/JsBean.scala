@@ -1,5 +1,6 @@
 package sjson.json
 
+import java.util.TimeZone
 import dispatch.json._
 
 trait JsBean {
@@ -160,8 +161,22 @@ trait JsBean {
                 // json parser makes BigDecimal out of all numbers
                 if (z.isInstanceOf[BigDecimal]) mkNum(z.asInstanceOf[BigDecimal], y.getType) 
 
+                // if it's timezone, need to make one from JSON string
+                else if (y.getType.isAssignableFrom(classOf[java.util.TimeZone])) TimeZone.getTimeZone(z.asInstanceOf[String])
+
                 // if it's date, need to make one from JSON string
                 else if (y.getType.isAssignableFrom(classOf[java.util.Date])) mkDate(z.asInstanceOf[String])
+
+                // process Enumerations
+                else if (y.getType.isAssignableFrom(classOf[Enumeration#Value])) {
+                  y.getAnnotation(classOf[EnumTypeHint]) match {
+                    case null => 
+                      throw new IllegalArgumentException("cannot get type information for enum " + z)
+                    case an =>
+                      val method = Class.forName(an.value).getMethod("valueOf", classOf[String])
+                      method.invoke(null, z.asInstanceOf[String]).asInstanceOf[Option[Enumeration#Value]].get
+                  }
+                }
 
                 // as ugly as it gets
                 // arrays in Scala are boxed sometimes: need to unbox before set
@@ -197,6 +212,11 @@ trait JsBean {
     case (s: String) => quote(obj.asInstanceOf[String])
     case (d: java.util.Date) => 
       quote(obj.asInstanceOf[java.util.Date].getTime.toString)
+
+    case (d: java.util.TimeZone) => quote(d.getID)
+
+    case (v: Enumeration#Value) => 
+      quote(v toString)
 
     case (s: Seq[AnyRef]) =>
       s.map(e => toJSON(e)).mkString("[", ",", "]")

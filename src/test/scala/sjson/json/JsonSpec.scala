@@ -463,5 +463,17 @@ class JsonSpec extends Spec with ShouldMatchers {
       obj.value._2.item should equal("refrigerator")
     }
   }
+
+  describe("enumerations") {
+    it("should enumerate Values into JSON list") {
+      import WeekDay._
+      import Shape._
+      val x = EnumTest(Mon, Circle, List(Mon, Tue, Wed))
+      val js = jsBean.toJSON(x)
+      val o = jsBean.fromJSON(Js(js), Some(classOf[EnumTest])).asInstanceOf[EnumTest]
+      o.start should equal(x.start)
+      o.shape should equal(x.shape)
+    }
+  }
 }
 

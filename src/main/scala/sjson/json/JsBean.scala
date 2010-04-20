@@ -21,13 +21,13 @@ trait JsBean {
   
   import java.beans._
   
-  import java.lang.reflect._
+  import java.lang.reflect.Field
   import dispatch.json._
   import dispatch.json.Js._
   import Util._
 
   private def getProps[T](clazz: Class[T]) = {
-    val fields = clazz.getDeclaredFields
+    val fields = clazz.getMethods
     Map() ++
     fields.map {field =>
       val a = field.getAnnotation(classOf[JSONProperty])
@@ -86,7 +86,7 @@ trait JsBean {
     else {
       // bean as a map from json
       val bean = js.self.asInstanceOf[Map[JsString, JsValue]]
-    
+
       // properties of the bean class
       // as a map to take care of mappings for JSONProperty annotation
       val props = getProps(context.get)
@@ -183,9 +183,10 @@ trait JsBean {
                 // kludge to take care of the fact that both array and List have the same JSON representation
                 // here the field is an Array but the value is a List
                 else if (y.getType.isArray) {
-                  z.asInstanceOf[List[_]]
-                   .toArray.asInstanceOf[scala.runtime.BoxedAnyArray]
-                   .unbox(y.getType.getComponentType)
+                  mkArray(z.asInstanceOf[List[_]], y.getType.getComponentType)
+                  // z.asInstanceOf[List[_]]
+                   // .toArray.asInstanceOf[scala.runtime.BoxedAnyArray]
+                   // .unbox(y.getType.getComponentType)
                 }
                   
                 // special treatment for JSON "nulls"
@@ -200,6 +201,17 @@ trait JsBean {
         }
       }
     }
+  }
+
+  private def mkArray(l: List[_], clz: Class[_]): Array[_] = {
+    import java.lang.reflect.{Array => JArray}
+    val a = JArray.newInstance(clz, l.size)
+    var i = 0
+    while (i < l.size) {
+      JArray.set(a, i, l(i))
+      i += 1
+    }
+    a.asInstanceOf[Array[_]]
   }
 
   /**
@@ -219,6 +231,9 @@ trait JsBean {
       quote(v toString)
 
     case (s: Seq[AnyRef]) =>
+      s.map(e => toJSON(e)).mkString("[", ",", "]")
+
+    case (s: Array[AnyRef]) =>
       s.map(e => toJSON(e)).mkString("[", ",", "]")
 
     case (m: Map[AnyRef, AnyRef]) =>
@@ -248,7 +263,7 @@ trait JsBean {
         for {
           pd <- pds
           val rm = pd.getReadMethod
-          val rv = rm.invoke(obj, null)
+          val rv = rm.invoke(obj)
             
           // Option[] needs to be treated differently
           val (rval, isOption) = rv match {

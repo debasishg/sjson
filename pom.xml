@@ -135,9 +135,10 @@
             <jvmArg>-Xmx1024m</jvmArg>
           </jvmArgs>
           <args>
-            <!--arg>-unchecked</arg>
             <arg>-deprecation</arg>
-            <arg>-Xno-varargs-conversion</arg-->
+	    <arg>-Xcheckinit</arg>
+	    <arg>-Xstrict-warnings</arg>
+            <arg>-Xwarninit</arg>
           </args>
           <scalaVersion>${scala.version}</scalaVersion>
         </configuration>

@@ -1,4 +1,5 @@
-package sjson.json
+package sjson
+package json
 
 /**
  * @author <a href="http://debasishg.blogspot.com">Debasish Ghosh</a>

@@ -1,4 +1,5 @@
-package sjson.json
+package sjson
+package json
 
 import java.util.TimeZone
 import dispatch.json._
@@ -122,7 +123,7 @@ trait JsBean {
 
               // case 2
               case t if (t isAssignableFrom(classOf[Tuple2[_,_]])) =>
-                processTuple2(x.toList.first, field)
+                processTuple2(x.toList.head, field)
 
               // case 3
               case _ =>
@@ -293,7 +294,7 @@ trait DefaultConstructor {
     // need to access private default constructor .. hack!
     // clazz.getDeclaredConstructors.foreach(println)
     val constructor =
-      clazz.getDeclaredConstructors.filter(_.getParameterTypes.length == 0).first
+      clazz.getDeclaredConstructors.filter(_.getParameterTypes.length == 0).head
 
      if (!Modifier.isPublic(constructor.getModifiers()) ||
       !Modifier.isPublic(constructor.getDeclaringClass().getModifiers()))

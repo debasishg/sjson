@@ -1,4 +1,5 @@
-package sjson.json
+package sjson
+package json
 
 import org.scalatest.Spec
 import org.scalatest.matchers.ShouldMatchers

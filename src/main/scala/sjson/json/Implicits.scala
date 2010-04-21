@@ -1,4 +1,5 @@
-package sjson.json
+package sjson
+package json
 
 object Implicits {
   implicit def ignoreProps = List[String]("class")

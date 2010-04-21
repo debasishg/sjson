@@ -1,4 +1,5 @@
-package sjson.json
+package sjson
+package json
 
 import scala.reflect._
 import scala.annotation.target._
@@ -35,7 +36,7 @@ object TestBeans {
   }
 
   @BeanInfo
-  case class InternationalAddress(st: String, ct: String, zp: String, cnt: String)
+  class InternationalAddress(st: String, ct: String, zp: String, cnt: String)
     extends Address(st, ct, zp) {
 
     override val street = st

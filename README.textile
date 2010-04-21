@@ -29,14 +29,16 @@ What you get back from is a JsValue, an abstraction of the JSON object model. Fo
 val a = serializer.in[AnyRef](serializer.out(addr))
 // use extractors
 val c = 'city ? str
-val c(_city) = a
-_city should equal("San Francisco")
+val c(ci) = a
+ci should equal("San Francisco")
+
 val s = 'street ? str
-val s(_street) = a
-_street should equal("Market Street")
+val s(st) = a
+st should equal("Market Street")
+
 val z = 'zip ? str
-val z(_zip) = a
-_zip should equal("956871")
+val z(zp) = a
+zp should equal("956871")
 </pre>
 
 h3. Serialization of Embedded Objects
@@ -47,9 +49,11 @@ SJSON supports serialization of Scala objects that have other embedded objects. 
 case class Contact(name: String,
                    @JSONTypeHint(classOf[Address])
                    addresses: Map[String, Address]) {
+
   override def toString = "name = " + name + " addresses = " +
     addresses.map(a => a._1 + ":" + a._2.toString).mkString(",")
 }
+
 @BeanInfo
 case class Address(street: String, city: String, zip: String) {
   override def toString = "address = " + street + "/" + city + "/" + zip
@@ -63,25 +67,34 @@ val a1 = Address("Market Street", "San Francisco", "956871")
 val a2 = Address("Monroe Street", "Denver", "80231")
 val a3 = Address("North Street", "Atlanta", "987671")
 val c = Contact("Bob", Map("residence" -> a1, "office" -> a2, "club" -> a3))
+
 val co = serializer.out(c)
+
 // with class specified
 c should equal(serializer.in[Contact](co))
+
 // no class specified
 val a = serializer.in[AnyRef](co)
+
 // extract name
 val n = 'name ? str
 val n(_name) = a
 "Bob" should equal(_name)
+
 // extract addresses
 val addrs = 'addresses ? obj
 val addrs(_addresses) = a
+
 // extract residence from addresses
 val res = 'residence ? obj
 val res(_raddr) = _addresses
+
 // make an Address bean out of _raddr
 val address = JsBean.fromJSON(_raddr, Some(classOf[Address]))
 a1 should equal(address)
+
 object r { def ># [T](f: JsF[T]) = f(a.asInstanceOf[JsValue]) }
+
 // still better: chain 'em up
 "Market Street" should equal(
   (r ># { ('addresses ? obj) andThen ('residence ? obj) andThen ('street ? str) }))
@@ -93,6 +106,7 @@ h3. Changing property names during serialization
 @BeanInfo
 case class Book(id: Number,
            title: String, @JSONProperty("ISBN") isbn: String) {
+
   override def toString = "id = " + id + " title = " + title + " isbn = " + isbn
 }
 </pre>
@@ -117,7 +131,8 @@ case class Journal(id: BigDecimal,
                     title: String,
                     author: String,
                     @JSONProperty {val ignore = true} issn: String) {
-override def toString =
+
+  override def toString =
     "Journal: " + id + "/" + title + "/" + author +
       (issn match {
           case null => ""
@@ -144,6 +159,7 @@ Consider the following Scala class:
 case class Contact(name: String,
                    @JSONTypeHint(classOf[Address])
                    addresses: Map[String, Address]) {
+
   override def toString = "name = " + name + " addresses = " +
     addresses.map(a => a._1 + ":" + a._2.toString).mkString(",")
 }
@@ -166,6 +182,7 @@ case class ContactWithOptionalAddr(name: String,
                               @JSONTypeHint(classOf[Address])
                               @OptionTypeHint(classOf[Map[_,_]])
                               addresses: Option[Map[String, Address]]) {
+
   override def toString = "name = " + name + " " +
     (addresses match {
       case None => ""

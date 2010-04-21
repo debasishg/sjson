@@ -24,7 +24,7 @@ or just as ..
 serializer.in(serializer.out(addr))
 </pre>
 
-What you get back from is a JsValue, an abstraction of the JSON object model. For details of JsValue implementation, refer to dispatch-json:http://databinder.net/dispatch/About that SJSON uses as the underlying JSON parser implementation. Once I have the JsValue model, I can use use extractors to get back individual attributes ..
+What you get back from is a JsValue, an abstraction of the JSON object model. For details of JsValue implementation, refer to "dispatch-json":http://databinder.net/dispatch/About that SJSON uses as the underlying JSON parser implementation. Once I have the JsValue model, I can use use extractors to get back individual attributes ..
 <pre>
 val a = serializer.in[AnyRef](serializer.out(addr))
 
@@ -267,9 +267,9 @@ val result = _m.map{ e =>
 // form a D
 println("result = " + D(result))
 </pre>
-The above snippet de-serializes correctly using extractors defined on JsValue. For more details on JsValue and the extractors, please refer to dispatch-json:http://databinder.net/dispatch/About.
+The above snippet de-serializes correctly using extractors defined on JsValue. For more details on JsValue and the extractors, please refer to "dispatch-json":http://databinder.net/dispatch/About.
 
 h3. Note:
 
-Serialization with SJSON is based on bean introspection. In the current version of Scala (2.8.0.Beta1 and 2.7.7) there is a bug where bean introspection does not work properly for classes enclosed within another class. Please ensure that the beans are the top level classes in your application. They can be within objects though. A ticket has been filed in the Scala Tracker and also fixed in the trunk. Here's the ticket:https://lampsvn.epfl.ch/trac/scala/ticket/3080.
+Serialization with SJSON is based on bean introspection. In the current version of Scala (2.8.0.Beta1 and 2.7.7) there is a bug where bean introspection does not work properly for classes enclosed within another class. Please ensure that the beans are the top level classes in your application. They can be within objects though. A ticket has been filed in the Scala Tracker and also fixed in the trunk. Here's the "ticket":https://lampsvn.epfl.ch/trac/scala/ticket/3080.
 

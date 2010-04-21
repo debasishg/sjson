@@ -179,14 +179,8 @@ trait JsBean {
                 }
 
                 // as ugly as it gets
-                // arrays in Scala are boxed sometimes: need to unbox before set
-                // kludge to take care of the fact that both array and List have the same JSON representation
-                // here the field is an Array but the value is a List
                 else if (y.getType.isArray) {
                   mkArray(z.asInstanceOf[List[_]], y.getType.getComponentType)
-                  // z.asInstanceOf[List[_]]
-                   // .toArray.asInstanceOf[scala.runtime.BoxedAnyArray]
-                   // .unbox(y.getType.getComponentType)
                 }
                   
                 // special treatment for JSON "nulls"

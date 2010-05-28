@@ -20,7 +20,7 @@ object TestBeans {
   
   @BeanInfo
   case class Contact(name: String, 
-                     @JSONTypeHint(classOf[Address])
+                     @(JSONTypeHint @field)(value = classOf[Address])
                      addresses: Map[String, Address]) {
   
     private def this() = this(null, null)
@@ -64,9 +64,9 @@ object TestBeans {
 
   @BeanInfo
   case class ContactWithOptionalAddr(name: String, 
-                                @JSONTypeHint(classOf[Address])
-                                @OptionTypeHint(classOf[Map[_,_]])
-                                addresses: Option[Map[String, Address]]) {
+    @(JSONTypeHint @field)(value = classOf[Address])
+    @(OptionTypeHint @field)(value = classOf[Map[_,_]])
+    addresses: Option[Map[String, Address]]) {
   
     private def this() = this(null, None)
   
@@ -81,7 +81,7 @@ object TestBeans {
   @BeanInfo  
   case class Person(lastName: String, 
                firstName: String,
-               @JSONTypeHint(classOf[Address])
+               @(JSONTypeHint @field)(value = classOf[Address])
                addresses: List[Address]) {
   
     def this() = this(null, null, Nil)
@@ -193,7 +193,7 @@ object TestBeans {
     val prevEmployer: String,
     
     @(JSONProperty @getter)(value = "Addresses")
-    @JSONTypeHint(classOf[Address])
+    @(JSONTypeHint @field)(value = classOf[Address])
     val addresses: List[Address],
     
     @(JSONProperty @getter)(value = "Salary")
@@ -229,7 +229,7 @@ object TestBeans {
   case class ArrayTest(
     id: Int,
     name: String,
-    @JSONTypeHint(classOf[String])
+    @(JSONTypeHint @field)(value = classOf[String])
     var addresses: Array[String]) {
     def this() = this(0, null, null)
   }
@@ -238,7 +238,7 @@ object TestBeans {
   case class ObjectArrayTest(
     id: Int,
     name: String,
-    @JSONTypeHint(classOf[Address])
+    @(JSONTypeHint @field)(value = classOf[Address])
     var addresses: Array[Address]) {
     def this() = this(0, null, null)
   }
@@ -246,7 +246,7 @@ object TestBeans {
   @BeanInfo
   case class Market(
     name: String, 
-    @JSONTypeHint(classOf[Shop])
+    @(JSONTypeHint @field)(value = classOf[Shop])
     shops: Map[Int, Shop], 
     country: String) {
     private def this() = this(null, null, null)
@@ -255,7 +255,7 @@ object TestBeans {
   @BeanInfo
   case class MyTuple2Message(
     val id: String, 
-    @JSONTypeHint(classOf[Shop])
+    @(JSONTypeHint @field)(value = classOf[Shop])
     val value: Tuple2[String, Shop]) {
     private def this() = this(null, null)
   }
@@ -276,10 +276,10 @@ object TestBeans {
 
   @BeanInfo
   case class EnumTest(
-    @EnumTypeHint("sjson.json.WeekDay") start: WeekDay.Value, 
-    @EnumTypeHint("sjson.json.Shape") shape: Shape.Value,
-    @JSONTypeHint(classOf[sjson.json.WeekDay.WeekDay])
-    @EnumTypeHint("sjson.json.WeekDay") 
+    @(EnumTypeHint @field)(value = "sjson.json.WeekDay") start: WeekDay.Value, 
+    @(EnumTypeHint @field)(value = "sjson.json.Shape") shape: Shape.Value,
+    @(JSONTypeHint @field)(value = classOf[sjson.json.WeekDay.WeekDay])
+    @(EnumTypeHint @field)(value = "sjson.json.WeekDay") 
     work: List[WeekDay.Value]) {
     private def this() = this(null, null, null)
   }

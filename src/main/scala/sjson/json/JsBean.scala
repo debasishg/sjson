@@ -185,7 +185,8 @@ trait JsBean {
                 }
                   
                 // special treatment for JSON "nulls"
-                else if (z.isInstanceOf[String] && (z == "null")) null
+                // else if (z.isInstanceOf[String] && (z == "null")) null
+                else if (z.isInstanceOf[String] && (z == null)) null
                 else z
 
               // need to handle Option[] in individual fields
@@ -213,7 +214,8 @@ trait JsBean {
    * Generate a JSON representation of the object <tt>obj</tt> and return the string.
    */
   def toJSON[T <: AnyRef](obj: T)(implicit ignoreProps: List[String]): String = obj match {
-    case null => quote("null")
+    // case null => quote("null")
+    case null => "null"
     case (n: Number) => obj.toString
     case (b: java.lang.Boolean) => obj.toString
     case (s: String) => quote(obj.asInstanceOf[String])

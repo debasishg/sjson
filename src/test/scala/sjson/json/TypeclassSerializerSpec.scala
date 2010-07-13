@@ -13,10 +13,10 @@ class TypeclassSerializerSpec extends Spec with ShouldMatchers {
 
   describe("Serialization of simple objects") {
     it("should serialize into json and back") {
-      import Protocols.Shop
-      import Protocols.ShopProtocol._
+      import Protocols._
+      import ShopProtocol._
       val shop = Shop("Shoppers Stop", "dress material", 1000)
-      fromjson(tojson(shop)) should equal(shop)
+      fromjson[Shop](tojson(shop)) should equal(shop)
     }
   }
 
@@ -47,18 +47,20 @@ class TypeclassSerializerSpec extends Spec with ShouldMatchers {
 
   describe("Serialization of composite objects") {
     it("should serialize into json and back") {
-      import Protocols.{Contact, Address}
-      import Protocols.ContactProtocol._
+      import Protocols._
+      import ContactProtocol._
+
       val contact = Contact("Debasish Ghosh", 
         List(Address("monroe st", "denver", "80231"), Address("pine drive", "santa clara", "95054")))
-      fromjson(tojson(contact)) should equal(contact)
+      fromjson[Contact](tojson(contact)) should equal(contact)
     }
   }
 
   describe("Serialization of composite objects with arrays") {
     it("should serialize into json and back") {
-      import Protocols.{Account, Address}
-      import Protocols.AccountProtocol._
+      import Protocols._
+      import AccountProtocol._
+
       val account = Account("123", "Debasish Ghosh", 
         Array(Address("monroe st", "denver", "80231"), Address("pine drive", "santa clara", "95054")))
 

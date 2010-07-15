@@ -1,11 +1,28 @@
 package sjson
 package json
 
-import dispatch.json._
-import Js._
-import JsonSerialization._
+import DefaultProtocol._
 
 object Protocols {
+  case class Person(lastName: String, firstName: String, age: Int)
+  object PersonProtocol extends DefaultProtocol {
+    import dispatch.json._
+    import JsonSerialization._
+    implicit object PersonFormat extends Format[Person] {
+      def reads(json: JsValue): Person = json match {
+        case JsObject(m) =>
+          Person(fromjson[String](m(JsString("lastName"))), 
+            fromjson[String](m(JsString("firstName"))), fromjson[Int](m(JsString("age"))))
+        case _ => throw new RuntimeException("JsObject expected")
+      }
+      def writes(p: Person): JsValue =
+        JsObject(List(
+          (tojson[String]("lastName").asInstanceOf[JsString], tojson[String](p.lastName)), 
+          (tojson[String]("firstName").asInstanceOf[JsString], tojson[String](p.firstName)), 
+          (tojson[String]("age").asInstanceOf[JsString], tojson[Int](p.age)) ))
+    }
+  }
+
   case class Shop(store: String, item: String, price: Int)
   object ShopProtocol extends DefaultProtocol {
     implicit val ShopFormat: Format[Shop] = 

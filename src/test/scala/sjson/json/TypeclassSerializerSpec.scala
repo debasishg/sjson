@@ -12,6 +12,15 @@ class TypeclassSerializerSpec extends Spec with ShouldMatchers {
   import DefaultProtocol._
   import JsonSerialization._
 
+  describe("Serialization using verbose protocol") {
+    it ("should serialize a Person") {
+      import Protocols._
+      import PersonProtocol._
+      val p = Person("ghosh", "debasish", 20)
+      fromjson[Person](tojson[Person](p)) should equal(p)
+    }
+  }
+
   describe("Serialization of simple objects") {
     it("should serialize into json and back") {
       import Protocols._

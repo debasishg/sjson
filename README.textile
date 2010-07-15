@@ -2,7 +2,9 @@ h1. sjson: Transparent JSON Serialization in Scala
 
 sjson offers non intrusive serialization of Scala objects into JSON. You can use sjson to serialize built in types, the basic generic data types and any custom data type that you design. Two types of serialization are supported right now :-
 # Reflection based that offers JSON serialization capabilities without any user intervention. You define your class, use some of the out-of-the-box annotations (if required) and invoke the serialization API
-# Typeclass based, that defines a serialization protocol that needs to be implemneted for custom data objects. For built-in types, the default protocol implemnetation comes out of the box. This is very much a work in progress and will evolve with time. The current implemnetation, however is fairly robust though not yet fully complete.
+# Typeclass based, that defines a serialization protocol that needs to be implemneted for custom data objects. For built-in types, the default protocol implemnetation comes out of the box. This is very much a work in progress and will evolve with time. The current implementation, however is fairly robust though not yet fully complete.
+
+For more details of the implementation and sample examples, have a look at the wiki.
 
 h1. License
 

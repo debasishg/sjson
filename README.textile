@@ -3,9 +3,7 @@ h1. SJSON
 SJSON supports serialization of Scala objects into JSON. It implements support for built in Scala structures like List, Map or String as well as custom objects. 
 
 Example: I have a Scala object as ..
-<pre>
-val addr = Address("Market Street", "San Francisco", "956871")
-</pre>
+<pre>val addr = Address("Market Street", "San Francisco", "956871")</pre>
 
 where Address is a custom class defined by the user. Using SJSON, I can store it as JSON and retrieve as plain old Scala object. Here’s the simple assertion that validates the invariant. Note that during de-serialziation, the class name is specified. Hence what it gives back is an instance of Address.
 <pre>
@@ -47,7 +45,7 @@ SJSON supports serialization of Scala objects that have other embedded objects. 
 <pre>
 @BeanInfo
 case class Contact(name: String,
-                   @JSONTypeHint(classOf[Address])
+                   @(JSONTypeHint @field)(value = classOf[Address])
                    addresses: Map[String, Address]) {
 
   override def toString = "name = " + name + " addresses = " +
@@ -105,7 +103,7 @@ h3. Changing property names during serialization
 <pre>
 @BeanInfo
 case class Book(id: Number,
-           title: String, @JSONProperty("ISBN") isbn: String) {
+           title: String, @(JSONProperty @getter)(value = "ISBN") isbn: String) {
 
   override def toString = "id = " + id + " title = " + title + " isbn = " + isbn
 }
@@ -130,7 +128,7 @@ When serializing objects, some of the properties can be ignored declaratively. C
 case class Journal(id: BigDecimal,
                     title: String,
                     author: String,
-                    @JSONProperty {val ignore = true} issn: String) {
+                    @(JSONProperty @getter)(ignore = true) issn: String) {
 
   override def toString =
     "Journal: " + id + "/" + title + "/" + author +
@@ -149,7 +147,7 @@ it("should ignore issn field") {
 }
 </pre>
 
-Similarly, we can ignore properties of an object **only** if they are null and not ignore otherwise. Just specify the annotation @JSONProperty as @JSONProperty {val ignoreIfNull = true}.
+Similarly, we can ignore properties of an object **only** if they are null and not ignore otherwise. Just specify the annotation @JSONProperty as @(JSONProperty @getter)(ignoreIfNull = true).
 
 h3. Serialization with Type Hints for Generic Data Members
 
@@ -157,7 +155,7 @@ Consider the following Scala class:
 <pre>
 @BeanInfo
 case class Contact(name: String,
-                   @JSONTypeHint(classOf[Address])
+                   @(JSONTypeHint @field)(value = classOf[Address])
                    addresses: Map[String, Address]) {
 
   override def toString = "name = " + name + " addresses = " +
@@ -179,8 +177,8 @@ With optional generic data members, we need to provide the hint to SJSON through
 <pre>
 @BeanInfo
 case class ContactWithOptionalAddr(name: String,
-                              @JSONTypeHint(classOf[Address])
-                              @OptionTypeHint(classOf[Map[_,_]])
+                              @(JSONTypeHint @field)(value = classOf[Address])
+                              @(OptionTypeHint @field)(value = classOf[Map[_,_]])
                               addresses: Option[Map[String, Address]]) {
 
   override def toString = "name = " + name + " " +
@@ -223,7 +221,7 @@ abstract class A
 @BeanInfo case class B(param1: String) extends A
 @BeanInfo case class C(param1: String, param2: String) extends A
 
-@BeanInfo case class D(@JSONTypeHint(classOf[A])param1: List[A])
+@BeanInfo case class D(@(JSONTypeHint @field)(value = classOf[A])param1: List[A])
 </pre>
 and the serialization code like the following:
 

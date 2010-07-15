@@ -21,9 +21,10 @@ trait TemplateProject extends DefaultProject with FileTasks
   def fmppArgs = "--ignore-temporary-files" :: Nil
 
   // creates a task that invokes fmpp
-  def fmppTask(args: => List[String], output: => Path, srcRoot: => Path, sources: PathFinder) =
+  def fmppTask(args: => List[String], output: => Path, srcRoot: => Path, sources: PathFinder) = {
     runTask(Some("fmpp.tools.CommandLine"), fmppClasspath,
       "-U" :: "all" :: "-S" :: srcRoot.absolutePath :: "-O" :: output.absolutePath :: args ::: sources.getPaths.toList)
+  }
 
   //  Define template actions and make them run before compilation
 

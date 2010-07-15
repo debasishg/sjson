@@ -9,6 +9,7 @@ import org.junit.runner.RunWith
 @RunWith(classOf[JUnitRunner])
 class TypeclassSerializerSpec extends Spec with ShouldMatchers {
 
+  import DefaultProtocol._
   import JsonSerialization._
 
   describe("Serialization of simple objects") {
@@ -22,26 +23,20 @@ class TypeclassSerializerSpec extends Spec with ShouldMatchers {
 
   describe("Serialization of lists") {
     it ("should serialize list of Ints") {
-      import CollectionProtocol.ListIntFormat
       val l1 = List(100, 200, 300, 400)
-      fromjson(tojson(l1)) should equal(l1)
+      fromjson[List[Int]](tojson(l1)) should equal(l1)
     }
 
     it ("should serialize list of Strings") {
-      import CollectionProtocol.ListStringFormat
       val l2 = List("dg", "mc", "rc", "nd")
-      fromjson(tojson(l2)) should equal(l2)
+      fromjson[List[String]](tojson(l2)) should equal(l2)
     }
   }
 
   describe("Serialization of Maps") {
     it ("should serialize Map of Strings & Strings") {
-      object MapProtocol extends DefaultProtocol {
-        implicit object MapStringStringFormat extends CollectionProtocol.MapFormat[String, String]
-      }
-      import MapProtocol.MapStringStringFormat
       val m = Map("100" -> "dg", "200" -> "mc")
-      fromjson(tojson(m)) should equal(m)
+      fromjson[Map[String, String]](tojson(m)) should equal(m)
     }
   }
 
@@ -68,6 +63,32 @@ class TypeclassSerializerSpec extends Spec with ShouldMatchers {
       ac.no should equal(account.no)
       ac.name should equal(account.name)
       ac.addresses should be === account.addresses
+    }
+  }
+
+  describe("Serialization of Option") {
+    it("should serialize an option field") {
+      val str = Some("debasish")
+      fromjson[Option[String]](tojson[Option[String]](str)) should equal(str)
+      fromjson[Option[String]](tojson[Option[String]](None)) should equal(None)
+
+      val i = Some(200)
+      fromjson[Option[Int]](tojson[Option[Int]](i)) should equal(i)
+    }
+  }
+
+  describe("Serialization of tuples") {
+    it("should serialize tuples of primitive types") {
+      val t1 = ("debasish", 12)
+      fromjson[Tuple2[String, Int]](tojson(t1)) should equal(t1)
+      val t2 = ("debasish", 12, "jonas")
+      fromjson[Tuple3[String, Int, String]](tojson(t2)) should equal(t2)
+    }
+    it("should serialize tuples of user defined types") {
+      import Protocols._
+      import AddressProtocol._
+      val t1 = ("debasish", Address("monroes st", "denver", "80231"))
+      fromjson[Tuple2[String, Address]](tojson[Tuple2[String, Address]](t1)) should equal(t1)
     }
   }
 }

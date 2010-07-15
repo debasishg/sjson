@@ -6,25 +6,18 @@ Example: I have a Scala object as ..
 <pre>val addr = Address("Market Street", "San Francisco", "956871")</pre>
 
 where Address is a custom class defined by the user. Using SJSON, I can store it as JSON and retrieve as plain old Scala object. Here’s the simple assertion that validates the invariant. Note that during de-serialziation, the class name is specified. Hence what it gives back is an instance of Address.
-<pre>
-addr should equal(
-  serializer.in[Address](serializer.out(addr)))
-</pre>
+<pre>addr should equal(
+  serializer.in[Address](serializer.out(addr)))</pre>
 Note, that the class needs to have a default constructor. Otherwise the deserialization into the specified class will fail.
 
 There are situations, particularly when writing generic persistence libraries in Akka, when the exact class is not known during de-serialization. Using SJSON I can get it as AnyRef or Nothing ..
-<pre>
-serializer.in[AnyRef](serializer.out(addr))
-</pre>
+<pre>serializer.in[AnyRef](serializer.out(addr))</pre>
 
 or just as ..
-<pre>
-serializer.in(serializer.out(addr))
-</pre>
+<pre>serializer.in(serializer.out(addr))</pre>
 
 What you get back from is a JsValue, an abstraction of the JSON object model. For details of JsValue implementation, refer to "dispatch-json":http://databinder.net/dispatch/About that SJSON uses as the underlying JSON parser implementation. Once I have the JsValue model, I can use use extractors to get back individual attributes ..
-<pre>
-val a = serializer.in[AnyRef](serializer.out(addr))
+<pre>val a = serializer.in[AnyRef](serializer.out(addr))
 // use extractors
 val c = 'city ? str
 val c(ci) = a
@@ -36,14 +29,12 @@ st should equal("Market Street")
 
 val z = 'zip ? str
 val z(zp) = a
-zp should equal("956871")
-</pre>
+zp should equal("956871")</pre>
 
 h3. Serialization of Embedded Objects
 
 SJSON supports serialization of Scala objects that have other embedded objects. Suppose you have the following Scala classes .. Here Contact has an embedded Address Map ..
-<pre>
-@BeanInfo
+<pre>@BeanInfo
 case class Contact(name: String,
                    @(JSONTypeHint @field)(value = classOf[Address])
                    addresses: Map[String, Address]) {
@@ -55,13 +46,11 @@ case class Contact(name: String,
 @BeanInfo
 case class Address(street: String, city: String, zip: String) {
   override def toString = "address = " + street + "/" + city + "/" + zip
-}
-</pre>
+}</pre>
 
 With SJSON, I can do the following:
 
-<pre>
-val a1 = Address("Market Street", "San Francisco", "956871")
+<pre>val a1 = Address("Market Street", "San Francisco", "956871")
 val a2 = Address("Monroe Street", "Denver", "80231")
 val a3 = Address("North Street", "Atlanta", "987671")
 val c = Contact("Bob", Map("residence" -> a1, "office" -> a2, "club" -> a3))
@@ -95,36 +84,30 @@ object r { def ># [T](f: JsF[T]) = f(a.asInstanceOf[JsValue]) }
 
 // still better: chain 'em up
 "Market Street" should equal(
-  (r ># { ('addresses ? obj) andThen ('residence ? obj) andThen ('street ? str) }))
-</pre>
+  (r ># { ('addresses ? obj) andThen ('residence ? obj) andThen ('street ? str) }))</pre>
 
 h3. Changing property names during serialization
 
-<pre>
-@BeanInfo
+<pre>@BeanInfo
 case class Book(id: Number,
            title: String, @(JSONProperty @getter)(value = "ISBN") isbn: String) {
 
   override def toString = "id = " + id + " title = " + title + " isbn = " + isbn
-}
-</pre>
+}</pre>
 
 When this will be serialized out, the property name will be changed.
-<pre>
-val b = new Book(100, "A Beautiful Mind", "012-456372")
+<pre>val b = new Book(100, "A Beautiful Mind", "012-456372")
 val jsBook = Js(JsBean.toJSON(b))
 val expected_book_map = Map(
   JsString("id") -> JsNumber(100),
   JsString("title") -> JsString("A Beautiful Mind"),
   JsString("ISBN") -> JsString("012-456372")
-)
-</pre>
+)</pre>
 
 h3. Serialization with ignore properties
 
 When serializing objects, some of the properties can be ignored declaratively. Consider the following class declaration:
-<pre>
-@BeanInfo
+<pre>@BeanInfo
 case class Journal(id: BigDecimal,
                     title: String,
                     author: String,
@@ -136,46 +119,38 @@ case class Journal(id: BigDecimal,
           case null => ""
           case _ => "/" + issn
         })
-}
-</pre>
+}</pre>
 
 The annotation @JSONProperty can be used to selectively ignore fields. When I serialize a Journal object out and then back in, the content of issn field will be null.
-<pre>
-it("should ignore issn field") {
+<pre>it("should ignore issn field") {
     val j = Journal(100, "IEEE Computer", "Alex Payne", "012-456372")
     serializer.in[Journal](serializer.out(j)).asInstanceOf[Journal].issn should equal(null)
-}
-</pre>
+}</pre>
 
 Similarly, we can ignore properties of an object **only** if they are null and not ignore otherwise. Just specify the annotation @JSONProperty as @(JSONProperty @getter)(ignoreIfNull = true).
 
 h3. Serialization with Type Hints for Generic Data Members
 
 Consider the following Scala class:
-<pre>
-@BeanInfo
+<pre>@BeanInfo
 case class Contact(name: String,
                    @(JSONTypeHint @field)(value = classOf[Address])
                    addresses: Map[String, Address]) {
 
   override def toString = "name = " + name + " addresses = " +
     addresses.map(a => a._1 + ":" + a._2.toString).mkString(",")
-}
-</pre>
+}</pre>
 
 Because of erasure, you need to add the type hint declaratively through the annotation @JSONTypeHint that
 SJSON will pick up during serialization. No we can say:
-<pre>
-val c = Contact("Bob", Map("residence" -> a1, "office" -> a2, "club" -> a3))
+<pre>val c = Contact("Bob", Map("residence" -> a1, "office" -> a2, "club" -> a3))
 val co = serializer.out(c)
 it("should give an instance of Contact") {
   c should equal(serializer.in[Contact](co))
-}
-</pre>
+}</pre>
 
 With optional generic data members, we need to provide the hint to SJSON through another annotation@OptionTypeHint.
-<pre>
-@BeanInfo
+<pre>@BeanInfo
 case class ContactWithOptionalAddr(name: String,
                               @(JSONTypeHint @field)(value = classOf[Address])
                               @(OptionTypeHint @field)(value = classOf[Map[_,_]])
@@ -186,12 +161,10 @@ case class ContactWithOptionalAddr(name: String,
       case None => ""
       case Some(ad) => " addresses = " + ad.map(a => a._1 + ":" + a._2.toString).mkString(",")
     })
-}
-</pre>
+}</pre>
 
 Serialization works ok with optional members annotated as above.
-<pre>
-describe("Bean with optional bean member serialization") {
+<pre>describe("Bean with optional bean member serialization") {
   it("should serialize with Option defined") {
     val c = new ContactWithOptionalAddr("Debasish Ghosh",
       Some(Map("primary" -> new Address("10 Market Street", "San Francisco, CA", "94111"),
@@ -199,34 +172,28 @@ describe("Bean with optional bean member serialization") {
     c should equal(
       serializer.in[ContactWithOptionalAddr](serializer.out(c)))
   }
-}
-</pre>
+}</pre>
 
 You can also specify a custom ClassLoader while using SJSON serializer:
-<pre>
-object SJSON {
+<pre>object SJSON {
   val classLoader = //.. specify a custom classloader
 }
 import SJSON._
 serializer.out(..)
-//..
-</pre>
+//.. </pre>
 
 h3. Fighting Type Erasure
 
 Because of type erasure, it's not always possible to infer the correct type during de-serialization of objects. Consider the following example:
 
-<pre>
-abstract class A
+<pre>abstract class A
 @BeanInfo case class B(param1: String) extends A
 @BeanInfo case class C(param1: String, param2: String) extends A
 
-@BeanInfo case class D(@(JSONTypeHint @field)(value = classOf[A])param1: List[A])
-</pre>
+@BeanInfo case class D(@(JSONTypeHint @field)(value = classOf[A])param1: List[A])</pre>
 and the serialization code like the following:
 
-<pre>
-object TestSerialize{
+<pre>object TestSerialize{
  def main(args: Array[String]) {
    val test1 = new D(List(B("hello1")))
    val json = sjson.json.Serializer.SJSON.out(test1)
@@ -234,12 +201,10 @@ object TestSerialize{
    val res1: D = res.asInstanceOf[D]
    println(res1)
  }
-}
-</pre>
+}</pre>
 Note that the type hint on class D says A, but the actual instances that have been put into the object before serialization is one of the derived classes (B). During de-serialization, we have no idea of what can be inside D. The serializer.in API will fail since all hint it has is for A, which is abstract. In such cases, we need to handle the de-serialization by using extractors over the underlying data structure that we use for storing JSON objects, which is JsValue. Here's an example:
 
-<pre>
-val test1 = new D(List(B("hello1")))
+<pre>val test1 = new D(List(B("hello1")))
 val json = serializer.out(test1)
 
 // create a JsValue from the string
@@ -259,8 +224,7 @@ val result = _m.map{ e =>
 }
 
 // form a D
-println("result = " + D(result))
-</pre>
+println("result = " + D(result))</pre>
 The above snippet de-serializes correctly using extractors defined on JsValue. For more details on JsValue and the extractors, please refer to "dispatch-json":http://databinder.net/dispatch/About.
 
 h3. Note:

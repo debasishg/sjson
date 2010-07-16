@@ -42,7 +42,7 @@ trait BasicTypes extends Protocol {
   </#list>
 }
 
-trait CollectionTypes extends BasicTypes {
+trait CollectionTypes extends BasicTypes with Generic {
 
   implicit def listFormat[T](implicit fmt : Format[T]) : Format[List[T]] = new Format[List[T]] {
     def writes(ts: List[T]) = JsArray(ts.map(t => tojson(t)(fmt)))
@@ -65,8 +65,26 @@ trait CollectionTypes extends BasicTypes {
   implicit def mapFormat[K, V](implicit fmtk: Format[K], fmtv: Format[V]) : Format[Map[K, V]] = new Format[Map[K, V]] {
     def writes(ts: Map[K, V]) = JsObject(ts.map{case (k, v) => ((tojson(k.toString)).asInstanceOf[JsString], tojson(v)(fmtv))})
     def reads(json: JsValue) = json match {
-      case JsObject(m) => Map() ++ m.map{case (k, v) => (fromjson(k)(fmtk), fromjson(v)(fmtv))}
+      case JsObject(m) => Map() ++ m.map{case (k, v) => (fromjson[K](k)(fmtk), fromjson[V](v)(fmtv))}
       case _ => throw new RuntimeException("Map expected")
     }
+  }
+
+  import scala.collection._
+  implicit def mutableSetFormat[T](implicit fmt: Format[T]): Format[mutable.Set[T]] = 
+    viaSeq((x: Seq[T]) => mutable.Set(x: _*))
+
+  implicit def immutableSetFormat[T](implicit fmt: Format[T]): Format[immutable.Set[T]] = 
+    viaSeq((x: Seq[T]) => immutable.Set(x: _*))
+
+  implicit def immutableSortedSetFormat[S](implicit ord : S => Ordered[S], binS : Format[S]) : Format[immutable.SortedSet[S]] = {
+    import BasicTypes.orderable // 2.7/8 compatibility
+    viaSeq((x: Seq[S]) => immutable.TreeSet[S](x: _*))
+  }
+}
+object BasicTypes {
+  /** 2.7/8 compatibility */
+  implicit def orderable[A](implicit s: A => Ordered[A]): Ordering[A] = new Ordering[A] {
+    def compare(x: A, y: A) = s(x).compare(y)
   }
 }

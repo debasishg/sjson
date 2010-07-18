@@ -82,6 +82,25 @@ trait CollectionTypes extends BasicTypes with Generic {
     viaSeq((x: Seq[S]) => immutable.TreeSet[S](x: _*))
   }
 }
+
+trait StandardTypes extends CollectionTypes {
+  implicit object BigIntFormat extends Format[BigInt] {
+    def writes(o: BigInt) = JsValue.apply(o)
+    def reads(json: JsValue) = json match {
+      case JsNumber(n) => n.toBigInt
+      case _ => throw new RuntimeException("BigInt expected")
+    }
+  }
+
+  implicit object BigDecimalFormat extends Format[BigDecimal] {
+    def writes(o: BigDecimal) = JsValue.apply(o)
+    def reads(json: JsValue) = json match {
+      case JsNumber(n) => n
+      case _ => throw new RuntimeException("BigDecimal expected")
+    }
+  }
+}
+
 object BasicTypes {
   /** 2.7/8 compatibility */
   implicit def orderable[A](implicit s: A => Ordered[A]): Ordering[A] = new Ordering[A] {

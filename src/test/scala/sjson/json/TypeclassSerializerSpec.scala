@@ -84,6 +84,20 @@ class TypeclassSerializerSpec extends Spec with ShouldMatchers {
       val i = Some(200)
       fromjson[Option[Int]](tojson[Option[Int]](i)) should equal(i)
     }
+    it("should serialize AddressWithOptionalCity") {
+      import TestBeans._
+      import Protocols._
+      import AddressWithOptionalCityProtocol._
+      val ad = AddressWithOptionalCity("garer math", Some("mumbai"), "400087")
+      fromjson[AddressWithOptionalCity](tojson(ad)) should equal(ad)
+    }
+    it("should serialize AddressWithOptionalCity without city") {
+      import TestBeans._
+      import Protocols._
+      import AddressWithOptionalCityProtocol._
+      val ad = AddressWithOptionalCity("garer math", None, "400087")
+      fromjson[AddressWithOptionalCity](tojson(ad)) should equal(ad)
+    }
   }
 
   describe("Serialization of tuples") {

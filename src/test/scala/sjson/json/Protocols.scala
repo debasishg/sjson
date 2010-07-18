@@ -17,9 +17,9 @@ object Protocols {
       }
       def writes(p: Person): JsValue =
         JsObject(List(
-          (tojson[String]("lastName").asInstanceOf[JsString], tojson[String](p.lastName)), 
-          (tojson[String]("firstName").asInstanceOf[JsString], tojson[String](p.firstName)), 
-          (tojson[String]("age").asInstanceOf[JsString], tojson[Int](p.age)) ))
+          (tojson("lastName").asInstanceOf[JsString], tojson(p.lastName)), 
+          (tojson("firstName").asInstanceOf[JsString], tojson(p.firstName)), 
+          (tojson("age").asInstanceOf[JsString], tojson(p.age)) ))
     }
   }
 
@@ -47,5 +47,11 @@ object Protocols {
   object AccountProtocol extends DefaultProtocol {
     implicit val AccountFormat: Format[Account] = 
       asProduct3("no", "name", "addresses")(Account)(Account.unapply(_).get)
+  }
+
+  import TestBeans._
+  object AddressWithOptionalCityProtocol extends DefaultProtocol {
+    implicit val AddressWithOptionalCityFormat: Format[AddressWithOptionalCity] =
+      asProduct3("street", "city", "zip")(AddressWithOptionalCity)(AddressWithOptionalCity.unapply(_).get)
   }
 }

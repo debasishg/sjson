@@ -49,6 +49,9 @@ object Protocols {
       asProduct3("no", "name", "addresses")(Account)(Account.unapply(_).get)
   }
 
+  case class Name(name: String)
+  implicit val NameFormat: Format[Name] = wrap[Name, String]("name")(_.name, Name)
+
   import TestBeans._
   object AddressWithOptionalCityProtocol extends DefaultProtocol {
     implicit val AddressWithOptionalCityFormat: Format[AddressWithOptionalCity] =

@@ -16,6 +16,26 @@ trait Generic extends Protocol {
     }
   }
 
+  /**
+   * Use this when you would wrap a value in a case class
+   *
+   * <pre>
+   * case class Name(name: String)
+   * implicit val NameFormat: Format[Name] = wrap[Name, String]("name")(_.name, Name)
+   *
+   * val n = Name("debasish ghosh")
+   * fromjson[Name](tojson(n)) should equal(n)
+   * </pre>
+   */
+  def wrap[S, T](name: String)(to : S => T, from : T => S)(implicit fmt : Format[T]) = new Format[S]{
+    def writes(s : S) = JsObject(List((tojson(name).asInstanceOf[JsString], tojson(to(s)))))
+    def reads(js : JsValue) = js match {
+      case JsObject(m) =>
+        from(fromjson[T](m(JsString(name))))
+      case _ => throw new RuntimeException("Object expected")
+    }
+  }
+
 
   <#list 2..9 as i> 
   <#assign typeParams><#list 1..i as j>T${j}<#if i !=j>,</#if></#list></#assign>

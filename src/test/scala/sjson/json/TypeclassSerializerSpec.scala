@@ -166,4 +166,19 @@ class TypeclassSerializerSpec extends Spec with ShouldMatchers {
       fromjson[immutable.Set[(String, Address)]](tojson(s)) should equal(s)
     }
   }
+
+  describe("Serialization of complex types") {
+    it("should serialize complex types") {
+      val l = List(Map("1"->"dg", "2"->"mc"), Map("1"->"irc", "2"->"rc", "3"->"nd"))
+      fromjson[List[Map[String, String]]](tojson(l)) should equal(l)
+    }
+  }
+
+  describe("Serialization of wrappers") {
+    it("should serialize") {
+      import Protocols._
+      val n = Name("debasish ghosh")
+      fromjson[Name](tojson(n)) should equal(n)
+    }
+  }
 }

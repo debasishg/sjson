@@ -1,4 +1,5 @@
-package sjson.json
+package sjson
+package json
 
 import java.util.TimeZone
 import dispatch.json._
@@ -21,13 +22,13 @@ trait JsBean {
   
   import java.beans._
   
-  import java.lang.reflect._
+  import java.lang.reflect.Field
   import dispatch.json._
   import dispatch.json.Js._
   import Util._
 
   private def getProps[T](clazz: Class[T]) = {
-    val fields = clazz.getDeclaredFields
+    val fields = clazz.getMethods
     Map() ++
     fields.map {field =>
       val a = field.getAnnotation(classOf[JSONProperty])
@@ -86,7 +87,7 @@ trait JsBean {
     else {
       // bean as a map from json
       val bean = js.self.asInstanceOf[Map[JsString, JsValue]]
-    
+
       // properties of the bean class
       // as a map to take care of mappings for JSONProperty annotation
       val props = getProps(context.get)
@@ -122,7 +123,7 @@ trait JsBean {
 
               // case 2
               case t if (t isAssignableFrom(classOf[Tuple2[_,_]])) =>
-                processTuple2(x.toList.first, field)
+                processTuple2(x.toList.head, field)
 
               // case 3
               case _ =>
@@ -179,17 +180,13 @@ trait JsBean {
                 }
 
                 // as ugly as it gets
-                // arrays in Scala are boxed sometimes: need to unbox before set
-                // kludge to take care of the fact that both array and List have the same JSON representation
-                // here the field is an Array but the value is a List
                 else if (y.getType.isArray) {
-                  z.asInstanceOf[List[_]]
-                   .toArray.asInstanceOf[scala.runtime.BoxedAnyArray]
-                   .unbox(y.getType.getComponentType)
+                  mkArray(z.asInstanceOf[List[_]], y.getType.getComponentType)
                 }
                   
                 // special treatment for JSON "nulls"
-                else if (z.isInstanceOf[String] && (z == "null")) null
+                // else if (z.isInstanceOf[String] && (z == "null")) null
+                else if (z.isInstanceOf[String] && (z == null)) null
                 else z
 
               // need to handle Option[] in individual fields
@@ -202,11 +199,23 @@ trait JsBean {
     }
   }
 
+  private def mkArray(l: List[_], clz: Class[_]): Array[_] = {
+    import java.lang.reflect.{Array => JArray}
+    val a = JArray.newInstance(clz, l.size)
+    var i = 0
+    while (i < l.size) {
+      JArray.set(a, i, l(i))
+      i += 1
+    }
+    a.asInstanceOf[Array[_]]
+  }
+
   /**
    * Generate a JSON representation of the object <tt>obj</tt> and return the string.
    */
   def toJSON[T <: AnyRef](obj: T)(implicit ignoreProps: List[String]): String = obj match {
-    case null => quote("null")
+    // case null => quote("null")
+    case null => "null"
     case (n: Number) => obj.toString
     case (b: java.lang.Boolean) => obj.toString
     case (s: String) => quote(obj.asInstanceOf[String])
@@ -219,6 +228,9 @@ trait JsBean {
       quote(v toString)
 
     case (s: Seq[AnyRef]) =>
+      s.map(e => toJSON(e)).mkString("[", ",", "]")
+
+    case (s: Array[AnyRef]) =>
       s.map(e => toJSON(e)).mkString("[", ",", "]")
 
     case (m: Map[AnyRef, AnyRef]) =>
@@ -248,7 +260,7 @@ trait JsBean {
         for {
           pd <- pds
           val rm = pd.getReadMethod
-          val rv = rm.invoke(obj, null)
+          val rv = rm.invoke(obj)
             
           // Option[] needs to be treated differently
           val (rval, isOption) = rv match {
@@ -284,7 +296,7 @@ trait DefaultConstructor {
     // need to access private default constructor .. hack!
     // clazz.getDeclaredConstructors.foreach(println)
     val constructor =
-      clazz.getDeclaredConstructors.filter(_.getParameterTypes.length == 0).first
+      clazz.getDeclaredConstructors.filter(_.getParameterTypes.length == 0).head
 
      if (!Modifier.isPublic(constructor.getModifiers()) ||
       !Modifier.isPublic(constructor.getDeclaringClass().getModifiers()))

@@ -1,6 +1,8 @@
-package sjson.json
+package sjson
+package json
 
 import scala.reflect._
+import scala.annotation.target._
 
 object TestBeans {
   @BeanInfo
@@ -18,7 +20,7 @@ object TestBeans {
   
   @BeanInfo
   case class Contact(name: String, 
-                     @JSONTypeHint(classOf[Address])
+                     @(JSONTypeHint @field)(value = classOf[Address])
                      addresses: Map[String, Address]) {
   
     private def this() = this(null, null)
@@ -34,7 +36,7 @@ object TestBeans {
   }
 
   @BeanInfo
-  case class InternationalAddress(st: String, ct: String, zp: String, cnt: String)
+  class InternationalAddress(st: String, ct: String, zp: String, cnt: String)
     extends Address(st, ct, zp) {
 
     override val street = st
@@ -62,9 +64,9 @@ object TestBeans {
 
   @BeanInfo
   case class ContactWithOptionalAddr(name: String, 
-                                @JSONTypeHint(classOf[Address])
-                                @OptionTypeHint(classOf[Map[_,_]])
-                                addresses: Option[Map[String, Address]]) {
+    @(JSONTypeHint @field)(value = classOf[Address])
+    @(OptionTypeHint @field)(value = classOf[Map[_,_]])
+    addresses: Option[Map[String, Address]]) {
   
     private def this() = this(null, None)
   
@@ -79,7 +81,7 @@ object TestBeans {
   @BeanInfo  
   case class Person(lastName: String, 
                firstName: String,
-               @JSONTypeHint(classOf[Address])
+               @(JSONTypeHint @field)(value = classOf[Address])
                addresses: List[Address]) {
   
     def this() = this(null, null, Nil)
@@ -89,7 +91,7 @@ object TestBeans {
 
   @BeanInfo
   case class Book(id: Number, 
-             title: String, @JSONProperty("ISBN") isbn: String) {
+             title: String, @(JSONProperty @getter)(value = "ISBN") isbn: String) {
   
     def this() = this(0, null, null)
     override def toString = "id = " + id + " title = " + title + " isbn = " + isbn
@@ -111,7 +113,7 @@ object TestBeans {
   case class Journal(id: BigDecimal, 
                      title: String, 
                      author: String, 
-                     @JSONProperty {val ignore = true} issn: String) {
+                     @(JSONProperty @getter)(ignore = true) issn: String) {
 
     private def this() = this(0, null, null, null)
     override def toString =
@@ -126,7 +128,7 @@ object TestBeans {
   case class Journal_1(id: Int, 
                   title: String, 
                   author: String, 
-                  @JSONProperty {val ignoreIfNull = true} issn: String) {
+                  @(JSONProperty @getter)(ignoreIfNull = true) issn: String) {
   }
 
   @BeanInfo
@@ -135,7 +137,7 @@ object TestBeans {
     val title = t
     val author = au
   
-    @JSONProperty("ISSN") {val ignoreIfNull = true}
+    @(JSONProperty @getter)(value = "ISSN", ignoreIfNull = true)
     val issn = is
   }
 
@@ -159,7 +161,7 @@ object TestBeans {
   case class Instrument(
     val id: Number, 
     val name: String, 
-    @JSONProperty("TYPE"){val ignoreIfNull = false, val ignore = false}
+    @(JSONProperty @getter)(value = "TYPE", ignoreIfNull = false, ignore = false)
     val typ: String) {
     
     private def this() = this(null, null, null)
@@ -169,7 +171,7 @@ object TestBeans {
   @BeanInfo
   case class Trade(
     val ref: String,
-    @JSONProperty("Instrument"){val ignoreIfNull = false, val ignore = false}
+    @(JSONProperty @getter)(value = "Instrument", ignoreIfNull = false, ignore = false)
     val ins: Instrument,
     val amount: Number) {
       
@@ -187,14 +189,14 @@ object TestBeans {
     val id: Number,
     val name: String,
     
-    @JSONProperty("Previous Employer"){val ignoreIfNull = true, val ignore = false}
+    @(JSONProperty @getter)(value = "Previous Employer", ignoreIfNull = true, ignore = false)
     val prevEmployer: String,
     
-    @JSONProperty("Addresses")
-    @JSONTypeHint(classOf[Address])
+    @(JSONProperty @getter)(value = "Addresses")
+    @(JSONTypeHint @field)(value = classOf[Address])
     val addresses: List[Address],
     
-    @JSONProperty("Salary")
+    @(JSONProperty @getter)(value = "Salary")
     val sal: Salary
   ) {
     private def this() = this(null, null, null, Nil, null)
@@ -227,7 +229,7 @@ object TestBeans {
   case class ArrayTest(
     id: Int,
     name: String,
-    @JSONTypeHint(classOf[String])
+    @(JSONTypeHint @field)(value = classOf[String])
     var addresses: Array[String]) {
     def this() = this(0, null, null)
   }
@@ -236,7 +238,7 @@ object TestBeans {
   case class ObjectArrayTest(
     id: Int,
     name: String,
-    @JSONTypeHint(classOf[Address])
+    @(JSONTypeHint @field)(value = classOf[Address])
     var addresses: Array[Address]) {
     def this() = this(0, null, null)
   }
@@ -244,7 +246,7 @@ object TestBeans {
   @BeanInfo
   case class Market(
     name: String, 
-    @JSONTypeHint(classOf[Shop])
+    @(JSONTypeHint @field)(value = classOf[Shop])
     shops: Map[Int, Shop], 
     country: String) {
     private def this() = this(null, null, null)
@@ -253,17 +255,17 @@ object TestBeans {
   @BeanInfo
   case class MyTuple2Message(
     val id: String, 
-    @JSONTypeHint(classOf[Shop])
+    @(JSONTypeHint @field)(value = classOf[Shop])
     val value: Tuple2[String, Shop]) {
     private def this() = this(null, null)
   }
 
   @BeanInfo
   case class View(
-    @JSONProperty {val ignoreIfNull = true}
+    @(JSONProperty @getter)(ignoreIfNull = true)
     val map: String, 
   
-    @JSONProperty {val ignoreIfNull = true}
+    @(JSONProperty @getter)(ignoreIfNull = true)
     val reduce: String) {
   
     private def this() = this(null, null)
@@ -274,10 +276,10 @@ object TestBeans {
 
   @BeanInfo
   case class EnumTest(
-    @EnumTypeHint("sjson.json.WeekDay") start: WeekDay.Value, 
-    @EnumTypeHint("sjson.json.Shape") shape: Shape.Value,
-    @JSONTypeHint(classOf[sjson.json.WeekDay.WeekDay])
-    @EnumTypeHint("sjson.json.WeekDay") 
+    @(EnumTypeHint @field)(value = "sjson.json.WeekDay") start: WeekDay.Value, 
+    @(EnumTypeHint @field)(value = "sjson.json.Shape") shape: Shape.Value,
+    @(JSONTypeHint @field)(value = classOf[sjson.json.WeekDay.WeekDay])
+    @(EnumTypeHint @field)(value = "sjson.json.WeekDay") 
     work: List[WeekDay.Value]) {
     private def this() = this(null, null, null)
   }

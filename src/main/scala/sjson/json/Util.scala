@@ -1,4 +1,5 @@
-package sjson.json
+package sjson
+package json
 
 object Util {
   def quote(s: String): String = s match {

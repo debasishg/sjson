@@ -24,7 +24,6 @@ class TypeclassSerializerSpec extends Spec with ShouldMatchers {
   describe("Serialization of simple objects") {
     it("should serialize into json and back") {
       import Protocols._
-      import ShopProtocol._
       val shop = Shop("Shoppers Stop", "dress material", 1000)
       fromjson[Shop](tojson(shop)) should equal(shop)
     }
@@ -52,8 +51,6 @@ class TypeclassSerializerSpec extends Spec with ShouldMatchers {
   describe("Serialization of composite objects") {
     it("should serialize into json and back") {
       import Protocols._
-      import ContactProtocol._
-
       val contact = Contact("Debasish Ghosh", 
         List(Address("monroe st", "denver", "80231"), Address("pine drive", "santa clara", "95054")))
       fromjson[Contact](tojson(contact)) should equal(contact)
@@ -63,8 +60,6 @@ class TypeclassSerializerSpec extends Spec with ShouldMatchers {
   describe("Serialization of composite objects with arrays") {
     it("should serialize into json and back") {
       import Protocols._
-      import AccountProtocol._
-
       val account = Account("123", "Debasish Ghosh", 
         Array(Address("monroe st", "denver", "80231"), Address("pine drive", "santa clara", "95054")))
 
@@ -87,14 +82,12 @@ class TypeclassSerializerSpec extends Spec with ShouldMatchers {
     it("should serialize AddressWithOptionalCity") {
       import TestBeans._
       import Protocols._
-      import AddressWithOptionalCityProtocol._
       val ad = AddressWithOptionalCity("garer math", Some("mumbai"), "400087")
       fromjson[AddressWithOptionalCity](tojson(ad)) should equal(ad)
     }
     it("should serialize AddressWithOptionalCity without city") {
       import TestBeans._
       import Protocols._
-      import AddressWithOptionalCityProtocol._
       val ad = AddressWithOptionalCity("garer math", None, "400087")
       fromjson[AddressWithOptionalCity](tojson(ad)) should equal(ad)
     }
@@ -109,7 +102,6 @@ class TypeclassSerializerSpec extends Spec with ShouldMatchers {
     }
     it("should serialize tuples of user defined types") {
       import Protocols._
-      import AddressProtocol._
       val t1 = ("debasish", Address("monroe st", "denver", "80231"))
       fromjson[Tuple2[String, Address]](tojson[Tuple2[String, Address]](t1)) should equal(t1)
     }
@@ -124,7 +116,6 @@ class TypeclassSerializerSpec extends Spec with ShouldMatchers {
     it("should serialize mutable sets of addresses") {
       import scala.collection._
       import Protocols._
-      import AddressProtocol._
 
       val s = mutable.Set(Address("monroe st", "denver", "80231"), Address("tamarac st", "boulder", "80231"))
       fromjson[mutable.Set[Address]](tojson(s)) should equal(s)
@@ -132,7 +123,6 @@ class TypeclassSerializerSpec extends Spec with ShouldMatchers {
     it("should serialize mutable sets of custom data types") {
       import scala.collection._
       import Protocols._
-      import AddressProtocol._
 
       val s = mutable.Set(
         ("debasish", Address("monroe st", "denver", "80231")), 
@@ -150,7 +140,6 @@ class TypeclassSerializerSpec extends Spec with ShouldMatchers {
     it("should serialize immutable sets of addresses") {
       import scala.collection._
       import Protocols._
-      import AddressProtocol._
 
       val s = immutable.Set(Address("monroe st", "denver", "80231"), Address("tamarac st", "boulder", "80231"))
       fromjson[immutable.Set[Address]](tojson(s)) should equal(s)
@@ -158,7 +147,6 @@ class TypeclassSerializerSpec extends Spec with ShouldMatchers {
     it("should serialize immutable sets of custom data types") {
       import scala.collection._
       import Protocols._
-      import AddressProtocol._
 
       val s = immutable.Set(
         ("debasish", Address("monroe st", "denver", "80231")), 
@@ -179,6 +167,11 @@ class TypeclassSerializerSpec extends Spec with ShouldMatchers {
       import Protocols._
       val n = Name("debasish ghosh")
       fromjson[Name](tojson(n)) should equal(n)
+    }
+    it("should serialize list wrappers") {
+      import Protocols._
+      val n = Holder(List("debasish ghosh", "jonas boner", "stephan schmidt"))
+      fromjson[Holder](tojson(n)) should equal(n)
     }
   }
 }

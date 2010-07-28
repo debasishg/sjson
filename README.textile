@@ -10,7 +10,7 @@ h1. News
 
 2010/07/28: sjson 0.7 released
     * type class based JSON serialization introduced
-    * examples at [[Examples of Type Class based JSON serialization]]    
+    * details at "Examples of Type Class based JSON serialization":http://wiki.github.com/debasishg/sjson/typeclass-based-json-serialization  
 
 h1. License
 

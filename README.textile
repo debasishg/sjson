@@ -6,6 +6,12 @@ sjson offers non intrusive serialization of Scala objects into JSON. You can use
 
 For more details of the implementation and sample examples, have a look at the wiki.
 
+h1. News
+
+2010/07/28: sjson 0.7 released
+    * type class based JSON serialization introduced
+    * examples at [[Examples of Type Class based JSON serialization]]    
+
 h1. License
 
 This software is licensed under the Apache 2 license, quoted below.

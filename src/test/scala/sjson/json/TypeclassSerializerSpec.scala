@@ -174,4 +174,17 @@ class TypeclassSerializerSpec extends Spec with ShouldMatchers {
       fromjson[Holder](tojson(n)) should equal(n)
     }
   }
+
+  describe("Serialization with inheritance") {
+    it("should serialize") {
+      import Protocols._
+      import DerivedProtocol._
+      val sa = new Derived("123", "debasish ghosh", Array(Address("monroe st", "denver", "80231"), Address("tamarac st", "boulder", "80231")), true)
+      val acc = fromjson[Derived](tojson(sa))
+      acc.no should equal(sa.no)
+      acc.name should equal(sa.name)
+      acc.specialFlag should equal(sa.specialFlag)
+      acc.addresses should be === sa.addresses
+    }
+  }
 }

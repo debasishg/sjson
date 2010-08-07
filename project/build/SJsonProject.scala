@@ -21,7 +21,7 @@ class SJsonProject(info: ProjectInfo) extends DefaultProject(info) with Template
       case "2.8.0.RC7" =>
         "org.scalatest" % "scalatest" % "1.2-for-scala-2.8.0.RC7-SNAPSHOT" % "test"
       case "2.8.0" =>
-        "org.scalatest" % "scalatest" % "1.2-for-scala-2.8.0.final-SNAPSHOT" % "test"
+        "org.scalatest" % "scalatest" % "1.2" % "test"
     }
 
   val junit = "junit" % "junit" % "4.8.1"

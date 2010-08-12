@@ -77,4 +77,30 @@ object Protocols {
   import TestBeans._
   implicit val AddressWithOptionalCityFormat: Format[AddressWithOptionalCity] =
     asProduct3("street", "city", "zip")(AddressWithOptionalCity)(AddressWithOptionalCity.unapply(_).get)
+
+  import dispatch.json._
+  trait HttpType
+  implicit val HttpTypeFormat: Format[HttpType] = new Format[HttpType] {
+    def reads(json: JsValue): HttpType = json match {
+      case JsString("Get") => Get
+      case JsString("Post") => Post
+      case _ => error("Invalid HttpType")
+    }
+    def writes(a: HttpType): JsValue = a match {
+      case Get => JsString("Get")
+      case Post => JsString("Post")
+    }
+  }
+
+  case object Get extends HttpType
+  case object Post extends HttpType
+
+  case class Http(url: String, t: HttpType)
+  implicit val HttpFormat: Format[Http] = 
+    asProduct2("url", "t")(Http)(Http.unapply(_).get)
+
+  case class Bar(name: String, list: Option[List[Foo]])
+  case class Foo(name: String, list: List[Bar])
+  implicit val BarFormat: Format[Bar] = lazyFormat(asProduct2("name", "list")(Bar)(Bar.unapply(_).get))
+  implicit val FooFormat: Format[Foo] = lazyFormat(asProduct2("name", "list")(Foo)(Foo.unapply(_).get))
 }

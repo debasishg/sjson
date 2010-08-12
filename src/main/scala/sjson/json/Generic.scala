@@ -36,6 +36,16 @@ trait Generic extends Protocol {
     }
   }
 
+  /**
+   * Lazy wrapper around serialization. Useful when you want to serialize mutually recursive structures.
+   */
+  def lazyFormat[S](fmt : => Format[S]) = new Format[S]{
+    lazy val delegate = fmt;
+
+    def reads(js : JsValue) = delegate.reads(js);
+    def writes(s : S) = delegate.writes(s);
+  }
+
 
   <#list 2..9 as i> 
   <#assign typeParams><#list 1..i as j>T${j}<#if i !=j>,</#if></#list></#assign>
@@ -85,4 +95,35 @@ trait Generic extends Protocol {
    *   }
    * }  
    **/
+
+  /**
+  case class Summand[T](clazz : Class[_], format : Format[T]);
+  implicit def classToSummand[T](clazz : Class[T])(implicit fmt : Format[T]) : Summand[T] = Summand[T](clazz, fmt);
+  implicit def formatToSummand[T](format : Format[T])(implicit mf : scala.reflect.Manifest[T]) : Summand[T] = 
+    Summand[T](mf.erasure, format);
+
+  def asUnion[S](summands : Summand[_ <: S]*) : Format[S] = 
+    if (summands.length >= 256) error("Sums of 256 or more elements currently not supported");
+    else
+    new Format[S]{
+      val mappings = summands.toArray.zipWithIndex;
+
+      def reads(json : JsValue) : S = read(in)(summands(read[Byte](in)).format)
+      // def writes(ts: S) = JsArray(ts.map(t => tojson(t)(fmt)).toList)
+      // def reads(json: JsValue) = json match {
+
+      def writes(ts: S) = JsArray(ts.map(t => tojson(t)(fmt)).toList)
+
+      def writes(out : Output, s : S): Unit =
+        mappings.find(_._1.clazz.isInstance(s)) match {
+          case Some( (sum, i) ) => writeSum(out, s, sum, i)
+          case None => error("No known sum type for object " + s);
+        }
+      private def writeSum[T](out : Output, s : S, sum : Summand[T], i : Int) {
+        write(out, i.toByte);
+        // 2.7/2.8 compatibility: cast added by MH
+        write(out, sum.clazz.cast(s).asInstanceOf[T])(sum.format);
+      }
+  }
+**/
 }

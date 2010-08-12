@@ -187,4 +187,26 @@ class TypeclassSerializerSpec extends Spec with ShouldMatchers {
       acc.addresses should be === sa.addresses
     }
   }
+
+  describe("Serialization with case objects") {
+    it("should serialize") {
+      import Protocols._
+      val h = Http("http://www.google.com", Get)
+      val h1 = fromjson[Http](tojson(h))
+      h1 should equal(h)
+    }
+  }
+
+  describe("Serialization of mutually recursive types") {
+    it("should serialize without recursion") {
+      import Protocols._
+      val f = Foo("testFoo", List(Bar("test1", None), Bar("test2", None)))
+      fromjson[Foo](tojson(f)) should equal(f)
+    }
+    it("should serialize with recursion") {
+      import Protocols._
+      val fBar = Foo("testFoo", List(Bar("test1", Some(List(Foo("barList", List(Bar("test", None), Bar("test2", None))))))))
+      fromjson[Foo](tojson(fBar)) should equal(fBar)
+    }
+  }
 }

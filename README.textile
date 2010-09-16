@@ -8,6 +8,10 @@ For more details of the implementation and sample examples, have a look at the w
 
 h1. News
 
+2010/09/16: sjson 0.8 released
+    * type class based JSON serialization enhanced
+    * fixed bug in reflection based serialization
+
 2010/07/28: sjson 0.7 released
     * type class based JSON serialization introduced
     * details at "Type Class based JSON serialization":http://wiki.github.com/debasishg/sjson/typeclass-based-json-serialization  

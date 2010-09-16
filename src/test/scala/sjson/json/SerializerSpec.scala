@@ -472,4 +472,15 @@ class SerializerSpec extends Spec with ShouldMatchers {
       in.asInstanceOf[ObjectArrayTest].addresses should equal(Array(a1, a2, a3))
     }
   }
+
+  describe("Testing for an object that contains an Int within a Map, List or Tuple2") {
+    it ("should serialize properly") {
+      val a = MyJsonObject("debasish", Map("debasish" -> 123), List(100), 35)
+      serializer.in[MyJsonObject](serializer.out(a)) should equal(a)
+      val obj = serializer.in[MyJsonObject](serializer.out(a)) 
+      obj should equal(a)
+      obj.asInstanceOf[MyJsonObject].m.get("debasish").get.isInstanceOf[Int] should equal(true)
+      obj.asInstanceOf[MyJsonObject].l.head.isInstanceOf[Int] should equal(true)
+    }
+  }
 }

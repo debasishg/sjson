@@ -60,9 +60,19 @@ trait JsBean {
       Map() ++ 
         (ann match {
           case null =>
-            m.map {case (y1: JsValue, y2: JsValue) => (y1.self, y2.self)}
+            m.map {case (y1: JsValue, y2: JsValue) => 
+              (y1.self, y2.self)
+            }
+          case x if x.value.isPrimitive == true =>
+            // remember all numbers are converted to BigDecimal by the JSON parser
+            m.map {case (y1: JsValue, y2: JsValue) => 
+              if (y2.isInstanceOf[JsNumber]) (y1.self, mkNum(y2.self.asInstanceOf[BigDecimal], ann.value))
+              else (y1.self, y2.self)
+            }
           case _ =>
-            m.map {case (y1: JsValue, y2: JsValue) => (y1.self, fromJSON(y2, Some(ann.value)))}
+            m.map {case (y1: JsValue, y2: JsValue) => 
+              (y1.self, fromJSON(y2, Some(ann.value)))
+            }
          }))
   }
 
@@ -73,6 +83,10 @@ trait JsBean {
       (ann match {
         case null =>
           (t1.self, t2.self)
+        case x if x.value.isPrimitive == true =>
+          // remember all numbers are converted to BigDecimal by the JSON parser
+          if (t2.isInstanceOf[JsNumber]) (t1.self, mkNum(t2.self.asInstanceOf[BigDecimal], ann.value))
+          else (t1.self, t2.self)
         case _ =>
           (t1.self, fromJSON(t2, Some(ann.value)))
        }))
@@ -137,11 +151,21 @@ trait JsBean {
             ann match {
               case null => 
                 (Some(field), 
-                  x.map(y => y.asInstanceOf[JsValue].self))
+                  x.map{ case y: JsValue => y.self
+                  })
+
+              case a if a.value.isPrimitive == true => 
+                (Some(field), 
+                  x.map{case y: JsValue => 
+                    // remember all numbers are converted to BigDecimal by the JSON parser
+                    if (y.isInstanceOf[JsNumber]) mkNum(y.self.asInstanceOf[BigDecimal], ann.value)
+                    else y.self
+                  })
 
               case _ =>
                 (Some(field), 
-                  x.map(y => fromJSON(y.asInstanceOf[JsValue], Some(ann.value))))
+                  x.map{ case y: JsValue => fromJSON(y, Some(ann.value))
+                  })
             }
           }
         

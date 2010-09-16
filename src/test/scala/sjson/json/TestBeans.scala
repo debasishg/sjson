@@ -292,6 +292,22 @@ object TestBeans {
   ) {
     private def this() = this(null)
   }
+
+  // an object where we have an Int within a Map and would like to
+  // keep it an Int after de-serialization
+  @BeanInfo
+  case class MyJsonObject(val key: String, 
+                          @(JSONTypeHint @field)(value = classOf[Int])
+                          val m: Map[String, Int], 
+                          @(JSONTypeHint @field)(value = classOf[Int])
+                          val l: List[Int], 
+                          val i: Int) {
+    private def this() = this(null, null, null, -1)
+    override def toString = {
+      val inte: Int = m.getOrElse(key, -1)
+      "key = " + key + " mapping to " + inte + " original int = " + i
+    }
+  }
 }
 
 object Shape extends Enumeration {

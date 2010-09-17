@@ -25,4 +25,8 @@ class SJsonProject(info: ProjectInfo) extends DefaultProject(info) with Template
     }
 
   val junit = "junit" % "junit" % "4.8.1"
+
+  override def packageSrcJar = defaultJarPath("-sources.jar")
+  lazy val sourceArtifact = Artifact.sources(artifactID)
+  override def packageToPublishActions = super.packageToPublishActions ++ Seq(packageSrc)
 }

@@ -29,4 +29,9 @@ class SJsonProject(info: ProjectInfo) extends DefaultProject(info) with Template
   override def packageSrcJar = defaultJarPath("-sources.jar")
   lazy val sourceArtifact = Artifact.sources(artifactID)
   override def packageToPublishActions = super.packageToPublishActions ++ Seq(packageSrc)
+
+  override def managedStyle = ManagedStyle.Maven
+  Credentials(Path.userHome / ".ivy2" / ".credentials", log)
+  lazy val publishTo = "Scala Tools Nexus" at "http://nexus.scala-tools.org/content/repositories/releases/"
+//  lazy val publishTo = Resolver.file("Local Test Repository", Path fileProperty "java.io.tmpdir" asFile)
 }

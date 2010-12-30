@@ -278,7 +278,7 @@ object TestBeans {
   case class EnumTest(
     @(EnumTypeHint @field)(value = "sjson.json.WeekDay") start: WeekDay.Value, 
     @(EnumTypeHint @field)(value = "sjson.json.Shape") shape: Shape.Value,
-    @(EnumTypeHint @field)(value = "sjson.json.Month") month: Month.Value,
+    month: Month.Value,
     @(JSONTypeHint @field)(value = classOf[sjson.json.WeekDay.WeekDay])
     @(EnumTypeHint @field)(value = "sjson.json.WeekDay") 
     work: List[WeekDay.Value]) {

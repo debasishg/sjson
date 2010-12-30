@@ -1,6 +1,7 @@
 package sjson
 package json
 
+import java.lang.reflect.Modifier
 import java.util.TimeZone
 import dispatch.json._
 
@@ -194,13 +195,18 @@ trait JsBean {
 
                 // process Enumerations
                 else if (classOf[Enumeration#Value].isAssignableFrom(y.getType)) {
-                  y.getAnnotation(classOf[EnumTypeHint]) match {
-                    case null => 
-                      throw new IllegalArgumentException("cannot get type information for enum " + z)
+                  val method = y.getAnnotation(classOf[EnumTypeHint]) match {
+                    case null =>
+                      val enumObjectClass: Class[_] = y.getType.getEnclosingClass
+                      if (Modifier.isAbstract(enumObjectClass.getModifiers)) {
+                        throw new IllegalArgumentException("cannot get type information for enum " + z)
+                      } else {
+                        enumObjectClass.getMethod("valueOf", classOf[String])
+                      }
                     case an =>
-                      val method = Class.forName(an.value).getMethod("valueOf", classOf[String])
-                      method.invoke(null, z.asInstanceOf[String]).asInstanceOf[Option[Enumeration#Value]].get
+                      Class.forName(an.value).getMethod("valueOf", classOf[String])
                   }
+                  method.invoke(null, z.asInstanceOf[String]).asInstanceOf[Option[Enumeration#Value]].get
                 }
 
                 // as ugly as it gets

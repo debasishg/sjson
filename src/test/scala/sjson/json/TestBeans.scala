@@ -278,10 +278,11 @@ object TestBeans {
   case class EnumTest(
     @(EnumTypeHint @field)(value = "sjson.json.WeekDay") start: WeekDay.Value, 
     @(EnumTypeHint @field)(value = "sjson.json.Shape") shape: Shape.Value,
+    @(EnumTypeHint @field)(value = "sjson.json.Month") month: Month.Value,
     @(JSONTypeHint @field)(value = classOf[sjson.json.WeekDay.WeekDay])
     @(EnumTypeHint @field)(value = "sjson.json.WeekDay") 
     work: List[WeekDay.Value]) {
-    private def this() = this(null, null, null)
+    private def this() = this(null, null, null, null)
   }
 
   import java.util.TimeZone
@@ -324,4 +325,20 @@ object WeekDay extends Enumeration {
   val Fri = Value("Friday")
   val Sat = Value("Saturday")
   val Sun = Value("Sunday")
+}
+
+object Month extends Enumeration {
+  class Value(val name: String, val dayCount: Int) extends Val(name)
+  val January = new Value("January", 31)
+  val February = new Value("February", 28)
+  val March = new Value("March", 31)
+  val April = new Value("April", 30)
+  val May = new Value("May", 31)
+  val June = new Value("June", 30)
+  val July = new Value("July", 31)
+  val August = new Value("August", 31)
+  val September = new Value("September", 30)
+  val October = new Value("October", 31)
+  val November = new Value("November", 30)
+  val December = new Value("December", 31)
 }

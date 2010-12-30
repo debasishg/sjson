@@ -193,7 +193,7 @@ trait JsBean {
                 else if (y.getType.isAssignableFrom(classOf[java.util.Date])) mkDate(z.asInstanceOf[String])
 
                 // process Enumerations
-                else if (y.getType.isAssignableFrom(classOf[Enumeration#Value])) {
+                else if (classOf[Enumeration#Value].isAssignableFrom(y.getType)) {
                   y.getAnnotation(classOf[EnumTypeHint]) match {
                     case null => 
                       throw new IllegalArgumentException("cannot get type information for enum " + z)

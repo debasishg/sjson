@@ -333,10 +333,12 @@ class SerializerSpec extends Spec with ShouldMatchers {
       // val b = EnumTest( TestEnum.One)
       import WeekDay._
       import Shape._
-      val b = EnumTest(Mon, Circle, List(Mon, Tue, Wed))
+      import Month._
+      val b = EnumTest(Mon, Circle, April, List(Mon, Tue, Wed))
       val o = serializer.in[EnumTest](serializer.out(b)).asInstanceOf[EnumTest] 
       b.start should equal(o.start)
       b.shape should equal(o.shape)
+      b.month should equal(o.month)
     }
   }
 

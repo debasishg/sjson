@@ -65,7 +65,7 @@ object TestBeans {
   @BeanInfo
   case class ContactWithOptionalAddr(name: String, 
     @(JSONTypeHint @field)(value = classOf[Address])
-    @(OptionTypeHint @field)(value = classOf[Map[_,_]])
+    @(OptionTypeHint @field)(value = classOf[scala.collection.Map[String,Address]])
     addresses: Option[Map[String, Address]]) {
   
     private def this() = this(null, None)

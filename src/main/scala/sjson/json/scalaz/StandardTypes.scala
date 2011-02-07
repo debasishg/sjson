@@ -15,7 +15,7 @@ trait BasicTypes extends Protocol {
     }
     def reads(json: JsValue) = json match {
       case JsNull => None.success
-      case x => some(fromjson[T](x)).sequence[({type λ[α]=Validation[String, α]})#λ, T]
+      case x => some(fromjson[T](x)).sequence[({type λ[α]=ValidationNEL[String, α]})#λ, T]
     }
   }
 
@@ -28,7 +28,7 @@ trait BasicTypes extends Protocol {
       fmt${j}: Format[T${j}]<#if i != j>,</#if>
     </#list>
     ): Format[${typeName}] = new Format[${typeName}]{
-      def reads (json: JsValue): Validation[String, ${typeName}] = {
+      def reads (json: JsValue): Validation[NonEmptyList[String], ${typeName}] = {
         val JsArray(<#list 1..i as j>e${j}::</#list> Nil) = json
         (
     <#list 1..i as j>
@@ -50,8 +50,8 @@ trait CollectionTypes extends BasicTypes { // with Generic {
   implicit def listFormat[T](implicit fmt : Format[T]) : Format[List[T]] = new Format[List[T]] {
     def writes(ts: List[T]) = JsArray(ts.map(t => tojson(t)(fmt)))
     def reads(json: JsValue) = json match {
-      case JsArray(ts) => ts.map(t => fromjson(t)(fmt)).sequence[({type λ[α]=Validation[String, α]})#λ, T] 
-      case _ => "List expected".fail
+      case JsArray(ts) => ts.map(t => fromjson(t)(fmt)).sequence[({type λ[α]=ValidationNEL[String, α]})#λ, T] 
+      case _ => "List expected".fail.liftFailNel
     }
   }
 
@@ -94,7 +94,7 @@ trait StandardTypes { // extends CollectionTypes {
     def writes(o: BigInt) = JsValue.apply(o)
     def reads(json: JsValue) = json match {
       case JsNumber(n) => n.toBigInt.success
-      case _ => "BigInt expected".fail
+      case _ => "BigInt expected".fail.liftFailNel
     }
   }
 
@@ -102,7 +102,7 @@ trait StandardTypes { // extends CollectionTypes {
     def writes(o: BigDecimal) = JsValue.apply(o)
     def reads(json: JsValue) = json match {
       case JsNumber(n) => n.success
-      case _ => "BigDecimal expected".fail
+      case _ => "BigDecimal expected".fail.liftFailNel
     }
   }
 }

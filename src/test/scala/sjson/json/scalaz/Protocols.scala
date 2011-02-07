@@ -15,11 +15,11 @@ object Protocols {
   object AddressProtocol extends DefaultProtocol {
 
     implicit object AddressFormat extends Format[Address] {
-      def reads(json: JsValue): Validation[String, Address] = json match {
+      def reads(json: JsValue): ValidationNEL[String, Address] = json match {
         case m@JsObject(_) => 
           (field[Int]("no", m) |@| field[String]("street", m) |@| field[String]("city", m) |@| field[String]("zip", m)) { Address }
 
-        case _ => "JsObject expected".fail
+        case _ => "JsObject expected".fail.liftFailNel
       }
 
       def writes(p: Address): JsValue =
@@ -35,11 +35,30 @@ object Protocols {
     import AddressProtocol._
 
     implicit object PersonFormat extends Format[Person] {
-      def reads(json: JsValue): Validation[String, Person] = json match {
+      def reads(json: JsValue): ValidationNEL[String, Person] = json match {
         case m@JsObject(_) => 
           (field[String]("lastName", m) |@| field[String]("firstName", m) |@| field[Int]("age", m) |@| field[Address]("address", m)) { Person }
 
-        case _ => "JsObject expected".fail
+        case _ => "JsObject expected".fail.liftFailNel
+      }
+      def writes(p: Person): JsValue =
+        JsObject(List(
+          (tojson("lastName").asInstanceOf[JsString], tojson(p.lastName)), 
+          (tojson("firstName").asInstanceOf[JsString], tojson(p.firstName)), 
+          (tojson("age").asInstanceOf[JsString], tojson(p.age)),
+          (tojson("address").asInstanceOf[JsString], tojson(p.address)) ))
+    }
+  }
+
+  object IncorrectPersonProtocol extends DefaultProtocol {
+    import AddressProtocol._
+
+    implicit object PersonFormat extends Format[Person] {
+      def reads(json: JsValue): ValidationNEL[String, Person] = json match {
+        case m@JsObject(_) => 
+          (field[String]("LastName", m) |@| field[String]("firstname", m) |@| field[Int]("age", m) |@| field[Address]("address", m)) { Person }
+
+        case _ => "JsObject expected".fail.liftFailNel
       }
       def writes(p: Person): JsValue =
         JsObject(List(

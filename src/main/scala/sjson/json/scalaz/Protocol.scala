@@ -11,7 +11,7 @@ trait Writes[T] {
 }
 
 trait Reads[T] {
-  def reads(json: JsValue): Validation[String, T]
+  def reads(json: JsValue): Validation[NonEmptyList[String], T]
 }
 
 trait Format[T] extends Writes[T] with Reads[T]
@@ -30,8 +30,8 @@ trait Protocol {
 trait DefaultProtocol extends Primitives with StandardTypes with CollectionTypes
 object DefaultProtocol extends DefaultProtocol {
   import JsonSerialization._
-  def field[T](name: String, js: JsValue)(implicit fjs: Reads[T]): Validation[String, T] = {
+  def field[T](name: String, js: JsValue)(implicit fjs: Reads[T]): Validation[NonEmptyList[String], T] = {
     val JsObject(m) = js
-    m.get(JsString(name)).map(fromjson[T](_)(fjs)).getOrElse(("field " + name + " not found").fail)
+    m.get(JsString(name)).map(fromjson[T](_)(fjs)).getOrElse(("field " + name + " not found").fail.liftFailNel)
   }
 }

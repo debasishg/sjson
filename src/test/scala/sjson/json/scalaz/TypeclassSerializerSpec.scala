@@ -14,13 +14,23 @@ class TypeclassSerializerSpec extends Spec with ShouldMatchers {
   import scalaz._
   import Scalaz._
 
-  describe("Serialization using verbose protocol") {
+  describe("Serialization using Person protocol") {
     it ("should serialize a Person") {
       import Protocols._
       import PersonProtocol._
       val a = Address(12, "Monroe Street", "Denver", "80231")
       val p = Person("ghosh", "debasish", 20, a)
       fromjson[Person](tojson(p)) should equal(p.success)
+    }
+  }
+
+  describe("Serialization using incorrect Person protocol") {
+    it ("serialization should fail") {
+      import Protocols._
+      import IncorrectPersonProtocol._
+      val a = Address(12, "Monroe Street", "Denver", "80231")
+      val p = Person("ghosh", "debasish", 20, a)
+      (fromjson[Person](tojson(p))).fail.toOption.get.list should equal (List("field LastName not found", "field firstname not found"))
     }
   }
 

@@ -11,7 +11,7 @@ trait Primitives extends Protocol {
     def writes(o: Int) = JsValue.apply(o)
     def reads(json: JsValue) = json match {
       case JsNumber(n) => n.intValue.success
-      case _ => "Int expected".fail
+      case _ => "Int expected".fail.liftFailNel
     }
   }
 
@@ -19,7 +19,7 @@ trait Primitives extends Protocol {
     def writes(o: Short) = JsValue.apply(o)
     def reads(json: JsValue) = json match {
       case JsNumber(n) => n.shortValue.success
-      case _ => "Short expected".fail
+      case _ => "Short expected".fail.liftFailNel
     }
   }
 
@@ -27,7 +27,7 @@ trait Primitives extends Protocol {
     def writes(o: Long) = JsValue.apply(o)
     def reads(json: JsValue) = json match {
       case JsNumber(n) => n.longValue.success
-      case _ => "Long expected".fail
+      case _ => "Long expected".fail.liftFailNel
     }
   }
 
@@ -35,7 +35,7 @@ trait Primitives extends Protocol {
     def writes(o: Float) = JsValue.apply(o)
     def reads(json: JsValue) = json match {
       case JsNumber(n) => n.floatValue.success
-      case _ => "Float expected".fail
+      case _ => "Float expected".fail.liftFailNel
     }
   }
 
@@ -43,7 +43,7 @@ trait Primitives extends Protocol {
     def writes(o: Double) = JsValue.apply(o)
     def reads(json: JsValue) = json match {
       case JsNumber(n) => n.doubleValue.success
-      case _ => "Double expected".fail
+      case _ => "Double expected".fail.liftFailNel
     }
   }
 
@@ -52,7 +52,7 @@ trait Primitives extends Protocol {
     def reads(json: JsValue) = json match {
       case JsTrue => true.success
       case JsFalse => false.success
-      case _ => "Boolean expected".fail
+      case _ => "Boolean expected".fail.liftFailNel
     }
   }
 
@@ -60,7 +60,7 @@ trait Primitives extends Protocol {
     def writes(o: String) = JsValue.apply(o)
     def reads(json: JsValue) = json match {
       case JsString(s) => s.success
-      case _ => "String expected".fail
+      case _ => "String expected".fail.liftFailNel
     }
   }
 }

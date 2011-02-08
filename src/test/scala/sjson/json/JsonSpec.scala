@@ -470,13 +470,14 @@ class JsonSpec extends Spec with ShouldMatchers {
       import WeekDay._
       import Shape._
       import Month._
-      val x = EnumTest(Mon, Circle, March, List(Mon, Tue, Wed))
+      val x = EnumTest(Mon, Circle, March, List(Mon, Tue, Wed), List(February, December))
       val js = jsBean.toJSON(x)
       val o = jsBean.fromJSON(Js(js), Some(classOf[EnumTest])).asInstanceOf[EnumTest]
       o.start should equal(x.start)
       o.shape should equal(x.shape)
       o.month should equal(x.month)
       o.work should equal(x.work)
+      o.months should equal(x.months)
     }
   }
 }

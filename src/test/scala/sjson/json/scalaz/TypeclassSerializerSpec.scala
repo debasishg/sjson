@@ -45,6 +45,66 @@ class TypeclassSerializerSpec extends Spec with ShouldMatchers {
       fromjson[List[String]](tojson(l2)) should equal(l2.success)
     }
   }
+  val jsonString = 
+    """{
+         "lastName" : "ghosh", 
+         "firstName" : "debasish", 
+         "age" : 20, 
+         "address" : { "no" : 12, "street" : "Monroe Street", "city" : "Denver", "zip" : "80231" }, 
+         "phone" : { "no" : "3032144567", "ext" : 212 },
+         "office" :
+          {
+            "name" : "anshinsoft",
+            "address" : { "no" : 23, "street" : "Hampden Avenue", "city" : "Denver", "zip" : "80245" } 
+          }
+       }"""
+
+  import Protocols._
+  import AddressProtocol._
+  import dispatch.json._
+  import Js._
+
+  val js = Js(jsonString)
+  val c = Contact("ghosh","debasish",Address(12,"Monroe Street","Denver","80231"),"Denver",Address(23,"Hampden Avenue","Denver","80245"))
+
+  describe("Serialization from arbitrary JSON string") {
+    it ("should serialize into Contact") {
+
+      (field[String]("lastName", js)    |@| 
+        field[String]("firstName", js)   |@| 
+        field[Address]("address", js)    |@| 
+        field[String]("city", (('office ! obj) andThen ('address ? obj))(js)) |@|
+        field[Address]((('office ! obj) andThen ('address ! obj)), js)) { Contact } should equal(c.success)
+    }
+
+    it ("should not serialize but report list of errors") {
+
+      (field[String]("lastName", js)    |@| 
+        field[String]("FirstName", js)   |@| 
+        field[Address]("address", js)    |@| 
+        field[String]("cty", (('office ! obj) andThen ('address ? obj))(js)) |@|
+        field[Address]((('office ! obj) andThen ('address ! obj)), js)) { Contact }.fail.toOption.get.list should equal(List("field FirstName not found", "field cty not found"))
+    }
+
+    it("should serialize monadically") {
+      // reader monad
+      val contact =
+        for {
+          last    <- field_c[String]("lastName")
+          first   <- field_c[String]("firstName")
+          address <- field_c[Address]("address")
+          office  <- field_c[Address]((('office ! obj) andThen ('address ! obj)))
+        }
+        yield(last |@| first |@| address |@| office)
+
+      // city needs to be parsed separately since we are working on part of js
+      val city = field_c[String]("city")
+
+      // compose everything and build a Contact
+      (contact(js) |@| city((('office ! obj) andThen ('address ? obj))(js))) { (last, first, address, office, city) => 
+        Contact(last, first, address, city, office) } should equal(c.success)
+    }
+  }
 
   /**
   describe("Serialization of Maps") {

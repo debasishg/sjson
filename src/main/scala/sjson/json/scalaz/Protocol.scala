@@ -26,12 +26,39 @@ trait Protocol {
   implicit val StringFormat: Format[String]
 }
 
-// trait DefaultProtocol extends CollectionTypes with Generic with Primitives
-trait DefaultProtocol extends Primitives with StandardTypes with CollectionTypes
+trait DefaultProtocol extends CollectionTypes with Generic with Primitives
 object DefaultProtocol extends DefaultProtocol {
+
+  import dispatch.json._
+  import Js._
   import JsonSerialization._
+
+  // field[String](('lastName ! str), js)
+  // field[Address](('address ! obj), js)
   def field[T](name: String, js: JsValue)(implicit fjs: Reads[T]): Validation[NonEmptyList[String], T] = {
     val JsObject(m) = js
     m.get(JsString(name)).map(fromjson[T](_)(fjs)).getOrElse(("field " + name + " not found").fail.liftFailNel)
+  }
+
+  // field[String]((('address ! obj) andThen ('city ! str)), js)
+  def field[T](f: (JsValue => JsValue), js: JsValue)(implicit fjs: Reads[T]): Validation[NonEmptyList[String], T] = try {
+    fromjson[T](f(js))(fjs)
+  } catch {
+    case e: Exception => e.getMessage.fail.liftFailNel
+  }
+
+  // curried version
+  def field_c[T](name: String)(implicit fjs: Reads[T]) = { js: JsValue =>
+    val JsObject(m) = js
+    m.get(JsString(name)).map(fromjson[T](_)(fjs)).getOrElse(("field " + name + " not found").fail.liftFailNel)
+  }
+
+  // curried version
+  def field_c[T](f: (JsValue => JsValue))(implicit fjs: Reads[T]) = { js: JsValue =>
+    try {
+      fromjson[T](f(js))(fjs)
+    } catch {
+      case e: Exception => e.getMessage.fail.liftFailNel
+    }
   }
 }

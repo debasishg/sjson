@@ -11,6 +11,7 @@ import dispatch.json._
 object Protocols {
   case class Address(no: Int, street: String, city: String, zip: String)
   case class Person(lastName: String, firstName: String, age: Int, address: Address)
+  case class Contact(lastName: String, firstName: String, address: Address, officeCity: String, officeAddress: Address)
 
   object AddressProtocol extends DefaultProtocol {
 

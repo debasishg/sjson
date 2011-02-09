@@ -476,6 +476,7 @@ class JsonSpec extends Spec with ShouldMatchers {
       o.start should equal(x.start)
       o.shape should equal(x.shape)
       o.month should equal(x.month)
+      o.work should equal(x.work)
     }
   }
 }

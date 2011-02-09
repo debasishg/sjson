@@ -97,14 +97,14 @@ class SerializerSpec extends Spec with ShouldMatchers {
       val m1 = serializer.in[AnyRef](serializer.out(m))
                          .asInstanceOf[JsValue].self
                          .asInstanceOf[Map[_,_]]
-      val m2 = Map(m1.map {x => 
-        (jsBean.fromJSON(x._1.asInstanceOf[JsValue], Some(classOf[String])), 
+      val m2 = Map(m1.map {x =>
+        (jsBean.fromJSON(x._1.asInstanceOf[JsValue], Some(classOf[String])),
           jsBean.fromJSON(x._2.asInstanceOf[JsValue], Some(classOf[String])))}.toList: _*)
 
       m.keySet.toList should equal(m2.keySet.toList)
     }
   }
-  
+
   describe("Simple bean serialization") {
     val addr = Address("Market Street", "San Francisco", "956871")
     it("should give an instance of Address") {
@@ -339,6 +339,7 @@ class SerializerSpec extends Spec with ShouldMatchers {
       b.start should equal(o.start)
       b.shape should equal(o.shape)
       b.month should equal(o.month)
+      b.work should equal(o.work)
     }
   }
 

@@ -3,7 +3,6 @@ package json
 
 import java.lang.reflect.Modifier
 import java.util.TimeZone
-import dispatch.json._
 
 trait JsBean {
   
@@ -25,7 +24,6 @@ trait JsBean {
   
   import java.lang.reflect.Field
   import dispatch.json._
-  import dispatch.json.Js._
   import Util._
 
   private def getProps[T](clazz: Class[T]) = {
@@ -66,13 +64,13 @@ trait JsBean {
             }
           case x if x.value.isPrimitive == true =>
             // remember all numbers are converted to BigDecimal by the JSON parser
-            m.map {case (y1: JsValue, y2: JsValue) => 
+            m.map {case (y1: JsValue, y2: JsValue) =>
               if (y2.isInstanceOf[JsNumber]) (y1.self, mkNum(y2.self.asInstanceOf[BigDecimal], ann.value))
               else (y1.self, y2.self)
             }
           case _ =>
             m.map {case (y1: JsValue, y2: JsValue) => 
-              (y1.self, fromJSON(y2, Some(ann.value)))
+              (y1.self, fromJSON(y2, Some(ann.value), field))
             }
          }))
   }
@@ -89,15 +87,48 @@ trait JsBean {
           if (t2.isInstanceOf[JsNumber]) (t1.self, mkNum(t2.self.asInstanceOf[BigDecimal], ann.value))
           else (t1.self, t2.self)
         case _ =>
-          (t1.self, fromJSON(t2, Some(ann.value)))
+          (t1.self, fromJSON(t2, Some(ann.value), field))
        }))
   }
   
   /**
+   * Convert the value to an Enumeration.Value instance using class <tt>enumObjectClass</tt>'s valueOf method. Returns an instance of
+   * <tt>Enumeration.Value</tt>.
+   */
+  private def toEnumValue[T](value: Any, enumObjectClass: Class[T]): Enumeration#Value = {
+    if (Modifier.isAbstract(enumObjectClass.getModifiers)) {
+      throw new IllegalArgumentException("cannot get type information for enum " + value)
+    }
+    val method = enumObjectClass.getMethod("valueOf", classOf[String])
+    method.invoke(null, value.asInstanceOf[String]).asInstanceOf[Option[Enumeration#Value]].get
+  }
+
+  private def getEnumObjectClass[T <: Enumeration#Value](targetClass: Class[T], y: Field): Class[_] = {
+    val enumObjectClass = y.getAnnotation(classOf[EnumTypeHint]) match {
+      case null =>
+        targetClass.getEnclosingClass
+      case an => Class.forName(an.value)
+    }
+    enumObjectClass
+  }
+
+  /**
+   * Convert the <tt>JsValue</tt> to an instance of the class <tt>context</tt>, using the parent for any annotation hints.
+   * Returns an instance of <tt>T</tt>.
+   */
+  def fromJSON[T](js: JsValue, context: Option[Class[T]], parent: Field): T = {
+    if (context.isDefined && classOf[Enumeration#Value].isAssignableFrom(context.get)) {
+      toEnumValue(js.self, getEnumObjectClass(context.get.asInstanceOf[Class[Enumeration#Value]], parent)).asInstanceOf[T]
+    } else {
+      fromJSON(js, context)
+    }
+  }
+
+  /**
    * Convert the <tt>JsValue</tt> to an instance of the class <tt>context</tt>. Returns an instance of
    * <tt>T</tt>.
    */
-  def fromJSON[T](js: JsValue, context: Option[Class[T]]): T = { 
+  def fromJSON[T](js: JsValue, context: Option[Class[T]]): T = {
     if (!js.isInstanceOf[JsObject] || !context.isDefined) js.self.asInstanceOf[T]
     else {
       // bean as a map from json
@@ -142,7 +173,7 @@ trait JsBean {
 
               // case 3
               case _ =>
-                (Some(field), fromJSON(value, Some(inner)))
+                (Some(field), fromJSON(value, Some(inner), field))
             }
           }
           
@@ -165,7 +196,7 @@ trait JsBean {
 
               case _ =>
                 (Some(field), 
-                  x.map{ case y: JsValue => fromJSON(y, Some(ann.value))
+                  x.map{ case y: JsValue => fromJSON(y, Some(ann.value), field)
                   })
             }
           }
@@ -185,7 +216,7 @@ trait JsBean {
               // type conversion hacks
               val num = 
                 // json parser makes BigDecimal out of all numbers
-                if (z.isInstanceOf[BigDecimal]) mkNum(z.asInstanceOf[BigDecimal], y.getType) 
+                if (z.isInstanceOf[BigDecimal]) mkNum(z.asInstanceOf[BigDecimal], y.getType)
 
                 // if it's timezone, need to make one from JSON string
                 else if (y.getType.isAssignableFrom(classOf[java.util.TimeZone])) TimeZone.getTimeZone(z.asInstanceOf[String])
@@ -195,25 +226,14 @@ trait JsBean {
 
                 // process Enumerations
                 else if (classOf[Enumeration#Value].isAssignableFrom(y.getType)) {
-                  val method = y.getAnnotation(classOf[EnumTypeHint]) match {
-                    case null =>
-                      val enumObjectClass: Class[_] = y.getType.getEnclosingClass
-                      if (Modifier.isAbstract(enumObjectClass.getModifiers)) {
-                        throw new IllegalArgumentException("cannot get type information for enum " + z)
-                      } else {
-                        enumObjectClass.getMethod("valueOf", classOf[String])
-                      }
-                    case an =>
-                      Class.forName(an.value).getMethod("valueOf", classOf[String])
-                  }
-                  method.invoke(null, z.asInstanceOf[String]).asInstanceOf[Option[Enumeration#Value]].get
+                  toEnumValue(z, getEnumObjectClass(y.getType.asInstanceOf[Class[Enumeration#Value]], y))
                 }
 
                 // as ugly as it gets
                 else if (y.getType.isArray) {
                   mkArray(z.asInstanceOf[List[_]], y.getType.getComponentType)
                 }
-                  
+
                 // special treatment for JSON "nulls"
                 // else if (z.isInstanceOf[String] && (z == "null")) null
                 else if (z.isInstanceOf[String] && (z == null)) null
@@ -221,7 +241,7 @@ trait JsBean {
 
               // need to handle Option[] in individual fields
               if (y.getType.isAssignableFrom(classOf[scala.Option[_]]))
-                y.set(instance, Some(num)) else y.set(instance, num) 
+                y.set(instance, Some(num)) else y.set(instance, num)
             }
           }
         }
@@ -286,29 +306,29 @@ trait JsBean {
         throw new UnsupportedOperationException("Class " + clazz + " not supported for conversion")
       }
         
-      val props = 
+      val props =
         for {
           pd <- pds
           val rm = pd.getReadMethod
           val rv = rm.invoke(obj)
-            
+
           // Option[] needs to be treated differently
           val (rval, isOption) = rv match {
             case (o: Option[_]) =>
               if (o.isDefined) (o.get.asInstanceOf[AnyRef], true) else (null, true)
             case x => (x, false)
           }
-            
+
           val ann = rm.getAnnotation(classOf[JSONProperty])
-          val v = 
-            if (ann == null || ann.value == null || ann.value.length == 0) pd.getName 
+          val v =
+            if (ann == null || ann.value == null || ann.value.length == 0) pd.getName
             else ann.value
-          val ignore = 
+          val ignore =
             if (ann != null) ann.ignore || (rv == null && ann.ignoreIfNull) else false
 
           if ((ignore == false) && (!isOption || (isOption && rval != null)))
         } yield toJSON(v) + ":" + toJSON(rval)
-      
+
       props.mkString("{", ",", "}")
     }
   }

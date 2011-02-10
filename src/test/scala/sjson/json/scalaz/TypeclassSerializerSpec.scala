@@ -106,6 +106,14 @@ class TypeclassSerializerSpec extends Spec with ShouldMatchers {
     }
   }
 
+  describe("Serialization of simple objects") {
+    it("should serialize into json and back") {
+      import Protocols._
+      val shop = Shop("Shoppers Stop", "dress material", 1000)
+      fromjson[Shop](tojson(shop)) should equal(shop.success)
+    }
+  }
+
   /**
   describe("Serialization of Maps") {
     it ("should serialize Map of Strings & Strings") {
@@ -113,16 +121,18 @@ class TypeclassSerializerSpec extends Spec with ShouldMatchers {
       fromjson[Map[String, String]](tojson(m)) should equal(m)
     }
   }
+  **/
 
   describe("Serialization of composite objects") {
     it("should serialize into json and back") {
       import Protocols._
-      val contact = Contact("Debasish Ghosh", 
-        List(Address("monroe st", "denver", "80231"), Address("pine drive", "santa clara", "95054")))
-      fromjson[Contact](tojson(contact)) should equal(contact)
+      val addressBook = AddressBook("Debasish Ghosh", 
+        List(Address(100, "monroe st", "denver", "80231"), Address(23, "pine drive", "santa clara", "95054")))
+      fromjson[AddressBook](tojson(addressBook)) should equal(addressBook.success)
     }
   }
 
+  /**
   describe("Serialization of composite objects with arrays") {
     it("should serialize into json and back") {
       import Protocols._
@@ -245,17 +255,15 @@ class TypeclassSerializerSpec extends Spec with ShouldMatchers {
       fromjson[Holder](tojson(n)) should equal(n)
     }
   }
+  **/
 
   describe("Serialization with inheritance") {
     it("should serialize") {
       import Protocols._
       import DerivedProtocol._
-      val sa = new Derived("123", "debasish ghosh", Array(Address("monroe st", "denver", "80231"), Address("tamarac st", "boulder", "80231")), true)
-      val acc = fromjson[Derived](tojson(sa))
-      acc.no should equal(sa.no)
-      acc.name should equal(sa.name)
-      acc.specialFlag should equal(sa.specialFlag)
-      acc.addresses should be === sa.addresses
+      val sa = new Derived("123", "debasish ghosh", List(Address(100, "monroe st", "denver", "80231"), Address(23, "tamarac st", "boulder", "80231")), true)
+      val Success(acc) = fromjson[Derived](tojson(sa))
+      acc should equal(sa)
     }
   }
 
@@ -264,7 +272,7 @@ class TypeclassSerializerSpec extends Spec with ShouldMatchers {
       import Protocols._
       val h = Http("http://www.google.com", Get)
       val h1 = fromjson[Http](tojson(h))
-      h1 should equal(h)
+      h1 should equal(h.success)
     }
   }
 
@@ -272,13 +280,12 @@ class TypeclassSerializerSpec extends Spec with ShouldMatchers {
     it("should serialize without recursion") {
       import Protocols._
       val f = Foo("testFoo", List(Bar("test1", None), Bar("test2", None)))
-      fromjson[Foo](tojson(f)) should equal(f)
+      fromjson[Foo](tojson(f)) should equal(f.success)
     }
     it("should serialize with recursion") {
       import Protocols._
       val fBar = Foo("testFoo", List(Bar("test1", Some(List(Foo("barList", List(Bar("test", None), Bar("test2", None))))))))
-      fromjson[Foo](tojson(fBar)) should equal(fBar)
+      fromjson[Foo](tojson(fBar)) should equal(fBar.success)
     }
   }
-  **/
 }

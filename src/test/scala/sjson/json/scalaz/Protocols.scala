@@ -69,4 +69,68 @@ object Protocols {
           (tojson("address").asInstanceOf[JsString], tojson(p.address)) ))
     }
   }
+
+  case class Shop(store: String, item: String, price: Int)
+  implicit val ShopFormat: Format[Shop] = 
+    asProduct3("store", "item", "price")(Shop)(Shop.unapply(_).get)
+
+  import AddressProtocol._
+  case class AddressBook(name: String, addresses: List[Address])
+  implicit val AddressBookFormat: Format[AddressBook] = 
+    asProduct2("name", "addresses")(AddressBook)(AddressBook.unapply(_).get)
+
+  case class Base(no: String, name: String, addresses: List[Address])
+  implicit val BaseFormat: Format[Base] = 
+    asProduct3("no", "name", "addresses")(Base)(Base.unapply(_).get)
+
+  class Derived(no: String, name: String, addresses: List[Address], special: Boolean) 
+    extends Base(no, name, addresses) {
+    val specialFlag = special
+  }
+  object DerivedProtocol extends DefaultProtocol {
+    import dispatch.json._
+    import JsonSerialization._
+    implicit object DerivedFormat extends Format[Derived] {
+      def reads(json: JsValue): Validation[NonEmptyList[String], Derived] = {
+        val Success(b) = fromjson[Base](json)
+        json match {
+          case m@JsObject(_) =>
+            val Success(spl) = field[Boolean]("specialFlag", m)
+            new Derived(b.no, b.name, b.addresses, spl).success
+          case _ => "JsObject expected".fail.liftFailNel
+        }
+      }
+      def writes(a: Derived): JsValue = {
+        val o = tojson(a: Base)
+        val JsObject(m) = o
+        JsObject(m ++ List((tojson("specialFlag").asInstanceOf[JsString], tojson(a.specialFlag))))
+      }
+    }
+  }
+
+  import dispatch.json._
+  trait HttpType
+  implicit val HttpTypeFormat: Format[HttpType] = new Format[HttpType] {
+    def reads(json: JsValue): Validation[NonEmptyList[String], HttpType] = json match {
+      case JsString("Get") => Get.success
+      case JsString("Post") => Post.success
+      case _ => "Invalid HttpType".fail.liftFailNel
+    }
+    def writes(a: HttpType): JsValue = a match {
+      case Get => JsString("Get")
+      case Post => JsString("Post")
+    }
+  }
+
+  case object Get extends HttpType
+  case object Post extends HttpType
+
+  case class Http(url: String, t: HttpType)
+  implicit val HttpFormat: Format[Http] = 
+    asProduct2("url", "t")(Http)(Http.unapply(_).get)
+
+  case class Bar(name: String, list: Option[List[Foo]])
+  case class Foo(name: String, list: List[Bar])
+  implicit val BarFormat: Format[Bar] = lazyFormat(asProduct2("name", "list")(Bar)(Bar.unapply(_).get))
+  implicit val FooFormat: Format[Foo] = lazyFormat(asProduct2("name", "list")(Foo)(Foo.unapply(_).get))
 }

@@ -152,20 +152,18 @@ class TypeclassSerializerSpec extends Spec with ShouldMatchers {
       val i = Some(200)
       fromjson[Option[Int]](tojson[Option[Int]](i)) should equal(i.success)
     }
-    /**
     it("should serialize AddressWithOptionalCity") {
-      import TestBeans._
+      import sjson.json.TestBeans._
       import Protocols._
       val ad = AddressWithOptionalCity("garer math", Some("mumbai"), "400087")
-      fromjson[AddressWithOptionalCity](tojson(ad)) should equal(ad)
+      fromjson[AddressWithOptionalCity](tojson(ad)) should equal(ad.success)
     }
     it("should serialize AddressWithOptionalCity without city") {
-      import TestBeans._
+      import sjson.json.TestBeans._
       import Protocols._
       val ad = AddressWithOptionalCity("garer math", None, "400087")
-      fromjson[AddressWithOptionalCity](tojson(ad)) should equal(ad)
+      fromjson[AddressWithOptionalCity](tojson(ad)) should equal(ad.success)
     }
-    **/
   }
 
   describe("Serialization of tuples") {
@@ -231,14 +229,14 @@ class TypeclassSerializerSpec extends Spec with ShouldMatchers {
       fromjson[immutable.Set[(String, Address)]](tojson(s)) should equal(s)
     }
   }
+  **/
 
   describe("Serialization of complex types") {
     it("should serialize complex types") {
       val l = List(Map("1"->"dg", "2"->"mc"), Map("1"->"irc", "2"->"rc", "3"->"nd"))
-      fromjson[List[Map[String, String]]](tojson(l)) should equal(l)
+      fromjson[List[Map[String, String]]](tojson(l)) should equal(l.success)
     }
   }
-  **/
 
   describe("Serialization of wrappers") {
     it("should serialize") {

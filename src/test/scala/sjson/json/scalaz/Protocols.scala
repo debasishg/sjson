@@ -143,4 +143,8 @@ object Protocols {
   case class Account(no: String, name: String, addresses: Array[Address])
   implicit val AccountFormat: Format[Account] = 
     asProduct3("no", "name", "addresses")(Account)(Account.unapply(_).get)
+
+  import sjson.json.TestBeans._
+  implicit val AddressWithOptionalCityFormat: Format[AddressWithOptionalCity] =
+    asProduct3("street", "city", "zip")(AddressWithOptionalCity)(AddressWithOptionalCity.unapply(_).get)
 }

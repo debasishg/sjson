@@ -114,14 +114,12 @@ class TypeclassSerializerSpec extends Spec with ShouldMatchers {
     }
   }
 
-  /**
   describe("Serialization of Maps") {
     it ("should serialize Map of Strings & Strings") {
       val m = Map("100" -> "dg", "200" -> "mc")
-      fromjson[Map[String, String]](tojson(m)) should equal(m)
+      fromjson[Map[String, String]](tojson(m)) should equal(m.success)
     }
   }
-  **/
 
   describe("Serialization of composite objects") {
     it("should serialize into json and back") {
@@ -132,20 +130,18 @@ class TypeclassSerializerSpec extends Spec with ShouldMatchers {
     }
   }
 
-  /**
   describe("Serialization of composite objects with arrays") {
     it("should serialize into json and back") {
       import Protocols._
       val account = Account("123", "Debasish Ghosh", 
-        Array(Address("monroe st", "denver", "80231"), Address("pine drive", "santa clara", "95054")))
+        Array(Address(100, "monroe st", "denver", "80231"), Address(234, "pine drive", "santa clara", "95054")))
 
-      val ac = fromjson[Account](tojson(account))
+      val Success(ac) = fromjson[Account](tojson(account))
       ac.no should equal(account.no)
       ac.name should equal(account.name)
       ac.addresses should be === account.addresses
     }
   }
-  **/
 
   describe("Serialization of Option") {
     it("should serialize an option field") {
@@ -242,20 +238,20 @@ class TypeclassSerializerSpec extends Spec with ShouldMatchers {
       fromjson[List[Map[String, String]]](tojson(l)) should equal(l)
     }
   }
+  **/
 
   describe("Serialization of wrappers") {
     it("should serialize") {
       import Protocols._
       val n = Name("debasish ghosh")
-      fromjson[Name](tojson(n)) should equal(n)
+      fromjson[Name](tojson(n)) should equal(n.success)
     }
     it("should serialize list wrappers") {
       import Protocols._
       val n = Holder(List("debasish ghosh", "jonas boner", "stephan schmidt"))
-      fromjson[Holder](tojson(n)) should equal(n)
+      fromjson[Holder](tojson(n)) should equal(n.success)
     }
   }
-  **/
 
   describe("Serialization with inheritance") {
     it("should serialize") {

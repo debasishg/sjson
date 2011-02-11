@@ -133,4 +133,14 @@ object Protocols {
   case class Foo(name: String, list: List[Bar])
   implicit val BarFormat: Format[Bar] = lazyFormat(asProduct2("name", "list")(Bar)(Bar.unapply(_).get))
   implicit val FooFormat: Format[Foo] = lazyFormat(asProduct2("name", "list")(Foo)(Foo.unapply(_).get))
+
+  case class Name(name: String)
+  implicit val NameFormat: Format[Name] = wrap[Name, String]("name")(_.name, Name)
+
+  case class Holder(item: List[String])
+  implicit val HolderFormat: Format[Holder] = wrap[Holder, List[String]]("item")(_.item, Holder)
+
+  case class Account(no: String, name: String, addresses: Array[Address])
+  implicit val AccountFormat: Format[Account] = 
+    asProduct3("no", "name", "addresses")(Account)(Account.unapply(_).get)
 }

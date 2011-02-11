@@ -32,15 +32,19 @@ trait Generic extends Protocol {
    * val n = Name("debasish ghosh")
    * fromjson[Name](tojson(n)) should equal(n)
    * </pre>
+   */
   def wrap[S, T](name: String)(to : S => T, from : T => S)(implicit fmt : Format[T]) = new Format[S]{
     def writes(s : S) = JsObject(List((tojson(name).asInstanceOf[JsString], tojson(to(s)))))
     def reads(js : JsValue) = js match {
-      case JsObject(m) =>
-        (from(fromjson[T](m(JsString(name))))).success
+      case m@JsObject(_) =>
+        val f = field[T](name, m)
+        f match {
+          case Success(v) => from(v).success
+          case Failure(e) => e.fail
+        }
       case _ => "Object expected".fail.liftFailNel
     }
   }
-   */
 
   /**
    * Lazy wrapper around serialization. Useful when you want to serialize mutually recursive structures.

@@ -55,13 +55,12 @@ trait CollectionTypes extends BasicTypes { // with Generic {
     }
   }
 
-  /**
   import scala.reflect.Manifest
   implicit def arrayFormat[T](implicit fmt : Format[T], mf: Manifest[T]) : Format[Array[T]] = new Format[Array[T]] {
     def writes(ts: Array[T]) = JsArray((ts.map(t => tojson(t)(fmt))).toList)
     def reads(json: JsValue) = json match {
-      case JsArray(ts) => listToArray(ts.map(t => fromjson(t)(fmt))).sequence[({type λ[α]=Validation[String, α]})#λ, T]
-      case _ => "Array expected".fail
+      case JsArray(ts) => (ts.map(t => fromjson(t)(fmt)).sequence[({type λ[α]=ValidationNEL[String, α]})#λ, T]).map(listToArray(_))
+      case _ => "Array expected".fail.liftFailNel
     }
   }
   def listToArray[T: Manifest](ls: List[T]): Array[T] = ls.toArray
@@ -69,11 +68,17 @@ trait CollectionTypes extends BasicTypes { // with Generic {
   implicit def mapFormat[K, V](implicit fmtk: Format[K], fmtv: Format[V]) : Format[Map[K, V]] = new Format[Map[K, V]] {
     def writes(ts: Map[K, V]) = JsObject(ts.map{case (k, v) => ((tojson(k.toString)).asInstanceOf[JsString], tojson(v)(fmtv))})
     def reads(json: JsValue) = json match {
-      case JsObject(m) => Map() ++ m.map{case (k, v) => (fromjson[K](k)(fmtk), fromjson[V](v)(fmtv))}
-      case _ => throw new RuntimeException("Map expected")
+      case JsObject(m) => 
+        val Success(keys) = 
+          m.map{ case (k, v) => fromjson[K](k)(fmtk)}.toList.sequence[({type λ[α]=ValidationNEL[String, α]})#λ, K]
+        val Success(values) = 
+          m.map{ case (k, v) => fromjson[V](v)(fmtv)}.toList.sequence[({type λ[α]=ValidationNEL[String, α]})#λ, V]
+        (Map() ++ (keys zip values)).success[NonEmptyList[String]]
+      case _ => "Map expected".fail.liftFailNel
     }
   }
 
+  /**
   import scala.collection._
   implicit def mutableSetFormat[T](implicit fmt: Format[T]): Format[mutable.Set[T]] = 
     viaSeq((x: Seq[T]) => mutable.Set(x: _*))

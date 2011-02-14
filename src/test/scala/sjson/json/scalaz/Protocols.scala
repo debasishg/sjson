@@ -32,6 +32,25 @@ object Protocols {
     }
   }
 
+  object IncorrectAddressProtocol extends DefaultProtocol {
+
+    implicit object AddressFormat extends Format[Address] {
+      def reads(json: JsValue): ValidationNEL[String, Address] = json match {
+        case m@JsObject(_) => 
+          (field[Int]("number", m) |@| field[String]("stret", m) |@| field[String]("City", m) |@| field[String]("zip", m)) { Address }
+
+        case _ => "JsObject expected".fail.liftFailNel
+      }
+
+      def writes(p: Address): JsValue =
+        JsObject(List(
+          (tojson("no").asInstanceOf[JsString], tojson(p.no)), 
+          (tojson("street").asInstanceOf[JsString], tojson(p.street)), 
+          (tojson("city").asInstanceOf[JsString], tojson(p.city)),
+          (tojson("zip").asInstanceOf[JsString], tojson(p.zip)) ))
+    }
+  }
+
   object PersonProtocol extends DefaultProtocol {
     import AddressProtocol._
 
@@ -147,4 +166,9 @@ object Protocols {
   import sjson.json.TestBeans._
   implicit val AddressWithOptionalCityFormat: Format[AddressWithOptionalCity] =
     asProduct3("street", "city", "zip")(AddressWithOptionalCity)(AddressWithOptionalCity.unapply(_).get)
+
+  val streetLens: Lens[Address, String] = Lens((a: Address) => a.street, (a: Address, s: String) => a.copy(street = s))
+  case class GoodName(lastName: String, firstName: String)
+  implicit val GoodNameFormat: Format[GoodName] = 
+    asProduct2("lastName", "firstName")(GoodName)(GoodName.unapply(_).get)
 }

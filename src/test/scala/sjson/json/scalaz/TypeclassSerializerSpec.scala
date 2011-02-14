@@ -14,7 +14,7 @@ class TypeclassSerializerSpec extends Spec with ShouldMatchers {
   import scalaz._
   import Scalaz._
 
-  describe("Serialization using Person protocol") {
+  describe("Serialization using standard protocol") {
     it ("should serialize a Person") {
       import Protocols._
       import PersonProtocol._
@@ -22,10 +22,23 @@ class TypeclassSerializerSpec extends Spec with ShouldMatchers {
       val p = Person("ghosh", "debasish", 20, a)
       fromjson[Person](tojson(p)) should equal(p.success)
     }
+
+    it ("should serialize an Address") {
+      import Protocols._
+      import AddressProtocol._
+      val a = Address(12, "Tamarac Square", "Denver", "80231")
+      fromjson[Address](tojson(a)) should equal(a.success)
+    }
   }
 
-  describe("Serialization using incorrect Person protocol") {
-    it ("serialization should fail") {
+  describe("Serialization using incorrect protocol") {
+    it ("address serialization should fail") {
+      import Protocols._
+      import IncorrectAddressProtocol._
+      val a = Address(12, "Monroe Street", "Denver", "80231")
+      (fromjson[Address](tojson(a))).fail.toOption.get.list should equal (List("field number not found", "field stret not found", "field City not found"))
+    }
+    it ("person serialization should fail") {
       import Protocols._
       import IncorrectPersonProtocol._
       val a = Address(12, "Monroe Street", "Denver", "80231")
@@ -71,19 +84,19 @@ class TypeclassSerializerSpec extends Spec with ShouldMatchers {
     it ("should serialize into Contact") {
 
       (field[String]("lastName", js)    |@| 
-        field[String]("firstName", js)   |@| 
-        field[Address]("address", js)    |@| 
-        field[String]("city", (('office ! obj) andThen ('address ? obj))(js)) |@|
-        field[Address]((('office ! obj) andThen ('address ! obj)), js)) { Contact } should equal(c.success)
+       field[String]("firstName", js)   |@| 
+       field[Address]("address", js)    |@| 
+       field[String]("city", (('office ! obj) andThen ('address ? obj))(js)) |@|
+       field[Address]((('office ! obj) andThen ('address ! obj)), js)) { Contact } should equal(c.success)
     }
 
     it ("should not serialize but report list of errors") {
 
       (field[String]("lastName", js)    |@| 
-        field[String]("FirstName", js)   |@| 
-        field[Address]("address", js)    |@| 
-        field[String]("cty", (('office ! obj) andThen ('address ? obj))(js)) |@|
-        field[Address]((('office ! obj) andThen ('address ! obj)), js)) { Contact }.fail.toOption.get.list should equal(List("field FirstName not found", "field cty not found"))
+       field[String]("FirstName", js)   |@| 
+       field[Address]("address", js)    |@| 
+       field[String]("cty", (('office ! obj) andThen ('address ? obj))(js)) |@|
+       field[Address]((('office ! obj) andThen ('address ! obj)), js)) { Contact }.fail.toOption.get.list should equal(List("field FirstName not found", "field cty not found"))
     }
 
     it("should serialize monadically") {
@@ -280,6 +293,49 @@ class TypeclassSerializerSpec extends Spec with ShouldMatchers {
       import Protocols._
       val fBar = Foo("testFoo", List(Bar("test1", Some(List(Foo("barList", List(Bar("test", None), Bar("test2", None))))))))
       fromjson[Foo](tojson(fBar)) should equal(fBar.success)
+    }
+  }
+
+  describe("Serialization followed by composition into objects") {
+    it ("should serialize an Address and name and compose") {
+      import Protocols._
+      import AddressProtocol._
+
+      import dispatch.json._
+      import Js._
+
+      val nameJsonString = """{"lastName" : "ghosh", "firstName" : "debasish"}""" 
+      val addressJsonString = """{"no" : 12, "street" : "Tamarac Square", "city" : "Denver", "zip" : "80231" }""" 
+
+      val njs = Js(nameJsonString)
+      val ajs = Js(addressJsonString)
+      val a = Address(12, "Tamarac Square", "Denver", "80231")
+
+      val n = GoodName("ghosh", "debasish")
+
+      // reader monad
+      val address =
+        for {
+          no      <- field_c[Int]("no")
+          street  <- field_c[String]("street")
+          city    <- field_c[String]("city")
+          zip     <- field_c[String]("zip")
+        }
+        yield(no |@| street |@| city |@| zip)
+
+      val name = 
+        for {
+          ln <- field_c[String]("lastName")
+          fn <- field_c[String]("firstName")
+        }
+        yield(ln |@| fn)
+
+      name(njs) { GoodName } should equal(n.success)
+      address(ajs) { Address } should equal(a.success)
+
+      case class Foo(name: GoodName, address: Address)
+      println((address(ajs) { Address } |@| name(njs) { GoodName }) { (a, n) => Foo(n, a) })
+      (address(ajs) { Address } |@| name(njs) { GoodName }) { (a, n) => Foo(n, a) } should equal(Foo(n, a).success)
     }
   }
 }

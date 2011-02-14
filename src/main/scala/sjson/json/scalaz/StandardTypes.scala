@@ -45,7 +45,7 @@ trait BasicTypes extends Protocol {
   </#list>
 }
 
-trait CollectionTypes extends BasicTypes { // with Generic {
+trait CollectionTypes extends BasicTypes with Generic {
 
   implicit def listFormat[T](implicit fmt : Format[T]) : Format[List[T]] = new Format[List[T]] {
     def writes(ts: List[T]) = JsArray(ts.map(t => tojson(t)(fmt)))
@@ -80,8 +80,17 @@ trait CollectionTypes extends BasicTypes { // with Generic {
 
   /**
   import scala.collection._
+  implicit def mutableSetFormat[T](implicit fmt : Format[T]) : Format[mutable.Set[T]] = new Format[mutable.Set[T]] {
+    def writes(ts: mutable.Set[T]) = JsArray(ts.toList.map(t => tojson(t)(fmt)))
+    def reads(json: JsValue) = json match {
+      case JsArray(ts) => (mutable.Set(ts: _*)).map(t => fromjson(t)(fmt)).sequence[({type λ[α]=ValidationNEL[String, α]})#λ, T] 
+      case _ => "Set expected".fail.liftFailNel
+    }
+  }
   implicit def mutableSetFormat[T](implicit fmt: Format[T]): Format[mutable.Set[T]] = 
-    viaSeq((x: Seq[T]) => mutable.Set(x: _*))
+    // viaSeq((x: Seq[ValidationNEL[String, T]]) => mutable.Set(x: _*))
+    viaSeq((x: Seq[ValidationNEL[String, T]]) => 
+      mutable.Set(x.sequence[({type λ[α]=ValidationNEL[String, α]})#λ, T]: _*).toOption.get)
 
   implicit def immutableSetFormat[T](implicit fmt: Format[T]): Format[immutable.Set[T]] = 
     viaSeq((x: Seq[T]) => immutable.Set(x: _*))
@@ -93,7 +102,7 @@ trait CollectionTypes extends BasicTypes { // with Generic {
   **/
 }
 
-trait StandardTypes { // extends CollectionTypes {
+trait StandardTypes extends CollectionTypes {
 
   implicit object BigIntFormat extends Format[BigInt] {
     def writes(o: BigInt) = JsValue.apply(o)

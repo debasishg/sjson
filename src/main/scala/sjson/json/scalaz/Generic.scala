@@ -12,14 +12,6 @@ trait Generic extends Protocol {
 
   implicit def listFormat[T](implicit fmt : Format[T]) : Format[List[T]];
 
-  def viaSeq[S <: Iterable[T], T] (f : Seq[ValidationNEL[String, T]] => ValidationNEL[String, S]) (implicit fmt : Format[T]) : Format[S] = new Format[S] {
-    def writes(ts: S) = JsArray(ts.map(t => tojson(t)(fmt)).toList)
-    def reads(json: JsValue) = json match {
-      case JsArray(ts) => f(ts.map(t => fromjson[T](t)))  // .sequence[({type λ[α]=ValidationNEL[String, α]})#λ, T])
-      case _ => "Collection expected".fail.liftFailNel
-    }
-  }
-
   /**
    * Use this when you would wrap a value in a case class
    *

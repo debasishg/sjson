@@ -78,28 +78,24 @@ trait CollectionTypes extends BasicTypes with Generic {
     }
   }
 
-  /**
   import scala.collection._
   implicit def mutableSetFormat[T](implicit fmt : Format[T]) : Format[mutable.Set[T]] = new Format[mutable.Set[T]] {
     def writes(ts: mutable.Set[T]) = JsArray(ts.toList.map(t => tojson(t)(fmt)))
     def reads(json: JsValue) = json match {
-      case JsArray(ts) => (mutable.Set(ts: _*)).map(t => fromjson(t)(fmt)).sequence[({type λ[α]=ValidationNEL[String, α]})#λ, T] 
+      case JsArray(ts) => 
+        (ts.map(t => fromjson(t)(fmt)).sequence[({type λ[α]=ValidationNEL[String, α]})#λ, T]).map(mutable.Set(_: _*))
       case _ => "Set expected".fail.liftFailNel
     }
   }
-  implicit def mutableSetFormat[T](implicit fmt: Format[T]): Format[mutable.Set[T]] = 
-    // viaSeq((x: Seq[ValidationNEL[String, T]]) => mutable.Set(x: _*))
-    viaSeq((x: Seq[ValidationNEL[String, T]]) => 
-      mutable.Set(x.sequence[({type λ[α]=ValidationNEL[String, α]})#λ, T]: _*).toOption.get)
 
-  implicit def immutableSetFormat[T](implicit fmt: Format[T]): Format[immutable.Set[T]] = 
-    viaSeq((x: Seq[T]) => immutable.Set(x: _*))
-
-  implicit def immutableSortedSetFormat[S](implicit ord : S => Ordered[S], binS : Format[S]) : Format[immutable.SortedSet[S]] = {
-    import BasicTypes.orderable // 2.7/8 compatibility
-    viaSeq((x: Seq[S]) => immutable.TreeSet[S](x: _*))
+  implicit def immutableSetFormat[T](implicit fmt : Format[T]) : Format[immutable.Set[T]] = new Format[immutable.Set[T]] {
+    def writes(ts: immutable.Set[T]) = JsArray(ts.toList.map(t => tojson(t)(fmt)))
+    def reads(json: JsValue) = json match {
+      case JsArray(ts) => 
+        (ts.map(t => fromjson(t)(fmt)).sequence[({type λ[α]=ValidationNEL[String, α]})#λ, T]).map(immutable.Set(_: _*))
+      case _ => "Set expected".fail.liftFailNel
+    }
   }
-  **/
 }
 
 trait StandardTypes extends CollectionTypes {

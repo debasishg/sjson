@@ -194,28 +194,27 @@ class TypeclassSerializerSpec extends Spec with ShouldMatchers {
     }
   }
 
-  /**
   describe("Serialization of mutable sets") {
     it("should serialize mutable sets of primitive types") {
       import scala.collection._
       val s = mutable.Set(12, 13, 10, 23, 25)
-      fromjson[mutable.Set[Int]](tojson(s)) should equal(s)
+      fromjson[mutable.Set[Int]](tojson(s)) should equal(s.success)
     }
     it("should serialize mutable sets of addresses") {
       import scala.collection._
       import Protocols._
 
-      val s = mutable.Set(Address("monroe st", "denver", "80231"), Address("tamarac st", "boulder", "80231"))
-      fromjson[mutable.Set[Address]](tojson(s)) should equal(s)
+      val s = mutable.Set(Address(100, "monroe st", "denver", "80231"), Address(23, "tamarac st", "boulder", "80231"))
+      fromjson[mutable.Set[Address]](tojson(s)) should equal(s.success)
     }
     it("should serialize mutable sets of custom data types") {
       import scala.collection._
       import Protocols._
 
       val s = mutable.Set(
-        ("debasish", Address("monroe st", "denver", "80231")), 
-        ("maulindu", Address("tamarac st", "boulder", "80231")))
-      fromjson[mutable.Set[(String, Address)]](tojson(s)) should equal(s)
+        ("debasish", Address(100, "monroe st", "denver", "80231")), 
+        ("maulindu", Address(23, "tamarac st", "boulder", "80231")))
+      fromjson[mutable.Set[(String, Address)]](tojson(s)) should equal(s.success)
     }
   }
 
@@ -223,26 +222,25 @@ class TypeclassSerializerSpec extends Spec with ShouldMatchers {
     it("should serialize immutable sets of primitive types") {
       import scala.collection._
       val s = immutable.Set(12, 13, 10, 23, 25)
-      fromjson[immutable.Set[Int]](tojson(s)) should equal(s)
+      fromjson[immutable.Set[Int]](tojson(s)) should equal(s.success)
     }
     it("should serialize immutable sets of addresses") {
       import scala.collection._
       import Protocols._
 
-      val s = immutable.Set(Address("monroe st", "denver", "80231"), Address("tamarac st", "boulder", "80231"))
-      fromjson[immutable.Set[Address]](tojson(s)) should equal(s)
+      val s = immutable.Set(Address(100, "monroe st", "denver", "80231"), Address(23, "tamarac st", "boulder", "80231"))
+      fromjson[immutable.Set[Address]](tojson(s)) should equal(s.success)
     }
     it("should serialize immutable sets of custom data types") {
       import scala.collection._
       import Protocols._
 
       val s = immutable.Set(
-        ("debasish", Address("monroe st", "denver", "80231")), 
-        ("maulindu", Address("tamarac st", "boulder", "80231")))
-      fromjson[immutable.Set[(String, Address)]](tojson(s)) should equal(s)
+        ("debasish", Address(100, "monroe st", "denver", "80231")), 
+        ("maulindu", Address(23, "tamarac st", "boulder", "80231")))
+      fromjson[immutable.Set[(String, Address)]](tojson(s)) should equal(s.success)
     }
   }
-  **/
 
   describe("Serialization of complex types") {
     it("should serialize complex types") {

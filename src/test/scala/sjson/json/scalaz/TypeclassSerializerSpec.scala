@@ -5,18 +5,18 @@ import org.scalatest.Spec
 import org.scalatest.matchers.ShouldMatchers
 import org.scalatest.junit.JUnitRunner
 import org.junit.runner.RunWith
+import scalaz._
+import Scalaz._
 
 @RunWith(classOf[JUnitRunner])
 class TypeclassSerializerSpec extends Spec with ShouldMatchers {
 
   import DefaultProtocol._
   import JsonSerialization._
-  import scalaz._
-  import Scalaz._
+  import Protocols._
 
   describe("Serialization using standard protocol") {
     it ("should serialize a Person") {
-      import Protocols._
       import PersonProtocol._
       val a = Address(12, "Monroe Street", "Denver", "80231")
       val p = Person("ghosh", "debasish", 20, a)
@@ -24,7 +24,6 @@ class TypeclassSerializerSpec extends Spec with ShouldMatchers {
     }
 
     it ("should serialize an Address") {
-      import Protocols._
       import AddressProtocol._
       val a = Address(12, "Tamarac Square", "Denver", "80231")
       fromjson[Address](tojson(a)) should equal(a.success)
@@ -33,13 +32,11 @@ class TypeclassSerializerSpec extends Spec with ShouldMatchers {
 
   describe("Serialization using incorrect protocol") {
     it ("address serialization should fail") {
-      import Protocols._
       import IncorrectAddressProtocol._
       val a = Address(12, "Monroe Street", "Denver", "80231")
       (fromjson[Address](tojson(a))).fail.toOption.get.list should equal (List("field number not found", "field stret not found", "field City not found"))
     }
     it ("person serialization should fail") {
-      import Protocols._
       import IncorrectPersonProtocol._
       val a = Address(12, "Monroe Street", "Denver", "80231")
       val p = Person("ghosh", "debasish", 20, a)
@@ -72,7 +69,6 @@ class TypeclassSerializerSpec extends Spec with ShouldMatchers {
           }
        }"""
 
-  import Protocols._
   import AddressProtocol._
   import dispatch.json._
   import Js._
@@ -121,7 +117,6 @@ class TypeclassSerializerSpec extends Spec with ShouldMatchers {
 
   describe("Serialization of simple objects") {
     it("should serialize into json and back") {
-      import Protocols._
       val shop = Shop("Shoppers Stop", "dress material", 1000)
       fromjson[Shop](tojson(shop)) should equal(shop.success)
     }
@@ -136,7 +131,6 @@ class TypeclassSerializerSpec extends Spec with ShouldMatchers {
 
   describe("Serialization of composite objects") {
     it("should serialize into json and back") {
-      import Protocols._
       val addressBook = AddressBook("Debasish Ghosh", 
         List(Address(100, "monroe st", "denver", "80231"), Address(23, "pine drive", "santa clara", "95054")))
       fromjson[AddressBook](tojson(addressBook)) should equal(addressBook.success)
@@ -145,7 +139,6 @@ class TypeclassSerializerSpec extends Spec with ShouldMatchers {
 
   describe("Serialization of composite objects with arrays") {
     it("should serialize into json and back") {
-      import Protocols._
       val account = Account("123", "Debasish Ghosh", 
         Array(Address(100, "monroe st", "denver", "80231"), Address(234, "pine drive", "santa clara", "95054")))
 
@@ -167,13 +160,11 @@ class TypeclassSerializerSpec extends Spec with ShouldMatchers {
     }
     it("should serialize AddressWithOptionalCity") {
       import sjson.json.TestBeans._
-      import Protocols._
       val ad = AddressWithOptionalCity("garer math", Some("mumbai"), "400087")
       fromjson[AddressWithOptionalCity](tojson(ad)) should equal(ad.success)
     }
     it("should serialize AddressWithOptionalCity without city") {
       import sjson.json.TestBeans._
-      import Protocols._
       val ad = AddressWithOptionalCity("garer math", None, "400087")
       fromjson[AddressWithOptionalCity](tojson(ad)) should equal(ad.success)
     }
@@ -187,7 +178,6 @@ class TypeclassSerializerSpec extends Spec with ShouldMatchers {
       fromjson[Tuple3[String, Int, String]](tojson(t2)) should equal(t2.success)
     }
     it("should serialize tuples of user defined types") {
-      import Protocols._
       import AddressProtocol._
       val t1 = ("debasish", Address(102, "monroe st", "denver", "80231"))
       fromjson[Tuple2[String, Address]](tojson[Tuple2[String, Address]](t1)) should equal(t1.success)
@@ -202,14 +192,12 @@ class TypeclassSerializerSpec extends Spec with ShouldMatchers {
     }
     it("should serialize mutable sets of addresses") {
       import scala.collection._
-      import Protocols._
 
       val s = mutable.Set(Address(100, "monroe st", "denver", "80231"), Address(23, "tamarac st", "boulder", "80231"))
       fromjson[mutable.Set[Address]](tojson(s)) should equal(s.success)
     }
     it("should serialize mutable sets of custom data types") {
       import scala.collection._
-      import Protocols._
 
       val s = mutable.Set(
         ("debasish", Address(100, "monroe st", "denver", "80231")), 
@@ -226,14 +214,12 @@ class TypeclassSerializerSpec extends Spec with ShouldMatchers {
     }
     it("should serialize immutable sets of addresses") {
       import scala.collection._
-      import Protocols._
 
       val s = immutable.Set(Address(100, "monroe st", "denver", "80231"), Address(23, "tamarac st", "boulder", "80231"))
       fromjson[immutable.Set[Address]](tojson(s)) should equal(s.success)
     }
     it("should serialize immutable sets of custom data types") {
       import scala.collection._
-      import Protocols._
 
       val s = immutable.Set(
         ("debasish", Address(100, "monroe st", "denver", "80231")), 
@@ -251,12 +237,10 @@ class TypeclassSerializerSpec extends Spec with ShouldMatchers {
 
   describe("Serialization of wrappers") {
     it("should serialize") {
-      import Protocols._
       val n = Name("debasish ghosh")
       fromjson[Name](tojson(n)) should equal(n.success)
     }
     it("should serialize list wrappers") {
-      import Protocols._
       val n = Holder(List("debasish ghosh", "jonas boner", "stephan schmidt"))
       fromjson[Holder](tojson(n)) should equal(n.success)
     }
@@ -264,7 +248,6 @@ class TypeclassSerializerSpec extends Spec with ShouldMatchers {
 
   describe("Serialization with inheritance") {
     it("should serialize") {
-      import Protocols._
       import DerivedProtocol._
       val sa = new Derived("123", "debasish ghosh", List(Address(100, "monroe st", "denver", "80231"), Address(23, "tamarac st", "boulder", "80231")), true)
       val Success(acc) = fromjson[Derived](tojson(sa))
@@ -274,7 +257,6 @@ class TypeclassSerializerSpec extends Spec with ShouldMatchers {
 
   describe("Serialization with case objects") {
     it("should serialize") {
-      import Protocols._
       val h = Http("http://www.google.com", Get)
       val h1 = fromjson[Http](tojson(h))
       h1 should equal(h.success)
@@ -283,12 +265,10 @@ class TypeclassSerializerSpec extends Spec with ShouldMatchers {
 
   describe("Serialization of mutually recursive types") {
     it("should serialize without recursion") {
-      import Protocols._
       val f = Foo("testFoo", List(Bar("test1", None), Bar("test2", None)))
       fromjson[Foo](tojson(f)) should equal(f.success)
     }
     it("should serialize with recursion") {
-      import Protocols._
       val fBar = Foo("testFoo", List(Bar("test1", Some(List(Foo("barList", List(Bar("test", None), Bar("test2", None))))))))
       fromjson[Foo](tojson(fBar)) should equal(fBar.success)
     }
@@ -296,7 +276,6 @@ class TypeclassSerializerSpec extends Spec with ShouldMatchers {
 
   describe("Serialization followed by composition into objects") {
     it ("should serialize an Address and name and compose") {
-      import Protocols._
       import AddressProtocol._
 
       import dispatch.json._

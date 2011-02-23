@@ -316,4 +316,69 @@ class TypeclassSerializerSpec extends Spec with ShouldMatchers {
       (address(ajs) { Address } |@| name(njs) { GoodName }) { (a, n) => Foo(n, a) } should equal(Foo(n, a).success)
     }
   }
+
+  describe("Merging of Raw Json values") {
+    val js1 = """{ "lastName" : "ghosh", "firstName" : "debasish" }"""
+    val js2 = """{ "age" : 40 }"""
+    val js3 = """{ "address" : { "no" : 12, "street" : "Monroe Street", "city" : "Denver", "zip" : "80231" } }""" 
+
+    it ("should merge all JSON values into one JsObject") {
+      import dispatch.json._
+      import Js._
+
+      val jsList = List(Js(js1), Js(js2), Js(js3))
+
+      // result is a Map
+      val result = jsList.foldLeft(Map.empty[JsString, JsValue]) { case (a, JsObject(m)) => a ++ m }
+
+      result(JsString("lastName")) should equal(JsString("ghosh"))
+      result(JsString("firstName")) should equal(JsString("debasish"))
+
+      // result JsValue
+      val newjs = JsObject(result)
+
+      // extract lastName
+      val l = 'lastName ? str
+      val l(l_) = newjs
+      l_ should equal("ghosh")
+
+      val a = 'address ? obj
+      val s = 'street ? str
+      val c = 'city ? str
+
+      // extract street
+      val a(s(s_)) = newjs
+      s_ should equal("Monroe Street")
+
+      // extract city
+      val a(c(c_)) = newjs
+      c_ should equal("Denver")
+    }
+  }
+
+  describe("Merging of objects into a composite JSON") {
+    val a = Address(12, "Monroe Street", "Denver", "80231")
+    val n = GoodName("ghosh", "debasish")
+
+    it ("should merge all JSON values into one JsObject") {
+      import dispatch.json._
+      import Js._
+
+      val jsList = List(tojson(a), tojson(n))
+
+      // result is a Map
+      val result = jsList.foldLeft(Map.empty[JsString, JsValue]) { case (a, JsObject(m)) => a ++ m }
+
+      result(JsString("lastName")) should equal(JsString("ghosh"))
+      result(JsString("firstName")) should equal(JsString("debasish"))
+
+      // result JsValue
+      val newjs = JsObject(result)
+
+      // extract lastName
+      val l = 'lastName ? str
+      val l(l_) = newjs
+      l_ should equal("ghosh")
+    }
+  }
 }

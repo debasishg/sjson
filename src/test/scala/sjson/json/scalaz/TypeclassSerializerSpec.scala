@@ -11,7 +11,6 @@ import Scalaz._
 @RunWith(classOf[JUnitRunner])
 class TypeclassSerializerSpec extends Spec with ShouldMatchers {
 
-  import DefaultProtocol._
   import JsonSerialization._
   import Protocols._
 
@@ -45,6 +44,8 @@ class TypeclassSerializerSpec extends Spec with ShouldMatchers {
   }
 
   describe("Serialization of lists") {
+    import DefaultProtocol._
+
     it ("should serialize list of Ints") {
       val l1 = List(100, 200, 300, 400)
       fromjson[List[Int]](tojson(l1)) should equal(l1.success)

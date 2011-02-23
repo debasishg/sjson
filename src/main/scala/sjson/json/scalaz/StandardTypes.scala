@@ -45,7 +45,7 @@ trait BasicTypes extends Protocol {
   </#list>
 }
 
-trait CollectionTypes extends BasicTypes with Generic {
+trait CollectionTypes extends BasicTypes {
 
   implicit def listFormat[T](implicit fmt : Format[T]) : Format[List[T]] = new Format[List[T]] {
     def writes(ts: List[T]) = JsArray(ts.map(t => tojson(t)(fmt)))

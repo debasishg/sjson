@@ -26,8 +26,7 @@ trait Protocol {
   implicit val StringFormat: Format[String]
 }
 
-trait DefaultProtocol extends CollectionTypes with Generic with Primitives
-object DefaultProtocol extends DefaultProtocol {
+trait DefaultProtocol extends StandardTypes with Generic with Primitives {
 
   import dispatch.json._
   import Js._
@@ -62,3 +61,5 @@ object DefaultProtocol extends DefaultProtocol {
     }
   }
 }
+
+object DefaultProtocol extends DefaultProtocol

@@ -193,4 +193,13 @@ class TypeclassSerializerSpec extends Spec with ShouldMatchers {
       fromjson[Foo](tojson(fBar)) should equal(fBar)
     }
   }
+
+  describe("Serialization of enumerated values") {
+    it("should serialize") {
+      import TestBeans._
+      import JobStartProtocol._
+      val js = JobStart("Debasish", WeekDay.Mon)
+      fromjson[JobStart](tojson(js)) should equal(js)
+    }
+  }
 }

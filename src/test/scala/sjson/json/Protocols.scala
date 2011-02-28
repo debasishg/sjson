@@ -103,4 +103,21 @@ object Protocols {
   case class Foo(name: String, list: List[Bar])
   implicit val BarFormat: Format[Bar] = lazyFormat(asProduct2("name", "list")(Bar)(Bar.unapply(_).get))
   implicit val FooFormat: Format[Foo] = lazyFormat(asProduct2("name", "list")(Foo)(Foo.unapply(_).get))
+
+  case class JobStart(name: String, start: WeekDay.Value)
+  object JobStartProtocol extends DefaultProtocol {
+    import JsonSerialization._
+    implicit object JobStartFormat extends Format[JobStart] {
+      def reads(json: JsValue): JobStart = json match {
+        case JsObject(m) =>
+          JobStart(fromjson[String](m(JsString("name"))), 
+            WeekDay.withName(fromjson[String](m(JsString("start")))))
+        case _ => throw new RuntimeException("JsObject expected")
+      }
+      def writes(p: JobStart): JsValue =
+        JsObject(List(
+          (tojson("name").asInstanceOf[JsString], tojson(p.name)), 
+          (tojson("start").asInstanceOf[JsString], tojson(p.start.toString)))) 
+    }
+  }
 }

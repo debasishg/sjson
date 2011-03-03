@@ -116,7 +116,7 @@ trait JsBean {
    * Convert the <tt>JsValue</tt> to an instance of the class <tt>context</tt>, using the parent for any annotation hints.
    * Returns an instance of <tt>T</tt>.
    */
-  def fromJSON[T](js: JsValue, context: Option[Class[T]], parent: Field): T = {
+  private[json] def fromJSON[T](js: JsValue, context: Option[Class[T]], parent: Field): T = {
     if (context.isDefined && classOf[Enumeration#Value].isAssignableFrom(context.get)) {
       toEnumValue(js.self, getEnumObjectClass(context.get.asInstanceOf[Class[Enumeration#Value]], parent)).asInstanceOf[T]
     } else {

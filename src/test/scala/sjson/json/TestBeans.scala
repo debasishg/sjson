@@ -281,8 +281,11 @@ object TestBeans {
     month: Month.Value,
     @(JSONTypeHint @field)(value = classOf[sjson.json.WeekDay.WeekDay])
     @(EnumTypeHint @field)(value = "sjson.json.WeekDay") 
-    work: List[WeekDay.Value]) {
-    private def this() = this(null, null, null, null)
+    work: List[WeekDay.Value],
+    @(JSONTypeHint @field)(value = classOf[sjson.json.Month.Value])
+    @(EnumTypeHint @field)(value = "sjson.json.Month")
+    months: List[Month.Value]) {
+    private def this() = this(null, null, null, null, null)
   }
 
   import java.util.TimeZone

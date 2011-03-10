@@ -202,4 +202,16 @@ class TypeclassSerializerSpec extends Spec with ShouldMatchers {
       fromjson[JobStart](tojson(js)) should equal(js)
     }
   }
+
+  describe("Serialization of list of custom objects") {
+    it ("should serialize list of objects") {
+      import PersonProtocol._
+      val persons = List(
+        Person("ghosh", "debasish", 20),
+        Person("chatterjee", "maulindu", 23),
+        Person("roy", "kuku", 25))
+
+      fromjson[List[Person]](tojson(persons)) should equal(persons)
+    }
+  }
 }

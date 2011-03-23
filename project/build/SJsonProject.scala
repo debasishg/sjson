@@ -7,8 +7,14 @@ class SJsonProject(info: ProjectInfo) extends DefaultProject(info) with Template
   val dispatch_json = "net.databinder" % "dispatch-json_2.8.1" % "0.7.8" % "compile"
   val commons_io = "commons-io" % "commons-io" % "1.4" % "compile"
   val objenesis = "org.objenesis" % "objenesis" % "1.2" % "compile"
-  val scalatest = "org.scalatest" % "scalatest" % "1.2" % "test"
   val junit = "junit" % "junit" % "4.8.1"
+  val scalatest =
+    buildScalaVersion match {
+      case "2.9.0-SNAPSHOT" =>
+        "org.scalatest" % "scalatest" % "1.4-SNAPSHOT" % "test"
+      case _ =>
+        "org.scalatest" % "scalatest" % "1.2" % "test"
+    }
 
   override def packageSrcJar = defaultJarPath("-sources.jar")
   lazy val sourceArtifact = Artifact.sources(artifactID)

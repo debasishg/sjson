@@ -179,26 +179,32 @@ trait JsBean {
           
           case x: List[_] => {
             val field = context.get.getDeclaredField(props.get(name).get)
-            val ann = field.getAnnotation(classOf[JSONTypeHint])
-            ann match {
-              case null => 
-                (Some(field), 
-                  x.map{ case y: JsValue => y.self
-                  })
 
-              case a if a.value.isPrimitive == true => 
-                (Some(field), 
-                  x.map{case y: JsValue => 
-                    // remember all numbers are converted to BigDecimal by the JSON parser
-                    if (y.isInstanceOf[JsNumber]) mkNum(y.self.asInstanceOf[BigDecimal], ann.value)
-                    else y.self
-                  })
+            // empty list as value and type = Option means None
+            // if (field.getType.isAssignableFrom(classOf[Option[_]]) && x.isEmpty) 
+              // (Some(field), None)
+            // else {
+              val ann = field.getAnnotation(classOf[JSONTypeHint])
+              ann match {
+                case null => 
+                  (Some(field), 
+                    x.map{ case y: JsValue => y.self
+                    })
 
-              case _ =>
-                (Some(field), 
-                  x.map{ case y: JsValue => fromJSON(y, Some(ann.value), field)
-                  })
-            }
+                case a if a.value.isPrimitive == true => 
+                  (Some(field), 
+                    x.map{case y: JsValue => 
+                      // remember all numbers are converted to BigDecimal by the JSON parser
+                      if (y.isInstanceOf[JsNumber]) mkNum(y.self.asInstanceOf[BigDecimal], ann.value)
+                      else y.self
+                    })
+
+                case _ =>
+                  (Some(field), 
+                    x.map{ case y: JsValue => fromJSON(y, Some(ann.value), field)
+                    })
+              }
+            // }
           }
         
           case x => 
@@ -240,8 +246,13 @@ trait JsBean {
                 else z
 
               // need to handle Option[] in individual fields
-              if (y.getType.isAssignableFrom(classOf[scala.Option[_]]))
-                y.set(instance, Some(num)) else y.set(instance, num)
+              if (y.getType.isAssignableFrom(classOf[scala.Option[_]])) {
+                // handle None case which comes as an empty List since we serialize None as []
+                if (num.isInstanceOf[List[_]] && num.asInstanceOf[List[_]].isEmpty) y.set(instance, None)
+                else y.set(instance, Some(num))
+              } else { 
+                y.set(instance, num)
+              }
             }
           }
         }
@@ -315,7 +326,7 @@ trait JsBean {
           // Option[] needs to be treated differently
           val (rval, isOption) = rv match {
             case (o: Option[_]) =>
-              if (o.isDefined) (o.get.asInstanceOf[AnyRef], true) else (null, true)
+              if (o.isDefined) (o.get.asInstanceOf[AnyRef], true) else (List(), true) // serialize None as []
             case x => (x, false)
           }
 

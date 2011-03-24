@@ -312,6 +312,10 @@ object TestBeans {
       "key = " + key + " mapping to " + inte + " original int = " + i
     }
   }
+
+  @BeanInfo case class SampleConfigOption(user: Option[String], names: List[String]) {
+    def this() = this (Some("default"), List[String]())
+  }
 }
 
 object Shape extends Enumeration {

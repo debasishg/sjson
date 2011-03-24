@@ -487,4 +487,16 @@ class SerializerSpec extends Spec with ShouldMatchers {
       obj.asInstanceOf[MyJsonObject].l.head.isInstanceOf[Int] should equal(true)
     }
   }
+
+  // https://github.com/debasishg/sjson/issues#issue/20
+  describe("Testing Option for None values") {
+    val s = SampleConfigOption(None, List("dg", "mc"))
+    it("should serialize None to []") {
+      new String(serializer.out(s)) should equal("""{"names":["dg","mc"],"user":[]}""")
+    }
+
+    it("should serialize and de-serialize correctly") {
+      serializer.in[SampleConfigOption](serializer.out(s)) should equal(s)
+    }
+  }
 }

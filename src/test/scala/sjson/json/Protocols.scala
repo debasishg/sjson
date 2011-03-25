@@ -74,6 +74,20 @@ object Protocols {
   case class Holder(item: List[String])
   implicit val HolderFormat: Format[Holder] = wrap[Holder, List[String]]("item")(_.item, Holder)
 
+  case class DoubleNanTest(price: Double)
+  import dispatch.json._
+  implicit val DoubleNanTestFormat: Format[DoubleNanTest] = new Format[DoubleNanTest] {
+    def reads(json: JsValue): DoubleNanTest = json match {
+      case JsString("Double.NaN") => DoubleNanTest(scala.Double.NaN)
+      case JsNumber(n) => DoubleNanTest(n.doubleValue)
+      case _ => error("Invalid DoubleNanTest")
+    }
+    def writes(a: DoubleNanTest): JsValue = a.price match {
+      case x if x equals scala.Double.NaN => JsString("Double.NaN")
+      case x => JsNumber(BigDecimal.valueOf(x))
+    }
+  }
+
   import TestBeans._
   implicit val AddressWithOptionalCityFormat: Format[AddressWithOptionalCity] =
     asProduct3("street", "city", "zip")(AddressWithOptionalCity)(AddressWithOptionalCity.unapply(_).get)

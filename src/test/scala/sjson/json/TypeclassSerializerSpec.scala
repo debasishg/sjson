@@ -214,4 +214,12 @@ class TypeclassSerializerSpec extends Spec with ShouldMatchers {
       fromjson[List[Person]](tojson(persons)) should equal(persons)
     }
   }
+
+  describe("Serialization of double NaN") {
+    it ("should serialize") {
+      val x = DoubleNanTest(scala.Double.NaN)
+      x.price.isNaN should equal(true)
+      fromjson[DoubleNanTest](tojson(x)).price.isNaN should equal(true)
+    }
+  }
 }

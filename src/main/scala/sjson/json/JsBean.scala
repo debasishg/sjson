@@ -99,8 +99,8 @@ trait JsBean {
     if (Modifier.isAbstract(enumObjectClass.getModifiers)) {
       throw new IllegalArgumentException("cannot get type information for enum " + value)
     }
-    val method = enumObjectClass.getMethod("valueOf", classOf[String])
-    method.invoke(null, value.asInstanceOf[String]).asInstanceOf[Option[Enumeration#Value]].get
+    val method = enumObjectClass.getMethod("withName", classOf[String])
+    method.invoke(null, value.asInstanceOf[String]).asInstanceOf[Enumeration#Value]
   }
 
   private def getEnumObjectClass[T <: Enumeration#Value](targetClass: Class[T], y: Field): Class[_] = {

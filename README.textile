@@ -8,6 +8,12 @@ For more details of the implementation and sample examples, have a look at the w
 
 h1. News
 
+2011/03/26: sjson 0.10 released
+    * bug fixes in serialization of Enumerations and Options
+    * builds with Scala 2.8.1 and Scala 2.9.0.RC1
+    * refactoring of code
+    * dependency on scalaz removed and moved to separate project sjson-scalaz
+
 2010/09/16: sjson 0.8 released
     * type class based JSON serialization enhanced
     * fixed bug in reflection based serialization

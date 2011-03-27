@@ -92,6 +92,7 @@ object Protocols {
   implicit val AddressWithOptionalCityFormat: Format[AddressWithOptionalCity] =
     asProduct3("street", "city", "zip")(AddressWithOptionalCity)(AddressWithOptionalCity.unapply(_).get)
 
+  // example for inheritance and case objects
   import dispatch.json._
   trait HttpType
   implicit val HttpTypeFormat: Format[HttpType] = new Format[HttpType] {
@@ -134,4 +135,50 @@ object Protocols {
           (tojson("start").asInstanceOf[JsString], tojson(p.start.toString)))) 
     }
   }
+
+  // the following example has 2 aspects :-
+  // 1. Inheritance of traits
+  // 2. Recursive types
+
+  trait SubUnit
+  case class Dept(name: String, manager: Employee, subUnits: List[SubUnit]) extends SubUnit
+  case class Employee(name: String, salary: Double) extends SubUnit
+
+  object SubUnitProtocol extends DefaultProtocol {
+    import JsonSerialization._
+    implicit object SubUnitFormat extends Format[SubUnit] {
+      def reads(json: JsValue): SubUnit = json match {
+        case JsObject(m) => m.keys.size match {
+          case 2 =>
+            Employee(fromjson[String](m(JsString("name"))),
+              fromjson[Double](m(JsString("salary"))))
+          case _ =>
+            Dept(fromjson[String](m(JsString("name"))),
+              fromjson[Employee](m(JsString("manager"))),
+              fromjson[List[SubUnit]](m(JsString("subUnits"))))
+          }
+
+        case _ => throw new RuntimeException("JsObject expected")
+      }
+
+      def writes(s: SubUnit): JsValue = s match {
+        case d: Dept =>
+          JsObject(List(
+            (tojson("name").asInstanceOf[JsString], tojson(d.name)),
+            (tojson("manager").asInstanceOf[JsString], tojson(d.manager)),
+            (tojson("subUnits").asInstanceOf[JsString], tojson(d.subUnits))))
+        case e: Employee =>
+          JsObject(List(
+            (tojson("name").asInstanceOf[JsString], tojson(e.name)),
+            (tojson("salary").asInstanceOf[JsString], tojson(e.salary))))
+      }
+    }
+  }
+
+  import SubUnitProtocol._
+  implicit val DeptFormat: Format[Dept] = 
+    lazyFormat(asProduct3("name", "manager", "subUnits")(Dept)(Dept.unapply(_).get))
+
+  implicit val EmployeeFormat: Format[Employee] = 
+    asProduct2("name", "salary")(Employee)(Employee.unapply(_).get)
 }

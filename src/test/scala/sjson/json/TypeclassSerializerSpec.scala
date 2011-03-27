@@ -222,4 +222,19 @@ class TypeclassSerializerSpec extends Spec with ShouldMatchers {
       fromjson[DoubleNanTest](tojson(x)).price.isNaN should equal(true)
     }
   }
+
+  describe("Serialization of list of traits with inheritance and recursive types") {
+    val e1 = Employee("Mary G.", 1000)
+    val e2 = Employee("John P.", 5000)
+    val e3 = Employee("Peter P.", 5000)
+
+    val d1 = Dept("Finance", e1, List(e1, e2))
+    val d2 = Dept("Accounting", e2, List(e1, e2, e3))
+    val d3 = Dept("Systems", e2, List(d1, d2))
+
+    it ("should serialize") {
+      fromjson[Dept](tojson(d1)) should equal(d1)
+      fromjson[Dept](tojson(d3)) should equal(d3)
+    }
+  }
 }

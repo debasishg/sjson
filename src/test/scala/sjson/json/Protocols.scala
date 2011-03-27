@@ -148,29 +148,17 @@ object Protocols {
     import JsonSerialization._
     implicit object SubUnitFormat extends Format[SubUnit] {
       def reads(json: JsValue): SubUnit = json match {
-        case JsObject(m) => m.keys.size match {
-          case 2 =>
-            Employee(fromjson[String](m(JsString("name"))),
-              fromjson[Double](m(JsString("salary"))))
-          case _ =>
-            Dept(fromjson[String](m(JsString("name"))),
-              fromjson[Employee](m(JsString("manager"))),
-              fromjson[List[SubUnit]](m(JsString("subUnits"))))
-          }
+        case j@JsObject(m) => m.keys.size match {
+          case 2 => fromjson[Employee](j)
+          case _ => fromjson[Dept](j)
+        }
 
         case _ => throw new RuntimeException("JsObject expected")
       }
 
       def writes(s: SubUnit): JsValue = s match {
-        case d: Dept =>
-          JsObject(List(
-            (tojson("name").asInstanceOf[JsString], tojson(d.name)),
-            (tojson("manager").asInstanceOf[JsString], tojson(d.manager)),
-            (tojson("subUnits").asInstanceOf[JsString], tojson(d.subUnits))))
-        case e: Employee =>
-          JsObject(List(
-            (tojson("name").asInstanceOf[JsString], tojson(e.name)),
-            (tojson("salary").asInstanceOf[JsString], tojson(e.salary))))
+        case d: Dept => tojson(d)
+        case e: Employee => tojson(e)
       }
     }
   }

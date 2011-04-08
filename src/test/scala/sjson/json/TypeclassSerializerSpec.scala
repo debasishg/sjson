@@ -85,17 +85,13 @@ class TypeclassSerializerSpec extends Spec with ShouldMatchers {
       val ad = AddressWithOptionalCity("garer math", None, "400087")
       fromjson[AddressWithOptionalCity](tojson(ad)) should equal(ad)
     }
-    it("should serialize without city") {
+    it("should serialize None properly") {
       import TestBeans._
       val str = None
       fromjson[Option[String]](tojson[Option[String]](str)) should equal(str)
-      val ad = AddressWithOptionalCity("garer math", None, "400087")
-      println(tojson(ad))
     }
-    it("should serialize P") {
+    it("should serialize P that contains an Option with default value as None") {
       val p = P("ghosh", "debasish")
-      println(tojson[P](p))
-      println(fromjson[P](tojson[P](p)))
       fromjson[P](tojson[P](p)) should equal(p)
     }
   }

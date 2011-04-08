@@ -15,7 +15,6 @@ class TypeclassSerializerSpec extends Spec with ShouldMatchers {
 
   describe("Serialization using verbose protocol") {
     it ("should serialize a Person") {
-      import PersonProtocol._
       val p = Person("ghosh", "debasish", 20)
       fromjson[Person](tojson[Person](p)) should equal(p)
     }
@@ -85,6 +84,19 @@ class TypeclassSerializerSpec extends Spec with ShouldMatchers {
       import TestBeans._
       val ad = AddressWithOptionalCity("garer math", None, "400087")
       fromjson[AddressWithOptionalCity](tojson(ad)) should equal(ad)
+    }
+    it("should serialize without city") {
+      import TestBeans._
+      val str = None
+      fromjson[Option[String]](tojson[Option[String]](str)) should equal(str)
+      val ad = AddressWithOptionalCity("garer math", None, "400087")
+      println(tojson(ad))
+    }
+    it("should serialize P") {
+      val p = P("ghosh", "debasish")
+      println(tojson[P](p))
+      println(fromjson[P](tojson[P](p)))
+      fromjson[P](tojson[P](p)) should equal(p)
     }
   }
 
@@ -165,7 +177,6 @@ class TypeclassSerializerSpec extends Spec with ShouldMatchers {
 
   describe("Serialization with inheritance") {
     it("should serialize") {
-      import DerivedProtocol._
       val sa = new Derived("123", "debasish ghosh", Array(Address("monroe st", "denver", "80231"), Address("tamarac st", "boulder", "80231")), true)
       val acc = fromjson[Derived](tojson(sa))
       acc.no should equal(sa.no)
@@ -197,7 +208,6 @@ class TypeclassSerializerSpec extends Spec with ShouldMatchers {
   describe("Serialization of enumerated values") {
     it("should serialize") {
       import TestBeans._
-      import JobStartProtocol._
       val js = JobStart("Debasish", WeekDay.Mon)
       fromjson[JobStart](tojson(js)) should equal(js)
     }
@@ -205,7 +215,6 @@ class TypeclassSerializerSpec extends Spec with ShouldMatchers {
 
   describe("Serialization of list of custom objects") {
     it ("should serialize list of objects") {
-      import PersonProtocol._
       val persons = List(
         Person("ghosh", "debasish", 20),
         Person("chatterjee", "maulindu", 23),

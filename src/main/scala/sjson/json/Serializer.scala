@@ -9,7 +9,6 @@ object Serializer {
   
     import dispatch.json._
     import dispatch.json.Js._
-    import Implicits._
     import java.io.{ObjectInputStream, ObjectOutputStream, ByteArrayInputStream, ByteArrayOutputStream}
     import org.apache.commons.io.input.ClassLoaderObjectInputStream
 

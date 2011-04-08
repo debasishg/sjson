@@ -5,7 +5,7 @@ import DefaultProtocol._
 
 object Protocols {
   case class Person(lastName: String, firstName: String, age: Int)
-  object PersonProtocol extends DefaultProtocol {
+  object Person extends DefaultProtocol {
     import dispatch.json._
     import JsonSerialization._
     implicit object PersonFormat extends Format[Person] {
@@ -47,7 +47,7 @@ object Protocols {
     extends Base(no, name, addresses) {
     val specialFlag = special
   }
-  object DerivedProtocol extends DefaultProtocol {
+  object Derived extends DefaultProtocol {
     import dispatch.json._
     import JsonSerialization._
     implicit object DerivedFormat extends Format[Derived] {
@@ -120,7 +120,7 @@ object Protocols {
   implicit val FooFormat: Format[Foo] = lazyFormat(asProduct2("name", "list")(Foo)(Foo.unapply(_).get))
 
   case class JobStart(name: String, start: WeekDay.Value)
-  object JobStartProtocol extends DefaultProtocol {
+  object JobStart extends DefaultProtocol {
     import JsonSerialization._
     implicit object JobStartFormat extends Format[JobStart] {
       def reads(json: JsValue): JobStart = json match {
@@ -144,7 +144,7 @@ object Protocols {
   case class Dept(name: String, manager: Employee, subUnits: List[SubUnit]) extends SubUnit
   case class Employee(name: String, salary: Double) extends SubUnit
 
-  object SubUnitProtocol extends DefaultProtocol {
+  object SubUnit extends DefaultProtocol {
     import JsonSerialization._
     implicit object SubUnitFormat extends Format[SubUnit] {
       def reads(json: JsValue): SubUnit = json match {
@@ -163,10 +163,36 @@ object Protocols {
     }
   }
 
-  import SubUnitProtocol._
+  // import SubUnitProtocol._
   implicit val DeptFormat: Format[Dept] = 
     lazyFormat(asProduct3("name", "manager", "subUnits")(Dept)(Dept.unapply(_).get))
 
   implicit val EmployeeFormat: Format[Employee] = 
     asProduct2("name", "salary")(Employee)(Employee.unapply(_).get)
+
+  case class P(lastName: String, firstName: String, age: Option[Int] = None)
+  object P extends DefaultProtocol {
+    import dispatch.json._
+    import JsonSerialization._
+    implicit object PFormat extends Format[P] {
+      def reads(json: JsValue): P = json match {
+        case JsObject(m) =>
+          P(
+            fromjson[String](m(JsString("lastName"))), 
+            fromjson[String](m(JsString("firstName"))), 
+            m.get(JsString("age")).map(fromjson[Option[Int]](_)).getOrElse(None))
+        case _ => throw new RuntimeException("JsObject expected")
+      }
+      def writes(p: P): JsValue =
+        p.age.map(a =>
+          JsObject(List(
+            (tojson("lastName").asInstanceOf[JsString], tojson(p.lastName)),
+            (tojson("firstName").asInstanceOf[JsString], tojson(p.firstName)),
+            (tojson("age").asInstanceOf[JsString], tojson(a)))))
+        .getOrElse(
+          JsObject(List(
+            (tojson("lastName").asInstanceOf[JsString], tojson(p.lastName)),
+            (tojson("firstName").asInstanceOf[JsString], tojson(p.firstName)))))
+    }
+  }
 }

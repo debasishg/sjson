@@ -15,7 +15,6 @@ class SerializerSpec extends Spec with ShouldMatchers {
 
   import dispatch.json._
   import Js._
-  import Implicits._
 
   private[this] val serializer = Serializer.SJSON
 

@@ -274,7 +274,7 @@ trait JsBean {
   /**
    * Generate a JSON representation of the object <tt>obj</tt> and return the string.
    */
-  def toJSON[T <: AnyRef](obj: T)(implicit ignoreProps: List[String]): String = obj match {
+  def toJSON[T <: AnyRef](obj: T): String = obj match {
     // case null => quote("null")
     case null => "null"
     case (n: Number) => obj.toString
@@ -311,7 +311,7 @@ trait JsBean {
       val pds = 
         Introspector.getBeanInfo(clazz)
           .getPropertyDescriptors
-          .filter(e => ignoreProps.exists(_.equals(e.getName)) == false)
+          .filter(_.getName != "class")
 
       if (pds.isEmpty) {
         throw new UnsupportedOperationException("Class " + clazz + " not supported for conversion")

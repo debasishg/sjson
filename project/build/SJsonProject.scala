@@ -13,7 +13,7 @@ class SJsonProject(info: ProjectInfo) extends DefaultProject(info) with Template
     }
   val commons_io = "commons-io" % "commons-io" % "1.4" % "compile"
   val objenesis = "org.objenesis" % "objenesis" % "1.2" % "compile"
-  val junit = "junit" % "junit" % "4.8.1"
+  val junit = "junit" % "junit" % "4.8.1" % "test"
   val scalatest =
     buildScalaVersion match {
       case "2.9.0.RC1" =>

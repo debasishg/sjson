@@ -6,6 +6,8 @@ class SJsonProject(info: ProjectInfo) extends DefaultProject(info) with Template
   val scalaToolsReleases = "Scala-Tools Maven2 Releases Repository" at "http://scala-tools.org/repo-releases"
   val dispatch_json = 
     buildScalaVersion match {
+      case "2.9.0.RC3" =>
+        "net.databinder" % "dispatch-json_2.9.0.RC3" % "0.7.8" % "compile"
       case "2.9.0.RC1" =>
         "net.databinder" % "dispatch-json_2.9.0.RC1" % "0.7.8" % "compile"
       case _ =>
@@ -16,6 +18,8 @@ class SJsonProject(info: ProjectInfo) extends DefaultProject(info) with Template
   val junit = "junit" % "junit" % "4.8.1" % "test"
   val scalatest =
     buildScalaVersion match {
+      case "2.9.0.RC2" =>
+        "org.scalatest" % "scalatest" % "1.4.RC2" % "test"
       case "2.9.0.RC1" =>
         "org.scalatest" % "scalatest" % "1.4-SNAPSHOT" % "test"
       case _ =>

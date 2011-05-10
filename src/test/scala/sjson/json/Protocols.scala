@@ -80,7 +80,7 @@ object Protocols {
     def reads(json: JsValue): DoubleNanTest = json match {
       case JsString("Double.NaN") => DoubleNanTest(scala.Double.NaN)
       case JsNumber(n) => DoubleNanTest(n.doubleValue)
-      case _ => error("Invalid DoubleNanTest")
+      case _ => sys.error("Invalid DoubleNanTest")
     }
     def writes(a: DoubleNanTest): JsValue = a.price match {
       case x if x equals scala.Double.NaN => JsString("Double.NaN")
@@ -99,7 +99,7 @@ object Protocols {
     def reads(json: JsValue): HttpType = json match {
       case JsString("Get") => Get
       case JsString("Post") => Post
-      case _ => error("Invalid HttpType")
+      case _ => sys.error("Invalid HttpType")
     }
     def writes(a: HttpType): JsValue = a match {
       case Get => JsString("Get")

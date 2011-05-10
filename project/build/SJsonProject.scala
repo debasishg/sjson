@@ -4,7 +4,7 @@ class SJsonProject(info: ProjectInfo) extends DefaultProject(info) with Template
 {
   val scalaToolsSnapshots = "Scala-Tools Maven2 Snapshots Repository" at "http://scala-tools.org/repo-snapshots"
   val scalaToolsReleases = "Scala-Tools Maven2 Releases Repository" at "http://scala-tools.org/repo-releases"
-  val dispatch_json = "net.databinder" % "dispatch-json_2.9.0.RC4" % "0.8.1" % "compile"
+  val dispatch_json = "net.databinder" % "dispatch-json_2.9.0" % "0.8.1" % "compile"
   val commons_io = "commons-io" % "commons-io" % "1.4" % "compile"
   val objenesis = "org.objenesis" % "objenesis" % "1.2" % "compile"
   val junit = "junit" % "junit" % "4.8.1" % "test"

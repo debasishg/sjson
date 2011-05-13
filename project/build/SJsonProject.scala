@@ -8,7 +8,7 @@ class SJsonProject(info: ProjectInfo) extends DefaultProject(info) with Template
   val commons_io = "commons-io" % "commons-io" % "1.4" % "compile"
   val objenesis = "org.objenesis" % "objenesis" % "1.2" % "compile"
   val junit = "junit" % "junit" % "4.8.1" % "test"
-  val scalatest = "org.scalatest" % "scalatest" % "1.4.RC2" % "test"
+  val scalatest = "org.scalatest" % "scalatest_2.9.0" % "1.4.1" % "test"
 
   override def packageSrcJar = defaultJarPath("-sources.jar")
   lazy val sourceArtifact = Artifact.sources(artifactID)

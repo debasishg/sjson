@@ -8,6 +8,12 @@ For more details of the implementation and sample examples, have a look at the w
 
 h1. News
 
+2011/05/16: sjson 0.12 released
+    * Major improvements in reflection based API
+    * De-serialization is more type-safe now - no need to cast
+    * Improved deep serialization of generic structures in reflection based APIs
+    * Improved test cases
+
 2011/03/26: sjson 0.10 released
     * bug fixes in serialization of Enumerations and Options
     * builds with Scala 2.8.1 and Scala 2.9.0.RC1

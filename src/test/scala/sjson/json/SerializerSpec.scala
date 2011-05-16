@@ -21,10 +21,6 @@ class SerializerSpec extends Spec with ShouldMatchers {
   val jsBean = new Object with JsBean with DefaultConstructor
 
   describe("String serialization") {
-    it("should give an instance of JsString") {
-      serializer.in[AnyRef](
-        serializer.out("debasish ghosh")).asInstanceOf[JsValue].self.asInstanceOf[String] should equal("debasish ghosh")
-    }
     it("should give an instance of String") {
       serializer.in[String](
         serializer.out("debasish ghosh")) should equal("debasish ghosh")
@@ -38,13 +34,6 @@ class SerializerSpec extends Spec with ShouldMatchers {
   }
 
   describe("Number serialization") {
-    it("should give an instance of JsNumber") {
-      val JsNumber(n) = serializer.in[AnyRef](serializer.out(BigDecimal(20))).asInstanceOf[JsValue]
-      n should equal(20)
-
-      val JsNumber(n1) = serializer.in[AnyRef](serializer.out(BigInt(20))).asInstanceOf[JsValue]
-      n1 should equal(20)
-    }
     it("should give an instance of BigDecimal") {
       serializer.in[BigDecimal](
         serializer.out(BigDecimal(20))) should equal(BigDecimal(20))
@@ -55,52 +44,22 @@ class SerializerSpec extends Spec with ShouldMatchers {
   }
 
   describe("List serialization") {
-    it("should give an instance of JsArray") {
-      val l = serializer.in[AnyRef](serializer.out(List(1, 2, 3))).asInstanceOf[JsValue]
-      val num_list = list ! num
-      val num_list(l0) = l
-      l0 should equal(List(1, 2, 3))
-    }
     it("should give an instance of List") {
-      val l = serializer.in[List[BigDecimal]](serializer.out(List(1, 2, 3)))
-                .asInstanceOf[List[_]]
-                .map(x => jsBean.fromJSON(x.asInstanceOf[JsValue], Some(classOf[BigDecimal])))
+      val l = serializer.in[List[Int]](serializer.out(List(1, 2, 3)))
       l should equal(List(1, 2, 3))
     }
-    it("should give an instance of JsArray containing JsString") {
-      val l = serializer.in[AnyRef](serializer.out(List("ab", "bc", "cd")))
-                .asInstanceOf[JsValue].self
-                .asInstanceOf[List[_]]
-                .map(x => jsBean.fromJSON(x.asInstanceOf[JsValue], Some(classOf[String])))
-      l should equal(List("ab", "bc", "cd"))
-    }
 
-    // use list extractor
-    it("should also give a List using extractors") {
-      val l = serializer.in[AnyRef](serializer.out(List("ab", "bc", "cd")))
-      val str_list = list ! str
-      val str_list(l0) = l
-      l0 should equal(List("ab", "bc", "cd"))
-    }
     it("should give an instance of List of String") {
       val l = serializer.in[List[String]](serializer.out(List("ab", "bc", "cd")))
-                .asInstanceOf[List[_]]
-                .map(x => jsBean.fromJSON(x.asInstanceOf[JsValue], Some(classOf[String])))
       l should equal(List("ab", "bc", "cd"))
     }
   }
 
   describe("Map serialization") {
     it("should serialize to an instance of Map") {
-      val m = Map("1" -> "dg", "2" -> "mc", "3" -> "rc")
-      val m1 = serializer.in[AnyRef](serializer.out(m))
-                         .asInstanceOf[JsValue].self
-                         .asInstanceOf[Map[_,_]]
-      val m2 = Map(m1.map {x =>
-        (jsBean.fromJSON(x._1.asInstanceOf[JsValue], Some(classOf[String])),
-          jsBean.fromJSON(x._2.asInstanceOf[JsValue], Some(classOf[String])))}.toList: _*)
-
-      m.keySet.toList should equal(m2.keySet.toList)
+      val l = Map("1" -> "debasish", "2" -> "maulindu", "3" -> "nilanjan")
+      val in = serializer.in[Map[String, String]](serializer.out(l)) 
+      in should equal(l)
     }
   }
 
@@ -110,24 +69,6 @@ class SerializerSpec extends Spec with ShouldMatchers {
       serializer.in[Address](
         serializer.out(addr)) should equal(addr)
     }
-
-    it("should match extracted values") {
-      val a = serializer.in[AnyRef](
-        serializer.out(addr))
-
-      // use extractors
-      val c = 'city ? str
-      val c(_city) = a
-      _city should equal("San Francisco")
-
-      val s = 'street ? str
-      val s(_street) = a
-      _street should equal("Market Street")
-
-      val z = 'zip ? str
-      val z(_zip) = a
-      _zip should equal("956871")
-    }
   }
 
   describe("Simple bean with null objects serialization") {
@@ -136,25 +77,6 @@ class SerializerSpec extends Spec with ShouldMatchers {
     it("should give an instance of Address") {
       serializer.in[Address](
         serializer.out(addr)) should equal(addr)
-    }
-
-    it("should match extracted values") {
-      val a = serializer.in[AnyRef](
-        serializer.out(addr))
-
-      // use extractors
-      val c = 'city ? str
-      val c(_city) = a
-      _city should equal("San Francisco")
-
-      val s = 'street ? str
-      val s(_street) = a
-      _street should equal("Market Street")
-
-      val z = 'zip ? str
-      // println("z = " + z)
-      // val z(_zip) = a
-      // _zip should equal("null") // should be JsNull since de-serialized with AnyRef
     }
   }
 
@@ -167,32 +89,6 @@ class SerializerSpec extends Spec with ShouldMatchers {
 
     it("should give an instance of Contact") {
       c should equal(serializer.in[Contact](co))
-    }
-    it("should match extracted values from Contact") {
-      val a = serializer.in[AnyRef](co)
-
-      // extract name
-      val n = 'name ? str
-      val n(_name) = a
-      "Bob" should equal(_name)
-
-      // extract addresses
-      val addrs = 'addresses ? obj
-      val addrs(_addresses) = a
-
-      // extract residence from addresses
-      val res = 'residence ? obj
-      val res(_raddr) = _addresses
-
-      // make an Address bean out of _raddr
-      val address = jsBean.fromJSON(_raddr, Some(classOf[Address]))
-      a1 should equal(address)
-
-      object r { def ># [T](f: JsF[T]) = f(a.asInstanceOf[JsValue]) }
-
-      // still better: chain 'em up
-      "Market Street" should equal(
-        (r ># { ('addresses ? obj) andThen ('residence ? obj) andThen ('street ? str) }))
     }
   }
 
@@ -225,11 +121,8 @@ class SerializerSpec extends Spec with ShouldMatchers {
       val a1 = Address("Market Street", "San Francisco", "956871")
       val a2 = Address("Monroe Street", "Denver", "80231")
       val a3 = Address("North Street", "Atlanta", "987671")
-      List(a1, a2, a3) should equal(
-        serializer.in[AnyRef](serializer.out(List(a1, a2, a3)))
-                  .asInstanceOf[JsValue].self
-                  .asInstanceOf[List[_]]
-                  .map(x => jsBean.fromJSON(x.asInstanceOf[JsValue], Some(classOf[Address]))))
+      val in = serializer.in[List[Address]](serializer.out(List(a1, a2, a3)))
+      in should equal(List(a1, a2, a3))
     }
   }
 
@@ -237,7 +130,7 @@ class SerializerSpec extends Spec with ShouldMatchers {
     val addr = new InternationalAddress("Market Street", "San Francisco", "956871", "USA")
     it("should give an instance of the derived class InternationalAddress") {
       val ad = serializer.in[InternationalAddress](
-          serializer.out(addr)).asInstanceOf[InternationalAddress]
+          serializer.out(addr))
 
       addr.country should equal(ad.country)
       addr.city should equal(ad.city)
@@ -246,7 +139,7 @@ class SerializerSpec extends Spec with ShouldMatchers {
     }
     it("should serialize a slice and give an instance of Address") {
       val a3 = serializer.in[Address](
-        serializer.out(addr)).asInstanceOf[Address]
+        serializer.out(addr))
       a3.city should equal(addr.city)
       a3.street should equal(addr.street)
       a3.zip should equal(addr.zip)
@@ -255,75 +148,33 @@ class SerializerSpec extends Spec with ShouldMatchers {
         serializer.in[Address](
           serializer.out(addr)))
     }
-    it("should support deserialization as AnyRef and extraction") {
-      val a = serializer.in[AnyRef](
-        serializer.out(addr))
-
-      // use extractors
-      val c = 'city ? str
-      val c(_city) = a
-      _city should equal("San Francisco")
-
-      val s = 'street ? str
-      val s(_street) = a
-      _street should equal("Market Street")
-
-      val z = 'zip ? str
-      val z(_zip) = a
-      _zip should equal("956871")
-
-      val n = 'country ? str
-      val n(_cnt) = a
-      _cnt should equal("USA")
-    }
-    it("should support anonymous deserialization and extraction") {
-      val a = serializer.in(
-        serializer.out(addr))
-
-      // use extractors
-      val c = 'city ? str
-      val c(_city) = a
-      _city should equal("San Francisco")
-
-      val s = 'street ? str
-      val s(_street) = a
-      _street should equal("Market Street")
-
-      val z = 'zip ? str
-      val z(_zip) = a
-      _zip should equal("956871")
-
-      val n = 'country ? str
-      val n(_cnt) = a
-      _cnt should equal("USA")
-    }
   }
 
   describe("Serialization with ignore properties") {
     it("should ignore issn field") {
       val j = Journal(100, "IEEE Computer", "Alex Payne", "012-456372")
-      serializer.in[Journal](serializer.out(j)).asInstanceOf[Journal].issn should equal(null)
+      serializer.in[Journal](serializer.out(j)).issn should equal(null)
     }
   }
 
   describe("Serialization of Boolean") {
     it("should serialize properly") {
       val b = Foo("debasish", true)
-      serializer.in[Foo](serializer.out(b)).asInstanceOf[Foo] should equal(b)
+      serializer.in[Foo](serializer.out(b)) should equal(b)
     }
   }
 
   describe("Serialization of vals") {
     it("should serialize properly") {
       val b = Bar("debasish", 12, 100l, 123.65f, true)
-      serializer.in[Bar](serializer.out(b)).asInstanceOf[Bar] should equal(b)
+      serializer.in[Bar](serializer.out(b)) should equal(b)
     }
   }
 
   describe("Serialization of timezones") {
     it("should serialize properly") {
       val t = TimeZoneBean( TimeZone.getTimeZone( "UTC"))
-      serializer.in[TimeZoneBean](serializer.out(t)).asInstanceOf[TimeZoneBean] should equal(t)
+      serializer.in[TimeZoneBean](serializer.out(t)) should equal(t)
     }
   }
 
@@ -334,7 +185,7 @@ class SerializerSpec extends Spec with ShouldMatchers {
       import Shape._
       import Month._
       val b = EnumTest(Mon, Circle, April, List(Mon, Tue, Wed), List(February))
-      val o = serializer.in[EnumTest](serializer.out(b)).asInstanceOf[EnumTest] 
+      val o = serializer.in[EnumTest](serializer.out(b))
       b.start should equal(o.start)
       b.shape should equal(o.shape)
       b.month should equal(o.month)
@@ -347,49 +198,32 @@ class SerializerSpec extends Spec with ShouldMatchers {
   describe("Serialization of date") {
     it("should serialize properly") {
       val t = SecurityTrade("T-123", new Date, new Date, 1000)
-      serializer.in[SecurityTrade](serializer.out(t)).asInstanceOf[SecurityTrade] should equal(t)
+      serializer.in[SecurityTrade](serializer.out(t)) should equal(t)
     }
   }
 
   describe("Serialization of tuple") {
     it("should serialize tuple2[string, string]") {
       val m = ("debasish", "ghosh")
-
-      val m1 = serializer.in[AnyRef](serializer.out(m))
-                         .asInstanceOf[JsValue].self
-                         .asInstanceOf[Map[_,_]]
-      val m2 = Map(m1.map {x => 
-        (jsBean.fromJSON(x._1.asInstanceOf[JsValue], Some(classOf[String])), 
-          jsBean.fromJSON(x._2.asInstanceOf[JsValue], Some(classOf[String])))}.toList: _*)
-
-      Map(m).valuesIterator.toList should equal(m2.valuesIterator.toList)
+      val in = serializer.in[Tuple2[String, String]](serializer.out(m))
+      in should equal(m)
     }
     it("should serialize tuple2[string, Int]") {
       val m = ("debasish", 1000)
+      val in = serializer.in[Tuple2[String, Int]](serializer.out(m))
+      in should equal(m)
 
-      val m1 = serializer.in[AnyRef](serializer.out(m))
-                         .asInstanceOf[JsValue].self
-                         .asInstanceOf[Map[_,_]]
-      val m2 = Map(m1.map {x => 
-        (jsBean.fromJSON(x._1.asInstanceOf[JsValue], Some(classOf[String])), 
-          jsBean.fromJSON(x._2.asInstanceOf[JsValue], Some(classOf[String])))}.toList: _*)
-
-      Map(m).valuesIterator.toList should equal(m2.valuesIterator.toList)
     }
     it("should serialize tuple2[string, List]") {
       val m = ("debasish", List(1,2,3,4))
-
-      val e = serializer.in(
-        serializer.out(m))
-
-      val JsObject(o) = e
-      o(JsString("debasish")) should equal(JsArray(List(JsNumber(1),JsNumber(2),JsNumber(3),JsNumber(4))))
+      val in = serializer.in[Tuple2[String, List[Int]]](serializer.out(m))
+      in should equal(m)
     }
     it("should serialize an object with Tuple2") {
       val message = MyMessage("id", ("hello", 34))
       val json = serializer.out(message)
       new String(json) should equal("""{"id":"id","value":{"hello":34}}""")
-      val f = serializer.in[MyMessage](json).asInstanceOf[MyMessage]
+      val f = serializer.in[MyMessage](json)
       f should equal(message)
     }
   }
@@ -459,7 +293,7 @@ class SerializerSpec extends Spec with ShouldMatchers {
       val out = serializer.out(a)
       new String(out) should equal("""{"addresses":["a","b","c"],"id":100,"name":"debasish"}""")
       val in = serializer.in[ArrayTest](out)
-      in.asInstanceOf[ArrayTest].addresses should equal(Array("a", "b", "c"))
+      in.addresses should equal(Array("a", "b", "c"))
     }
   }
 
@@ -472,7 +306,7 @@ class SerializerSpec extends Spec with ShouldMatchers {
       val a = ObjectArrayTest(100, "debasish", Array(a1, a2, a3))
       val out = serializer.out(a)
       val in = serializer.in[ObjectArrayTest](out)
-      in.asInstanceOf[ObjectArrayTest].addresses should equal(Array(a1, a2, a3))
+      in.addresses should equal(Array(a1, a2, a3))
     }
   }
 
@@ -482,8 +316,8 @@ class SerializerSpec extends Spec with ShouldMatchers {
       serializer.in[MyJsonObject](serializer.out(a)) should equal(a)
       val obj = serializer.in[MyJsonObject](serializer.out(a)) 
       obj should equal(a)
-      obj.asInstanceOf[MyJsonObject].m.get("debasish").get.isInstanceOf[Int] should equal(true)
-      obj.asInstanceOf[MyJsonObject].l.head.isInstanceOf[Int] should equal(true)
+      obj.m.get("debasish").get.isInstanceOf[Int] should equal(true)
+      obj.l.head.isInstanceOf[Int] should equal(true)
     }
   }
 
@@ -496,6 +330,45 @@ class SerializerSpec extends Spec with ShouldMatchers {
 
     it("should serialize and de-serialize correctly") {
       serializer.in[SampleConfigOption](serializer.out(s)) should equal(s)
+    }
+  }
+
+  describe("Java List serialization") {
+    it("should give an instance of JsArray") {
+      val l = new java.util.ArrayList[Int]
+      l.add(1)
+      l.add(2)
+      l.add(3)
+      import scala.collection.JavaConversions._
+      val li = serializer.in[List[Int]](serializer.out(l.toList))
+      li should equal(l.toList)
+    }
+    it("should give another instance of JsArray") {
+      val l = new java.util.ArrayList[String]
+      l.add("a")
+      l.add("b")
+      l.add("c")
+      import scala.collection.JavaConversions._
+      val li = serializer.in[List[String]](serializer.out(l.toList))
+      li should equal(l.toList)
+    }
+  }
+
+  describe("Nested List serialization") {
+    it("should give an instance of List of List of Int") {
+      val l = List(List(1, 2), List(2, 3, 4), List(5))
+      serializer.in[List[List[Int]]](serializer.out(l)) should equal(l)
+    }
+    it("should give an instance of List of List of String") {
+      val l = List(List("a", "b"), List("c", "d", "e"), List("f"))
+      serializer.in[List[List[String]]](serializer.out(l)) should equal(l)
+    }
+    it("should give an instance of List of List of Address") {
+      val a1 = Address("Market Street", "San Francisco", "956871")
+      val a2 = Address("Monroe Street", "Denver", "80231")
+      val a3 = Address("North Street", "Atlanta", "987671")
+      val l = List(List(a1), List(a1, a2), List(a1, a2, a3))
+      serializer.in[List[List[Address]]](serializer.out(l)) should equal(l)
     }
   }
 }

@@ -275,7 +275,6 @@ trait JsBean {
    * Generate a JSON representation of the object <tt>obj</tt> and return the string.
    */
   def toJSON[T <: AnyRef](obj: T): String = obj match {
-    // case null => quote("null")
     case null => "null"
     case (n: Number) => obj.toString
     case (b: java.lang.Boolean) => obj.toString

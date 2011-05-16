@@ -15,7 +15,7 @@ object Serializer {
     val classLoader: Option[ClassLoader]
 
     import scala.reflect.Manifest
-    def deepClone[T](obj: T)(implicit m: Manifest[T]): AnyRef = in[T](out(obj.asInstanceOf[AnyRef]))
+    def deepClone[T](obj: T)(implicit m: Manifest[T]): T = in[T](out(obj.asInstanceOf[AnyRef]))
   
     /**
      * Serialize out a Scala object. It can be serialized back in to the object using
@@ -38,52 +38,57 @@ object Serializer {
       }
     }
   
-    def in[T](bytes: Array[Byte])(implicit m: Manifest[T]): AnyRef = {
+    def in[T](bytes: Array[Byte])(implicit m: Manifest[T]): T = {
       in[T](new String(bytes, "UTF-8"))(m)
     }
 
-    /**
-     * Serialize in a JSON into a Scala object. 
-     * <p/>
-     * The API can be invoked either by specifying a concrete class, as <tt>in[Address](json)</tt>
-     * then the API returns an instance of <tt>Address</tt>. If any of the fields of <tt>Address</tt>
-     * object was <tt>null</tt>, then it will be appropriately converted to the <tt>null</tt> value.
-     * However, if the API is invoked as <tt>in[AnyRef](json)</tt> or <tt>in(json)</tt> or
-     * <tt>in[None](json)</tt>, then the API returns an instance of JsValue, which can be manipulated
-     * using the Json extractors. e.g.
-     * <pre>
-     * val addr = Address("Market Street", "San Francisco", null)
-     * val a = serializer.in[AnyRef](serializer.out(addr))
-     *
-     * val c = 'city ? str
-     * val c(_city) = a
-     * _city should equal("San Francisco")
-     *
-     * val s = 'street ? str
-     * val s(_street) = a
-     * _street should equal("Market Street")
-     *
-     * val z = 'zip ? str
-     * val z(_zip) = a
-     * _zip should equal("null") 
-     * </pre>
-     *
-     * Note that in the second case, the zip field is being de-serialized as String null, "null",
-     * which is how we serialize nulls in sjson.
-     */
-    def in[T](json: String)(implicit m: Manifest[T]): AnyRef = m.toString match {
-      case "Object" =>
-        Js(json)
-      case "java.lang.Object" =>
-        Js(json)
-      case "scala.runtime.Nothing$" =>
-        Js(json)
-      case "Nothing" =>
-        Js(json)
-      case "None.type" =>
-        Js(json)
-      case _ =>
-        fromJSON(Js(json), Some(m.erasure)).asInstanceOf[AnyRef]
+    def in[T](json: String)(implicit m: Manifest[T]): T = {
+      in[T](Js(json))(m)
+    }
+
+    private[json] def in[T](js: JsValue)(implicit m: Manifest[T]): T = {
+      // Map and Tuple2 both are serialized as Maps wrapped within a JsObject
+      if (m.erasure == classOf[collection.immutable.Map[_, _]] ||
+          m.erasure == classOf[Tuple2[_, _]]) extract[T](js)
+
+      // beans are also serialized as JsObjects, but need to invoke fromJSON for beans
+      else if (js.isInstanceOf[JsObject]) fromJSON(js, Some(m.erasure)).asInstanceOf[T]
+
+      // all other cases
+      else extract[T](js)
+    }
+
+    private[json] def extract[T](jsv: JsValue)(implicit m: Manifest[T]): T = {
+      val ex = jsv match {
+        case JsNumber(n) => n
+        case JsString(s) => s
+        case JsArray(l) => {
+          // deep serialization
+          val inm = m.typeArguments.head
+          l.map(in(_)(inm))
+        }
+        case JsBoolean(b) => b
+        case JsNull => null
+        case JsObject(mp) => { // either Map or a Tuple2
+          // deep serialization
+          val targs = m.typeArguments
+          val (km, vm) = (targs.head, targs.last)
+
+          if (m.erasure == classOf[Tuple2[_, _]]) {
+            val tup = mp.toList.head
+            val deserl_1 = in(tup._1)(km)
+            val deserl_2 = in(tup._2)(vm)
+            (deserl_1, deserl_2)
+          } else { // Map
+            mp.map { case (k, v) =>
+              val deserl_k = in(k)(km)
+              val deserl_v = in(v)(vm)
+              (deserl_k, deserl_v)
+            }
+          }
+        }
+      }
+      ex.asInstanceOf[T]
     }
 
     /**

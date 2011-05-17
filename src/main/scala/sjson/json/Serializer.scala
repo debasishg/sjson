@@ -38,15 +38,16 @@ object Serializer {
       }
     }
   
-    def in[T](bytes: Array[Byte])(implicit m: Manifest[T]): T = {
-      in[T](new String(bytes, "UTF-8"))(m)
+    def in[T: Manifest](bytes: Array[Byte]): T = {
+      in[T](new String(bytes, "UTF-8")) // (m)
     }
 
-    def in[T](json: String)(implicit m: Manifest[T]): T = {
-      in[T](Js(json))(m)
+    def in[T: Manifest](json: String): T = {
+      in[T](Js(json)) // (m)
     }
 
-    private[json] def in[T](js: JsValue)(implicit m: Manifest[T]): T = {
+    private[json] def in[T: Manifest](js: JsValue): T = {
+      val m = implicitly[Manifest[T]]
       // Map and Tuple2 both are serialized as Maps wrapped within a JsObject
       if (m.erasure == classOf[collection.immutable.Map[_, _]] ||
           m.erasure == classOf[Tuple2[_, _]]) extract[T](js)
@@ -58,7 +59,8 @@ object Serializer {
       else extract[T](js)
     }
 
-    private[json] def extract[T](jsv: JsValue)(implicit m: Manifest[T]): T = {
+    private[json] def extract[T: Manifest](jsv: JsValue): T = {
+      val m = implicitly[Manifest[T]]
       val ex = jsv match {
         case JsNumber(n) => n
         case JsString(s) => s

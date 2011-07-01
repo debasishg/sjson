@@ -47,13 +47,17 @@ object Util {
     str.toString
   }
 
-  def mkNum(v: BigDecimal, c: Class[_]): Any = {
-    if (c.isAssignableFrom(classOf[Int])) v.asInstanceOf[BigDecimal].intValue
-    else if (c.isAssignableFrom(classOf[Long])) v.asInstanceOf[BigDecimal].longValue
-    else if (c.isAssignableFrom(classOf[Float])) v.asInstanceOf[BigDecimal].floatValue
-    else if (c.isAssignableFrom(classOf[Double])) v.asInstanceOf[BigDecimal].doubleValue
-    else if (c.isAssignableFrom(classOf[Short])) v.asInstanceOf[BigDecimal].shortValue
-    else v
+  def mkNum(v: Any, c: Class[_]) = {
+    v match {
+      case b: BigDecimal =>
+        if (c.isAssignableFrom(classOf[Int])) b.intValue
+        else if (c.isAssignableFrom(classOf[Long])) b.longValue
+        else if (c.isAssignableFrom(classOf[Float])) b.floatValue
+        else if (c.isAssignableFrom(classOf[Double])) b.doubleValue
+        else if (c.isAssignableFrom(classOf[Short])) b.shortValue
+        else b
+      case _ => sys.error("unexpected")
+    }
   }
 
   import java.util.Date

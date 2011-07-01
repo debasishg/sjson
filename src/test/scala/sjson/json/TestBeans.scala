@@ -318,11 +318,19 @@ object TestBeans {
   }
 
   @BeanInfo
+  case class Manager(name: String,
+    @(OptionTypeHint@field)(value = classOf[Long]) age: Option[Long]) {
+     private def this() = this ("", None)
+  }
+
+  @BeanInfo
   case class DesignDocument(var _id: String, 
     @(JSONProperty @getter)(ignoreIfNull = true, ignore = false) _rev: String, 
     @(JSONTypeHint @field)(value = classOf[View]) views: Map[String, View],
-    @(JSONProperty @getter)(ignoreIfNull = true, ignore = false) validate_doc_update: Option[String] = None) {
-    private def this() = this(null, null, Map[String, View](), None)
+    @(JSONProperty @getter)(ignoreIfNull = true, ignore = false) validate_doc_update: Option[String] = None,
+    @(JSONProperty @getter)(ignoreIfNull = true, ignore = false) shows: Option[Map[String, String]] = None,
+    @(JSONProperty @getter)(ignoreIfNull = true, ignore = false) lists: Option[Map[String, String]] = None) {
+    private def this() = this(null, null, Map[String, View]())
 
     override def toString = {
     "_id = " + _id + " _rev = " + _rev + " " + " validate = " + validate_doc_update + 

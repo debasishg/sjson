@@ -249,10 +249,12 @@ trait JsBean {
               if (y.getType.isAssignableFrom(classOf[scala.Option[_]])) {
                 // handle None case which comes as an empty List since we serialize None as []
                 if (num.isInstanceOf[List[_]] && num.asInstanceOf[List[_]].isEmpty) y.set(instance, None)
+                else if (num.isInstanceOf[BigDecimal]) {
+                  val inner = getInnerTypeForOption(y.getType, y)
+                  y.set(instance, Some(mkNum(num, inner)))
+                }
                 else y.set(instance, Some(num))
-              } else { 
-                y.set(instance, num)
-              }
+              } else y.set(instance, num)
             }
           }
         }

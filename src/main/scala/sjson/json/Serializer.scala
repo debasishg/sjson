@@ -46,7 +46,7 @@ object Serializer {
       in[T](Js(json)) // (m)
     }
 
-    private[json] def in[T: Manifest](js: JsValue): T = {
+    def in[T: Manifest](js: JsValue): T = {
       val m = implicitly[Manifest[T]]
       // Map and Tuple2 both are serialized as Maps wrapped within a JsObject
       if (m.erasure == classOf[collection.immutable.Map[_, _]] ||

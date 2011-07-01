@@ -371,4 +371,11 @@ class SerializerSpec extends Spec with ShouldMatchers {
       serializer.in[List[List[Address]]](serializer.out(l)) should equal(l)
     }
   }
+
+  describe("Serialization of Long in a bean") {
+    it("should serialize") {
+      val m = Manager("alexander", Some(27l))
+      serializer.in[Manager](serializer.out(m)) should equal(m)
+    }
+  }
 }

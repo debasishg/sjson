@@ -497,6 +497,17 @@ class JsonSpec extends Spec with ShouldMatchers {
       val o2 = jsBean.fromJSON(Js(json2), Some(classOf[DesignDocument])).asInstanceOf[DesignDocument]
       o2.validate_doc_update.isDefined should equal(false)
     }
+
+    it("should process optional shows correctly") {
+      val all_pass = "function(newDoc, oldDoc, userCtx) {}"  // all valid
+      val summary = "function(doc, rec) {}"
+      val detail = "function(doc, rec) {}"
+      val bar = "function(head, rec) {}"
+      val zoom = "function(head, rec) {}"
+      val d1 = DesignDocument("foo_valid", null, Map[String, View](), Some(all_pass), Some(Map("summary" -> summary, "detail" -> detail)), Some(Map("zoom" -> zoom, "bar" -> bar)))
+      val json1 = jsBean.toJSON(d1)
+      println(json1)
+    }
   }
 }
 

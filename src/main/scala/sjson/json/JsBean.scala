@@ -333,8 +333,13 @@ trait JsBean {
           val v =
             if (ann == null || ann.value == null || ann.value.length == 0) pd.getName
             else ann.value
+          val rvIsNone =
+            if (rv.isInstanceOf[Option[_]]) {
+              val rvo = rv.asInstanceOf[Option[_]]
+              if (!rvo.isDefined) true else false
+            } else false
           val ignore =
-            if (ann != null) ann.ignore || (rv == null && ann.ignoreIfNull) else false
+            if (ann != null) ann.ignore || (rv == null && ann.ignoreIfNull) || (rvIsNone && ann.ignoreIfNull) else false
 
           if ((ignore == false) && (!isOption || (isOption && rval != null)))
         } yield toJSON(v) + ":" + toJSON(rval)

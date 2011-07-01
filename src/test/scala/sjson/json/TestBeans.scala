@@ -316,6 +316,25 @@ object TestBeans {
   @BeanInfo case class SampleConfigOption(user: Option[String], names: List[String]) {
     def this() = this (Some("default"), List[String]())
   }
+
+  @BeanInfo
+  case class DesignDocument(var _id: String, 
+    @(JSONProperty @getter)(ignoreIfNull = true, ignore = false) _rev: String, 
+    @(JSONTypeHint @field)(value = classOf[View]) views: Map[String, View],
+    @(JSONProperty @getter)(ignoreIfNull = true, ignore = false) validate_doc_update: Option[String] = None) {
+    private def this() = this(null, null, Map[String, View](), None)
+
+    override def toString = {
+    "_id = " + _id + " _rev = " + _rev + " " + " validate = " + validate_doc_update + 
+      (views match {
+        case null => ""
+        case v => {
+          v.map(e => 
+            (e._1.toString + ":" + e._2.toString)).mkString(",")
+        }
+      })
+    }
+  }
 }
 
 object Shape extends Enumeration {

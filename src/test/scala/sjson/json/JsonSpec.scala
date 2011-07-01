@@ -480,5 +480,23 @@ class JsonSpec extends Spec with ShouldMatchers {
       o.months should equal(x.months)
     }
   }
+
+  describe("couchdb design documents") {
+    it("should process optional validate_doc_update correctly") {
+      val all_pass = "function(newDoc, oldDoc, userCtx) {}"  // all valid
+      val d1 = DesignDocument("foo_valid", null, Map[String, View](), Some(all_pass))
+      val json1 = jsBean.toJSON(d1)
+      val s = ('validate_doc_update ? str)
+      val s(_s) = Js(json1)
+      _s should equal("function(newDoc, oldDoc, userCtx) {}")
+      val o1 = jsBean.fromJSON(Js(json1), Some(classOf[DesignDocument])).asInstanceOf[DesignDocument]
+      o1.validate_doc_update.isDefined should equal(true)
+
+      val d2 = DesignDocument("foo_valid", null, Map[String, View](), None)
+      val json2 = jsBean.toJSON(d2)
+      val o2 = jsBean.fromJSON(Js(json2), Some(classOf[DesignDocument])).asInstanceOf[DesignDocument]
+      o2.validate_doc_update.isDefined should equal(false)
+    }
+  }
 }
 

@@ -60,4 +60,8 @@ trait Primitives extends Protocol {
       case _ => throw new RuntimeException("String expected")
     }
   }
+  implicit object JsValueFormat extends Format[JsValue] {
+    def writes(o: JsValue) = o
+    def reads(json: JsValue) = json
+  }
 }

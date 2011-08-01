@@ -363,7 +363,9 @@ trait DefaultConstructor {
     // need to access private default constructor .. hack!
     // clazz.getDeclaredConstructors.foreach(println)
     val constructor =
-      clazz.getDeclaredConstructors.filter(_.getParameterTypes.length == 0).head
+      clazz.getDeclaredConstructors
+           .filter(_.getParameterTypes.length == 0)
+           .headOption.getOrElse(sys.error("no default constructor found on " + clazz))
 
      if (!Modifier.isPublic(constructor.getModifiers()) ||
       !Modifier.isPublic(constructor.getDeclaringClass().getModifiers()))

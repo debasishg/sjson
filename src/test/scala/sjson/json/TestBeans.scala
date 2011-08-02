@@ -343,6 +343,22 @@ object TestBeans {
       })
     }
   }
+
+  @BeanInfo
+  case class Family(
+    @(JSONProperty @getter)(ignoreIfNull = true)
+    @(OptionTypeHint@field)(value = classOf[Personz]) father: Option[Personz] = None, 
+    @(JSONProperty @getter)(ignoreIfNull = true)
+    @(OptionTypeHint@field)(value = classOf[Personz]) mother: Option[Personz] = None, 
+    @(JSONProperty @getter)(ignoreIfNull = true)
+    @(JSONTypeHint @field)(value = classOf[Personz]) children: List[Personz] = List()) {
+    def this() = this(None, None, List())
+    }
+
+  @BeanInfo
+  case class Personz(@(JSONProperty @getter)(ignoreIfNull = true) name: String = "", age: Int = -1) {
+    def this() = this("", -1)
+  }
 }
 
 object Shape extends Enumeration {

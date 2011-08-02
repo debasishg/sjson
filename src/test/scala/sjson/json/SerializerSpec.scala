@@ -378,4 +378,21 @@ class SerializerSpec extends Spec with ShouldMatchers {
       serializer.in[Manager](serializer.out(m)) should equal(m)
     }
   }
+
+  // issue #26
+  describe("Serialization of optionally empty fields") {
+    it("should serialize Family ignoring an empty children list") {
+      val pair = new Family(Some(Personz("Homer", 40)), Some(Personz("Marge", 40)))
+      val out = serializer.out(pair)
+      new String(out) should equal("""{"father":{"age":40,"name":"Homer"},"mother":{"age":40,"name":"Marge"}}""")
+      serializer.in[Family](out) should equal(pair)
+    }
+
+    it("should serialize a list of orphans without the empty parents in output") {
+      val orphan = new Family(None, None, List(Personz("Bart", 10), Personz("Lisa", 8)))
+      val out = serializer.out(orphan)
+      new String(out) should equal("""{"children":[{"age":10,"name":"Bart"},{"age":8,"name":"Lisa"}]}""")
+      serializer.in[Family](out) should equal(orphan)
+    }
+  }
 }

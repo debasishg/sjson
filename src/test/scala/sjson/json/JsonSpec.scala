@@ -340,7 +340,10 @@ class JsonSpec extends Spec with ShouldMatchers {
     it("should pass for empty Map in value") {
       jsBean.toJSON(Map("empty" -> Map())) should equal("""{"empty":{}}""")
     }
-      
+    it("should serialize primitives") {
+      jsBean.toJSON(Array(1, 2, 3)) should equal("[1,2,3]")
+      jsBean.toJSON(Map("data1" -> Array(1, 2, 3), "data2" -> Array(4, 5, 6))) should equal("""{"data1":[1,2,3],"data2":[4,5,6]}""")
+    }
   }
   
   describe("Generating JSON from a complex bean") {

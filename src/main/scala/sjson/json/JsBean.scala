@@ -292,8 +292,11 @@ trait JsBean {
     case (s: Seq[AnyRef]) =>
       s.map(e => toJSON(e)).mkString("[", ",", "]")
 
-    case (s: Array[AnyRef]) =>
+    case (s: Array[AnyRef]) => 
       s.map(e => toJSON(e)).mkString("[", ",", "]")
+
+    case (s: Array[_]) => 
+      s.mkString("[", ",", "]")
 
     case (m: Map[AnyRef, AnyRef]) =>
       m.map(e => toJSON(e._1.toString) + ":" + toJSON(e._2))

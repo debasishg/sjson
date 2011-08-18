@@ -508,8 +508,29 @@ class JsonSpec extends Spec with ShouldMatchers {
       val bar = "function(head, rec) {}"
       val zoom = "function(head, rec) {}"
       val d1 = DesignDocument("foo_valid", null, Map[String, View](), Some(all_pass), Some(Map("summary" -> summary, "detail" -> detail)), Some(Map("zoom" -> zoom, "bar" -> bar)))
-      val json1 = jsBean.toJSON(d1)
-      println(json1)
+      jsBean.toJSON(d1) should equal("""{"_id":"foo_valid","lists":{"zoom":"function(head, rec) {}","bar":"function(head, rec) {}"},"shows":{"summary":"function(doc, rec) {}","detail":"function(doc, rec) {}"},"validate_doc_update":"function(newDoc, oldDoc, userCtx) {}","views":{}}""")
+    }
+  }
+
+  describe("should process complex scala classes with singleton objects") {
+    it("should generate proper json for case objects") {
+      val sec = Security("Google", FI)
+      val fitrade1 = BondTrade(sec, Some(Map("TradeTax" -> BigDecimal(10.00), "Commission" -> BigDecimal(23))), "a-123")
+      jsBean.toJSON(fitrade1) should equal("""{"account":"a-123","instrument":{"name":"Google","securityType":"sjson.json.TestBeans$FI$"},"taxFees":{"TradeTax":10.0,"Commission":23}}""")
+
+      val fitrade2 = BondTrade(sec, None, "a-123")
+      jsBean.toJSON(fitrade2) should equal("""{"account":"a-123","instrument":{"name":"Google","securityType":"sjson.json.TestBeans$FI$"}}""")
+    }
+
+    it("should deserialize json to construct case objects") {
+      val sec = Security("Google", FI)
+      val fitrade1 = BondTrade(sec, Some(Map("TradeTax" -> BigDecimal(10.00), "Commission" -> BigDecimal(23))), "a-123")
+      val json1 = jsBean.toJSON(fitrade1) 
+      jsBean.fromJSON(Js(json1), Some(classOf[BondTrade])) should equal(fitrade1)
+
+      val fitrade2 = BondTrade(sec, None, "a-123")
+      val json2 = jsBean.toJSON(fitrade2) 
+      jsBean.fromJSON(Js(json2), Some(classOf[BondTrade])) should equal(fitrade2)
     }
   }
 }

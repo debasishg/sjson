@@ -64,5 +64,62 @@ object Util {
   def mkDate(v: String): Date = {
     new Date(v.toLong.longValue)
   }
+
+  val loader = getClass.getClassLoader
+
+  def getObjectFor[T](fqn: String, classloader: ClassLoader = loader): Either[Exception, T] = try {
+    getClassFor(fqn, classloader) match {
+      case Right(value) ⇒
+        val instance = value.getDeclaredField("MODULE$")
+        instance.setAccessible(true)
+        val obj = instance.get(null)
+        if (obj eq null) Left(new NullPointerException) else Right(obj.asInstanceOf[T])
+      case Left(exception) ⇒ Left(exception) //We could just cast this to Either[Exception, T] but it's ugly
+    }
+  } catch {
+    case e: Exception ⇒
+      Left(e)
+  }
+
+  def getClassFor[T](fqn: String, classloader: ClassLoader = loader): Either[Exception, Class[T]] = try {
+    assert(fqn ne null)
+
+    // First, use the specified CL
+    val first = try {
+      Right(classloader.loadClass(fqn).asInstanceOf[Class[T]])
+    } catch {
+      case c: ClassNotFoundException ⇒ Left(c)
+    }
+
+    if (first.isRight) first
+    else {
+      // Second option is to use the ContextClassLoader
+      val second = try {
+        Right(Thread.currentThread.getContextClassLoader.loadClass(fqn).asInstanceOf[Class[T]])
+      } catch {
+        case c: ClassNotFoundException ⇒ Left(c)
+      }
+
+      if (second.isRight) second
+      else {
+        val third = try {
+          if (classloader ne loader) Right(loader.loadClass(fqn).asInstanceOf[Class[T]]) else Left(null) //Horrid
+        } catch {
+          case c: ClassNotFoundException ⇒ Left(c)
+        }
+
+        if (third.isRight) third
+        else {
+          try {
+            Right(Class.forName(fqn).asInstanceOf[Class[T]]) // Last option is Class.forName
+          } catch {
+            case c: ClassNotFoundException ⇒ Left(c)
+          }
+        }
+      }
+    }
+  } catch {
+    case e: Exception ⇒ Left(e)
+  }
 }
 

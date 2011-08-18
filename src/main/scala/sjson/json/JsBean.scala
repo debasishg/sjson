@@ -116,11 +116,11 @@ trait JsBean {
    * Convert the <tt>JsValue</tt> to an instance of the class <tt>context</tt>, using the parent for any annotation hints.
    * Returns an instance of <tt>T</tt>.
    */
-  private[json] def fromJSON[T](js: JsValue, context: Option[Class[T]], parent: Field): T = {
+  private[json] def fromJSON[T: Manifest](js: JsValue, context: Option[Class[T]], parent: Field): T = {
     if (context.isDefined && classOf[Enumeration#Value].isAssignableFrom(context.get)) {
       toEnumValue(js.self, getEnumObjectClass(context.get.asInstanceOf[Class[Enumeration#Value]], parent)).asInstanceOf[T]
     } else {
-      fromJSON(js, context)
+      fromJSON[T](js, context)
     }
   }
 
@@ -128,7 +128,7 @@ trait JsBean {
    * Convert the <tt>JsValue</tt> to an instance of the class <tt>context</tt>. Returns an instance of
    * <tt>T</tt>.
    */
-  def fromJSON[T](js: JsValue, context: Option[Class[T]]): T = {
+  def fromJSON[T: Manifest](js: JsValue, context: Option[Class[T]]): T = {
     if (!js.isInstanceOf[JsObject] || !context.isDefined) js.self.asInstanceOf[T]
     else {
       // bean as a map from json
@@ -180,10 +180,6 @@ trait JsBean {
           case x: List[_] => {
             val field = context.get.getDeclaredField(props.get(name).get)
 
-            // empty list as value and type = Option means None
-            // if (field.getType.isAssignableFrom(classOf[Option[_]]) && x.isEmpty) 
-              // (Some(field), None)
-            // else {
               val ann = field.getAnnotation(classOf[JSONTypeHint])
               ann match {
                 case null => 
@@ -204,9 +200,20 @@ trait JsBean {
                     x.map{ case y: JsValue => fromJSON(y, Some(ann.value), field)
                     })
               }
-            // }
           }
         
+          case x: String if (x endsWith "$") => 
+            getClassFor(x) match {
+              case Left(ex) => sys.error("Cannot get class info for :" + x)
+              case Right(clazz) =>
+                getObject(x, clazz) match {
+                  case Left(ex) =>
+                    sys.error("Cannot make object for :" + x)
+                  case Right(obj) =>
+                    (Some(context.get.getDeclaredField(props.get(name).get)), obj)
+                }
+            }
+
           case x => 
             (Some(context.get.getDeclaredField(props.get(name).get)), value.self)
         }
@@ -241,7 +248,6 @@ trait JsBean {
                 }
 
                 // special treatment for JSON "nulls"
-                // else if (z.isInstanceOf[String] && (z == "null")) null
                 else if (z.isInstanceOf[String] && (z == null)) null
                 else z
 
@@ -261,6 +267,8 @@ trait JsBean {
       }
     }
   }
+
+  private def getObject[T](fqn: String, clazz: Class[T]) = getObjectFor[T](fqn)
 
   private def mkArray(l: List[_], clz: Class[_]): Array[_] = {
     import java.lang.reflect.{Array => JArray}
@@ -304,6 +312,9 @@ trait JsBean {
 
     case (t: Tuple2[AnyRef, AnyRef]) =>
         "{" + toJSON(t._1) + ":" + toJSON(t._2) + "}"
+
+    // scala case object
+    case x if x.getClass.getName.endsWith("$") => quote(obj.getClass.getCanonicalName)
 
     case _ => {
       // handle beans

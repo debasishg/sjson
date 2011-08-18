@@ -359,6 +359,36 @@ object TestBeans {
   case class Personz(@(JSONProperty @getter)(ignoreIfNull = true) name: String = "", age: Int = -1) {
     def this() = this("", -1)
   }
+
+  @BeanInfo
+  case class Security[T <: SecurityType](name: String, securityType: T) {
+    def this() = this("", null.asInstanceOf[T])
+  }
+
+  sealed trait SecurityType
+  case object STOCK extends SecurityType
+  case object FI extends SecurityType
+  case object MUTUAL_FUND extends SecurityType
+  case object GOVT_BOND extends SecurityType
+
+  @BeanInfo
+  case class BondTrade(
+    instrument: Security[FI.type],
+    @(JSONProperty @getter)(ignoreIfNull = true, ignore = false) @(OptionTypeHint@field)(value = classOf[scala.collection.Map[_, _]]) taxFees: Option[Map[String, BigDecimal]] = None,
+    account: String) {
+    def this() = this(null, None, "")
+  }
+
+  @BeanInfo
+  case class TradedIn(
+    @(JSONTypeHint @field)(value = classOf[SecurityType]) securityTypes: Map[String, List[SecurityType]]) {
+    def this() = this(Map.empty[String, List[SecurityType]])
+  }
+
+  @BeanInfo
+  case class MappedList(securityTypes: Map[String, List[String]]) {
+    def this() = this(Map.empty[String, List[String]])
+  }
 }
 
 object Shape extends Enumeration {

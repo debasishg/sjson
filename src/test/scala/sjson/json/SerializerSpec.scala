@@ -395,4 +395,36 @@ class SerializerSpec extends Spec with ShouldMatchers {
       serializer.in[Family](out) should equal(orphan)
     }
   }
+
+  describe("Serialization of classes containing singleton objects") {
+    it("should serialize BondTrade with FI type of security") {
+      val sec = Security("Google", FI)
+      val fitrade = BondTrade(sec, Some(Map("TradeTax" -> BigDecimal(10.00), "Commission" -> BigDecimal(23))), "a-123")
+      val out = serializer.out(fitrade)
+      serializer.in[BondTrade](out) should equal(fitrade)
+    }
+
+    it("should serialize a BondTrade with FI type of security and empty taxfee list") {
+      val sec = Security("Google", FI)
+      val fitrade = BondTrade(sec, None, "a-123")
+      val out = serializer.out(fitrade)
+      serializer.in[BondTrade](out) should equal(fitrade)
+    }
+
+    /**
+    it("should serialize") {
+      val t = TradedIn(Map("New York" -> List(STOCK, FI), "Hong Kong" -> List(STOCK, MUTUAL_FUND)))
+      val out = serializer.out(t)
+      println(new String(out))
+      serializer.in[TradedIn](out) should equal(t)
+    }
+
+    it("should serialize") {
+      val t = MappedList(Map("New York" -> List("FI", "STOCK"), "Hong Kong" -> List("STOCK")))
+      val out = serializer.out(t)
+      println(new String(out))
+      serializer.in[MappedList](out) should equal(t)
+    }
+    **/
+  }
 }

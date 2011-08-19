@@ -53,16 +53,54 @@ trait JsBean {
     } else { clazz }
   }
 
-  private def processJsValue(js: JsValue): Any = js match {
-    case JsArray(l) => l.map(j => processJsValue(j))
-    case JsString(s) => s
-    case JsNumber(n) => n
-    case JsTrue => true
-    case JsFalse => false
-    case JsNull => null
-    case _ => js.self
+  private def makeOptionFromHint[T: Manifest](obj: T, f: Field) = f.getAnnotation(classOf[OptionTypeHint]) match {
+    case null => obj
+    case x if (x.value.isAssignableFrom(implicitly[Manifest[T]].erasure)) => Some(obj)
+    case x => obj
   }
 
+  /**
+   * Process the <tt>JsValue</tt> and return the wrapped value. It may need to take care of two things:
+   * <li>in case of <tt>JsArray</tt>, need to map over and do a deep processing</li>
+   * <li>in case the field is annotated with an <tt>Option</tt> type that matches the wrapped type, then <tt>Some(obj)</tt></li>
+   */
+  private def processJsValue(js: JsValue, f: Option[Field] = None): Any = js match {
+    case JsArray(l) =>  f match {
+      case Some(fld) => makeOptionFromHint(l.map(j => processJsValue(j)), fld)
+      case _ => l.map(j => processJsValue(j))
+    }
+    case JsString(s) => f match {
+      case Some(fld) => makeOptionFromHint(s, fld)
+      case _ => s
+    }
+    case JsNumber(n) => f match {
+      case Some(fld) => makeOptionFromHint(n, fld)
+      case _ => n
+    }
+    case JsTrue => f match {
+      case Some(fld) => makeOptionFromHint(true, fld)
+      case _ => true
+    }
+    case JsFalse => f match {
+      case Some(fld) => makeOptionFromHint(false, fld)
+      case _ => false
+    }
+    case JsNull => null
+    case _ => f match {
+      case Some(fld) => {
+        val ann = fld.getAnnotation(classOf[OptionTypeHint]) 
+        ann.value match {
+          case null => sys.error("OptionTypeHint missing .. annotation type not found for " + js)
+          case x => Some(fromJSON(js, Some(x)))
+        }
+      }
+      case _ => js.self
+    }
+  }
+
+  /**
+   * Process Map recursively and consider the impact of a <tt>JSONTypeHint</tt> annotation.
+   */
   private def processMap(m: Map[_,_], field: Field) = {
     val ann = field.getAnnotation(classOf[JSONTypeHint])
     (Some(field), 
@@ -70,7 +108,7 @@ trait JsBean {
         (ann match {
           case null =>
             m.map {case (y1: JsValue, y2: JsValue) => 
-              (y1.self, processJsValue(y2))
+              (y1.self, processJsValue(y2, Some(field)))
             }
           case x if x.value.isPrimitive == true =>
             // remember all numbers are converted to BigDecimal by the JSON parser
@@ -86,6 +124,9 @@ trait JsBean {
          }))
   }
 
+  /**
+   * Process Tuple2 recursively and consider the impact of a <tt>JSONTypeHint</tt> annotation.
+   */
   private def processTuple2(t: Tuple2[_,_], field: Field) = {
     val (t1: JsValue, t2: JsValue) = t
     val ann = field.getAnnotation(classOf[JSONTypeHint])
@@ -110,8 +151,8 @@ trait JsBean {
   }
   
   /**
-   * Convert the value to an Enumeration.Value instance using class <tt>enumObjectClass</tt>'s valueOf method. Returns an instance of
-   * <tt>Enumeration.Value</tt>.
+   * Convert the value to an Enumeration.Value instance using class <tt>enumObjectClass</tt>'s 
+   * valueOf method. Returns an instance of <tt>Enumeration.Value</tt>.
    */
   private def toEnumValue[T](value: Any, enumObjectClass: Class[T]): Enumeration#Value = {
     if (Modifier.isAbstract(enumObjectClass.getModifiers)) {
@@ -131,16 +172,15 @@ trait JsBean {
   }
 
   /**
-   * Convert the <tt>JsValue</tt> to an instance of the class <tt>context</tt>, using the parent for any annotation hints.
-   * Returns an instance of <tt>T</tt>.
+   * Convert the <tt>JsValue</tt> to an instance of the class <tt>context</tt>, using the parent for 
+   * any annotation hints. Returns an instance of <tt>T</tt>.
    */
   private[json] def fromJSON[T](js: JsValue, context: Option[Class[T]], parent: Field): T = {
-    if (context.isDefined && classOf[Enumeration#Value].isAssignableFrom(context.get)) {
-      toEnumValue(js.self, getEnumObjectClass(context.get.asInstanceOf[Class[Enumeration#Value]], parent)).asInstanceOf[T]
-    } else {
-      fromJSON(js, context)
-      // if (context.get.isInterface == true) fromJSON(js, None) else fromJSON(js, context)
-    }
+    if (context.isDefined && classOf[Enumeration#Value].isAssignableFrom(context.get)) 
+      toEnumValue(
+        js.self, 
+        getEnumObjectClass(context.get.asInstanceOf[Class[Enumeration#Value]], parent)).asInstanceOf[T]
+    else fromJSON(js, context)
   }
 
   /**
@@ -153,10 +193,8 @@ trait JsBean {
         case JsArray(l) => processJsValue(js).asInstanceOf[T]
         case JsString(s) if (s endsWith "$") => 
           processSingletonObject(s) match {
-            case Left(ex) =>
-              sys.error("Cannot make object for :" + s)
-            case Right(obj) => 
-              obj.asInstanceOf[T]
+            case Left(ex) => sys.error("Cannot make object for :" + s)
+            case Right(obj) => obj.asInstanceOf[T]
           }
         case _ => js.self.asInstanceOf[T]
       }
@@ -235,10 +273,8 @@ trait JsBean {
         
           case x: String if (x endsWith "$") => 
             processSingletonObject(x) match {
-              case Left(ex) =>
-                sys.error("Cannot make object for :" + x)
-              case Right(obj) => 
-                (Some(context.get.getDeclaredField(props.get(name).get)), obj)
+              case Left(ex) => sys.error("Cannot make object for :" + x)
+              case Right(obj) => (Some(context.get.getDeclaredField(props.get(name).get)), obj)
             }
 
           case x => 

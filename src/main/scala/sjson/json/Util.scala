@@ -81,6 +81,13 @@ object Util {
       Left(e)
   }
 
+  def getObjectFor[T](clazz: Class[T]): Either[Exception, T] = {
+    val instance = clazz.getDeclaredField("MODULE$")
+    instance.setAccessible(true)
+    val obj = instance.get(null)
+    if (obj eq null) Left(new NullPointerException) else Right(obj.asInstanceOf[T])
+  }
+
   def getClassFor[T](fqn: String, classloader: ClassLoader = loader): Either[Exception, Class[T]] = try {
     assert(fqn ne null)
 

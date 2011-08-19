@@ -386,8 +386,33 @@ object TestBeans {
   }
 
   @BeanInfo
-  case class MappedList(securityTypes: Map[String, List[String]]) {
+  case class MapOfListOfString(securityTypes: Map[String, List[String]]) {
     def this() = this(Map.empty[String, List[String]])
+  }
+
+  @BeanInfo
+  case class MapOfListOfShop(
+    @(JSONTypeHint @field)(value = classOf[Shop]) shops: Map[String, List[Shop]]) {
+    def this() = this(Map.empty[String, List[Shop]])
+  }
+
+  @BeanInfo
+  case class OptionalMapOfListOfString(
+    @(OptionTypeHint@field)(value = classOf[scala.collection.Map[_, _]]) securityTypes: Option[Map[String, List[String]]]) {
+    def this() = this(None)
+  }
+
+  @BeanInfo
+  case class MapOfOptionalListOfString(
+    @(OptionTypeHint@field)(value = classOf[scala.collection.immutable.List[_]]) securityTypes: Map[String, Option[List[String]]]) {
+    def this() = this(Map.empty[String, Option[List[String]]])
+  }
+
+  @BeanInfo
+  case class OptionalMapOfListOfShop(
+    @(OptionTypeHint@field)(value = classOf[scala.collection.Map[_, _]]) 
+    @(JSONTypeHint @field)(value = classOf[Shop]) shops: Option[Map[String, List[Shop]]]) {
+    def this() = this(None)
   }
 }
 

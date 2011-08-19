@@ -53,7 +53,8 @@ object Serializer {
           m.erasure == classOf[Tuple2[_, _]]) extract[T](js)
 
       // beans are also serialized as JsObjects, but need to invoke fromJSON for beans
-      else if (js.isInstanceOf[JsObject]) fromJSON(js, Some(m.erasure)).asInstanceOf[T]
+      else if (js.isInstanceOf[JsObject]) 
+        fromJSON(js, Some(m.erasure)).asInstanceOf[T]
 
       // all other cases
       else extract[T](js)

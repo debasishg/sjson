@@ -410,21 +410,58 @@ class SerializerSpec extends Spec with ShouldMatchers {
       val out = serializer.out(fitrade)
       serializer.in[BondTrade](out) should equal(fitrade)
     }
+  }
 
-    /**
-    it("should serialize") {
+  describe("Serialization of classes containing collections of singleton objects") {
+    it("should serialize an object with a Map containing lists of case objects") {
       val t = TradedIn(Map("New York" -> List(STOCK, FI), "Hong Kong" -> List(STOCK, MUTUAL_FUND)))
       val out = serializer.out(t)
-      println(new String(out))
       serializer.in[TradedIn](out) should equal(t)
     }
+  }
 
-    it("should serialize") {
-      val t = MappedList(Map("New York" -> List("FI", "STOCK"), "Hong Kong" -> List("STOCK")))
+  describe("Serialization of classes containing Maps of Lists as values") {
+    it("should serialize a Map of list of String") {
+      val t = MapOfListOfString(Map("New York" -> List("FI", "STOCK"), "Hong Kong" -> List("STOCK")))
+      val out = serializer.out(t)
+      serializer.in[MapOfListOfString](out) should equal(t)
+    }
+
+    it("should serialize an optional Map of list of String") {
+      val t = OptionalMapOfListOfString(Some(Map("New York" -> List("FI", "STOCK"), "Hong Kong" -> List("STOCK"))))
+      val out = serializer.out(t)
+      serializer.in[OptionalMapOfListOfString](out) should equal(t)
+    }
+
+    /**
+    it("should serialize a Map of optional list of String") {
+      val t = MapOfOptionalListOfString(Map("New York" -> Some(List("FI", "STOCK")), "Hong Kong" -> Some(List("STOCK"))))
       val out = serializer.out(t)
       println(new String(out))
-      serializer.in[MappedList](out) should equal(t)
+      serializer.in[MapOfOptionalListOfString](out) should equal(t)
     }
     **/
+
+    it("should serialize a Map of list of Shop") {
+      val s1 = Shop("macys", "garment", 100)
+      val s2 = Shop("sears", "shirt", 120)
+      val s3 = Shop("costco", "banana", 15)
+      val s4 = Shop("jcpenny", "garment", 200)
+
+      val t = MapOfListOfShop(Map("New York" -> List(s1, s2), "Hong Kong" -> List(s2, s3, s4)))
+      val out = serializer.out(t)
+      serializer.in[MapOfListOfShop](out) should equal(t)
+    }
+
+    it("should serialize an optional Map of list of Shop") {
+      val s1 = Shop("macys", "garment", 100)
+      val s2 = Shop("sears", "shirt", 120)
+      val s3 = Shop("costco", "banana", 15)
+      val s4 = Shop("jcpenny", "garment", 200)
+
+      val t = OptionalMapOfListOfShop(Some(Map("New York" -> List(s1, s2), "Hong Kong" -> List(s2, s3, s4))))
+      val out = serializer.out(t)
+      serializer.in[OptionalMapOfListOfShop](out) should equal(t)
+    }
   }
 }

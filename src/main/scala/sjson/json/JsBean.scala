@@ -53,6 +53,16 @@ trait JsBean {
     } else { clazz }
   }
 
+  private def processJsValue(js: JsValue): Any = js match {
+    case JsArray(l) => l.map(j => processJsValue(j))
+    case JsString(s) => s
+    case JsNumber(n) => n
+    case JsTrue => true
+    case JsFalse => false
+    case JsNull => null
+    case _ => js.self
+  }
+
   private def processMap(m: Map[_,_], field: Field) = {
     val ann = field.getAnnotation(classOf[JSONTypeHint])
     (Some(field), 
@@ -60,7 +70,7 @@ trait JsBean {
         (ann match {
           case null =>
             m.map {case (y1: JsValue, y2: JsValue) => 
-              (y1.self, y2.self)
+              (y1.self, processJsValue(y2))
             }
           case x if x.value.isPrimitive == true =>
             // remember all numbers are converted to BigDecimal by the JSON parser
@@ -69,9 +79,10 @@ trait JsBean {
               else (y1.self, y2.self)
             }
           case _ =>
-            m.map {case (y1: JsValue, y2: JsValue) => 
-              (y1.self, fromJSON(y2, Some(ann.value), field))
-            }
+            m.map {case (y1: JsValue, y2: JsValue) => y2 match {
+              case JsArray(l) => (y1.self, l.map(j => fromJSON(j, Some(ann.value), field)))
+              case _ => (y1.self, fromJSON(y2, Some(ann.value), field))
+            }}
          }))
   }
 
@@ -89,6 +100,13 @@ trait JsBean {
         case _ =>
           (t1.self, fromJSON(t2, Some(ann.value), field))
        }))
+  }
+
+  private def processSingletonObject[T](fqn: String): Either[Exception, T] = {
+    getClassFor(fqn) match {
+      case Left(ex) => Left(new Exception("Cannot get class info for :" + fqn))
+      case Right(clazz) => getObjectFor(clazz) 
+    }
   }
   
   /**
@@ -116,11 +134,12 @@ trait JsBean {
    * Convert the <tt>JsValue</tt> to an instance of the class <tt>context</tt>, using the parent for any annotation hints.
    * Returns an instance of <tt>T</tt>.
    */
-  private[json] def fromJSON[T: Manifest](js: JsValue, context: Option[Class[T]], parent: Field): T = {
+  private[json] def fromJSON[T](js: JsValue, context: Option[Class[T]], parent: Field): T = {
     if (context.isDefined && classOf[Enumeration#Value].isAssignableFrom(context.get)) {
       toEnumValue(js.self, getEnumObjectClass(context.get.asInstanceOf[Class[Enumeration#Value]], parent)).asInstanceOf[T]
     } else {
-      fromJSON[T](js, context)
+      fromJSON(js, context)
+      // if (context.get.isInterface == true) fromJSON(js, None) else fromJSON(js, context)
     }
   }
 
@@ -128,8 +147,20 @@ trait JsBean {
    * Convert the <tt>JsValue</tt> to an instance of the class <tt>context</tt>. Returns an instance of
    * <tt>T</tt>.
    */
-  def fromJSON[T: Manifest](js: JsValue, context: Option[Class[T]]): T = {
-    if (!js.isInstanceOf[JsObject] || !context.isDefined) js.self.asInstanceOf[T]
+  def fromJSON[T](js: JsValue, context: Option[Class[T]]): T = {
+    if (!js.isInstanceOf[JsObject] || !context.isDefined) {
+      js match {
+        case JsArray(l) => processJsValue(js).asInstanceOf[T]
+        case JsString(s) if (s endsWith "$") => 
+          processSingletonObject(s) match {
+            case Left(ex) =>
+              sys.error("Cannot make object for :" + s)
+            case Right(obj) => 
+              obj.asInstanceOf[T]
+          }
+        case _ => js.self.asInstanceOf[T]
+      }
+    }
     else {
       // bean as a map from json
       val bean = js.self.asInstanceOf[Map[JsString, JsValue]]
@@ -203,15 +234,11 @@ trait JsBean {
           }
         
           case x: String if (x endsWith "$") => 
-            getClassFor(x) match {
-              case Left(ex) => sys.error("Cannot get class info for :" + x)
-              case Right(clazz) =>
-                getObject(x, clazz) match {
-                  case Left(ex) =>
-                    sys.error("Cannot make object for :" + x)
-                  case Right(obj) =>
-                    (Some(context.get.getDeclaredField(props.get(name).get)), obj)
-                }
+            processSingletonObject(x) match {
+              case Left(ex) =>
+                sys.error("Cannot make object for :" + x)
+              case Right(obj) => 
+                (Some(context.get.getDeclaredField(props.get(name).get)), obj)
             }
 
           case x => 
@@ -300,6 +327,10 @@ trait JsBean {
     case (s: Seq[AnyRef]) =>
       s.map(e => toJSON(e)).mkString("[", ",", "]")
 
+    case Some(s) => toJSON(s.asInstanceOf[AnyRef])
+
+    case None => "[]"
+
     case (s: Array[AnyRef]) => 
       s.map(e => toJSON(e)).mkString("[", ",", "]")
 
@@ -327,6 +358,7 @@ trait JsBean {
         Introspector.getBeanInfo(clazz)
           .getPropertyDescriptors
           .filter(_.getName != "class")
+
 
       if (pds.isEmpty) {
         throw new UnsupportedOperationException("Class " + clazz + " not supported for conversion")

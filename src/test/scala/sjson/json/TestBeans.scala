@@ -426,6 +426,26 @@ object TestBeans {
     @(OptionTypeHint@field)(value = classOf[Shop]) shopTypes: Map[String, Option[Shop]]) {
     def this() = this(Map.empty[String, Option[Shop]])
   }
+
+  @BeanInfo
+  case class ListOfMap(
+    @(JSONTypeHint@field)(value = classOf[Shop]) shops: List[Map[String, Shop]]) {
+    def this() = this(List.empty[Map[String, Shop]])
+  }
+
+  @BeanInfo
+  case class ListOfMapOfString(
+    @(JSONTypeHint@field)(value = classOf[String]) shops: List[Map[String, String]]) {
+    def this() = this(List.empty[Map[String, String]])
+  }
+
+  @BeanInfo
+  case class ListOfMapOfOptionalString(
+    @(OptionTypeHint@field)(value = classOf[String])
+    @(JSONTypeHint@field)(value = classOf[String]) 
+    shops: List[Map[String, Option[String]]]) {
+    def this() = this(List.empty[Map[String, Option[String]]])
+  }
 }
 
 object Shape extends Enumeration {

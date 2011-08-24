@@ -86,15 +86,27 @@ trait JsBean {
       case _ => false
     }
     case JsNull => null
-    case _ => f match {
+    case JsObject(m) => f match {
       case Some(fld) => {
         val ann = fld.getAnnotation(classOf[OptionTypeHint]) 
-        ann.value match {
-          case null => sys.error("OptionTypeHint missing .. annotation type not found for " + js)
-          case x => Some(fromJSON(js, Some(x)))
+        ann match {
+          case null => 
+            val jsType = fld.getAnnotation(classOf[JSONTypeHint])
+            if (jsType != null)
+              m.map {case (y1: JsValue, y2: JsValue) => 
+                (y1.self, fromJSON(y2, Some(jsType.value)))}
+            else 
+              m.map {case (y1: JsValue, y2: JsValue) => 
+                (y1.self, processJsValue(y2, None))}
+
+          case x => Some(fromJSON(js, Some(x.value)))
         }
       }
-      case _ => js.self
+      // no field: treat as a Map
+      case None => 
+        m.map {case (y1: JsValue, y2: JsValue) => 
+          (y1.self, processJsValue(y2, None))
+        }
     }
   }
 
@@ -177,8 +189,7 @@ trait JsBean {
    */
   private[json] def fromJSON[T](js: JsValue, context: Option[Class[T]], parent: Field): T = {
     if (context.isDefined && classOf[Enumeration#Value].isAssignableFrom(context.get)) 
-      toEnumValue(
-        js.self, 
+      toEnumValue(js.self, 
         getEnumObjectClass(context.get.asInstanceOf[Class[Enumeration#Value]], parent)).asInstanceOf[T]
     else fromJSON(js, context)
   }
@@ -249,26 +260,44 @@ trait JsBean {
           case x: List[_] => {
             val field = context.get.getDeclaredField(props.get(name).get)
 
-              val ann = field.getAnnotation(classOf[JSONTypeHint])
-              ann match {
-                case null => 
-                  (Some(field), 
-                    x.map{ case y: JsValue => y.self
-                    })
+            val ann = field.getAnnotation(classOf[JSONTypeHint])
+            ann match {
+              case null => 
+                (Some(field), 
+                  x.map{ case y: JsValue => y.self
+                  })
 
-                case a if a.value.isPrimitive == true => 
-                  (Some(field), 
-                    x.map{case y: JsValue => 
-                      // remember all numbers are converted to BigDecimal by the JSON parser
-                      if (y.isInstanceOf[JsNumber]) mkNum(y.self.asInstanceOf[BigDecimal], ann.value)
-                      else y.self
-                    })
+              case a if a.value.isPrimitive == true => 
+                (Some(field), 
+                  x.map{case y: JsValue => 
+                    // remember all numbers are converted to BigDecimal by the JSON parser
+                    if (y.isInstanceOf[JsNumber]) mkNum(y.self.asInstanceOf[BigDecimal], ann.value)
+                    else y.self
+                  })
 
-                case _ =>
-                  (Some(field), 
-                    x.map{ case y: JsValue => fromJSON(y, Some(ann.value), field)
-                    })
-              }
+              case _ =>
+                (Some(field), 
+                  x.map{case y: JsValue => 
+
+                    // list of Maps : can be objects or can be scala.collection.Map
+                    if (y.isInstanceOf[JsObject]) {
+
+                      // use field to find out if it's a Map or an object
+                      if (field.getGenericType.isInstanceOf[java.lang.reflect.ParameterizedType]) {
+                        field.getGenericType
+                             .asInstanceOf[java.lang.reflect.ParameterizedType]
+                             .getActualTypeArguments.head match {
+
+                          // case Map
+                          case h: java.lang.reflect.ParameterizedType if (h.getRawType.equals(classOf[scala.collection.immutable.Map[_, _]])) => processJsValue(y, Some(field))
+
+                          // case object
+                          case h => fromJSON(y, Some(ann.value), field)
+                        }
+                      } else fromJSON(y, Some(ann.value), field)
+                    } else fromJSON(y, Some(ann.value), field)
+                  })
+             }
           }
         
           case x: String if (x endsWith "$") => 

@@ -474,5 +474,28 @@ class SerializerSpec extends Spec with ShouldMatchers {
       val out = serializer.out(t)
       serializer.in[MapOfOptionalShop](out) should equal(t)
     }
+
+    it("should serialize a List of Map") {
+      val s1 = Shop("macys", "garment", 100)
+      val s2 = Shop("sears", "shirt", 120)
+      val t = ListOfMap(List(Map("New York" -> s1, "Hong Kong" -> s2)))
+      val out = serializer.out(t)
+      serializer.in[ListOfMap](out) should equal(t)
+    }
+
+    it("should serialize a List of Map of String") {
+      val t = ListOfMapOfString(List(Map("New York" -> "US", "Kolkata" -> "India")))
+      val out = serializer.out(t)
+      serializer.in[ListOfMapOfString](out) should equal(t)
+    }
+
+    /**
+     * @fixme
+    it("should serialize a List of Map of optional String") {
+      val t = ListOfMapOfOptionalString(List(Map("New York" -> Some("US"), "Kolkata" -> Some("India"))))
+      val out = serializer.out(t)
+      serializer.in[ListOfMapOfOptionalString](out) should equal(t)
+    }
+    **/
   }
 }

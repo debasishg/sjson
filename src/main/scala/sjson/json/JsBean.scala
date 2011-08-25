@@ -92,20 +92,28 @@ trait JsBean {
         ann match {
           case null => 
             val jsType = fld.getAnnotation(classOf[JSONTypeHint])
-            if (jsType != null)
+
+            if (jsType != null) {
               m.map {case (y1: JsValue, y2: JsValue) => 
                 (y1.self, fromJSON(y2, Some(jsType.value)))}
-            else 
+            } else { // just a Map
               m.map {case (y1: JsValue, y2: JsValue) => 
-                (y1.self, processJsValue(y2, None))}
+                (y1.self, processJsValue(y2))}
+            }
 
-          case x => Some(fromJSON(js, Some(x.value)))
+          case x => 
+            val jsType = fld.getAnnotation(classOf[JSONTypeHint])
+
+            if (jsType != null) {
+              m.map {case (y1: JsValue, y2: JsValue) => 
+                (y1.self, Some(processJsValue(y2)))}
+            } else Some(fromJSON(js, Some(x.value)))
         }
       }
       // no field: treat as a Map
       case None => 
         m.map {case (y1: JsValue, y2: JsValue) => 
-          (y1.self, processJsValue(y2, None))
+          (y1.self, processJsValue(y2))
         }
     }
   }

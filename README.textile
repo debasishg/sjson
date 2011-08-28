@@ -8,6 +8,16 @@ For more details of the implementation and sample examples, have a look at the w
 
 h1. News
 
+2011/08/29: sjson 0.14 released
+    * fixed a bug with serializing a combo of List, Map and Option
+    * fixed #35: Need to distinguish between cases where we have a List of objects or a List of Maps
+    * fixed #34: Bug in serializing structures where the OptionTypeHint is for a nested value
+    * fixed #33: Bug in serializing composite structures like a List within a Map
+    * fixed issue #32: Serializing case objects (singleton objects) using sjson
+    * fixed #30: SJSON.toJSON() should handle primitive arrays
+    * fixed issue #26: optionally remove empty objects & arrays from result
+    * fixed #29 (https://github.com/debasishg/sjson/issues/29)
+
 2011/07/11: sjson 0.13 released
     * Bug fixes in reflection based API
     * Now compiles with scala 2.9.0-1

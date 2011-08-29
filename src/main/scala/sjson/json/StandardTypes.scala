@@ -52,6 +52,17 @@ trait CollectionTypes extends BasicTypes with Generic {
     }
   }
 
+  // implicit def mutableSetFormat[T](implicit bin : Format[T]) : Format[mutable.Set[T]] = 
+    // viaSeq((x : Seq[T]) => mutable.Set(x :_*))
+
+  implicit def seqFormat[T](implicit fmt : Format[T]) : Format[Seq[T]] = new Format[Seq[T]] {
+    def writes(ts: Seq[T]) = JsArray(ts.toList.map(t => tojson(t)(fmt)))
+    def reads(json: JsValue) = json match {
+      case JsArray(ts) => ts.map(t => fromjson(t)(fmt))
+      case _ => throw new RuntimeException("Seq expected")
+    }
+  }
+
   import scala.reflect.Manifest
   implicit def arrayFormat[T](implicit fmt : Format[T], mf: Manifest[T]) : Format[Array[T]] = new Format[Array[T]] {
     def writes(ts: Array[T]) = JsArray((ts.map(t => tojson(t)(fmt))).toList)

@@ -242,4 +242,15 @@ class TypeclassSerializerSpec extends Spec with ShouldMatchers {
       fromjson[Dept](tojson(d3)) should equal(d3)
     }
   }
+
+  describe("Serialization of Seq of items") {
+    import DataGridResultProtocol._
+    it ("should serialize") {
+      val u1 = User(Some("1"), "johndole", "ibm", "john", "dole")
+      val u2 = User(Some("2"), "barrykaplan", "ibm", "barry", "kaplan")
+      val u3 = User(Some("3"), "peterscott", "ibm", "peter", "scott")
+      val dg = DataGridResult("10", true, Seq(u1, u2, u3))
+      fromjson[DataGridResult](tojson(dg)) should equal(dg)
+    }
+  }
 }

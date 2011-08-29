@@ -208,26 +208,9 @@ object Protocols {
   object DataGridResultProtocol extends DefaultProtocol {
     import dispatch.json._
     import JsonSerialization._
-    implicit object UserFormat extends Format[User] {
-      def reads(json: JsValue): User = json match {
-        case JsObject(m) =>
-          User(fromjson[Option[String]](m(JsString("id"))),
-            fromjson[String](m(JsString("username"))),
-            fromjson[String](m(JsString("org"))),
-            fromjson[String](m(JsString("firstname"))),
-            fromjson[String](m(JsString("lastname"))))
-        case _ => throw new RuntimeException("JsObject expected")
-      }
 
-      def writes(p: User): JsValue =
-        JsObject(List(
-          (tojson("id").asInstanceOf[JsString], tojson(p.id.getOrElse(""))),
-          (tojson("username").asInstanceOf[JsString], tojson(p.username)),
-          (tojson("org").asInstanceOf[JsString], tojson(p.org)),
-          (tojson("firstname").asInstanceOf[JsString], tojson(p.firstname)),
-          (tojson("lastname").asInstanceOf[JsString], tojson(p.lastname))
-        ))
-    }
+    implicit val UserFormat: Format[User] =
+      asProduct5("id", "username", "org", "firstname", "lastname")(User)(User.unapply(_).get)
 
     implicit val DataGridFormat: Format[DataGridResult] =
       asProduct3("totalCount", "success", "results")(DataGridResult)(DataGridResult.unapply(_).get)  

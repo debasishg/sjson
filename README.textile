@@ -8,6 +8,10 @@ For more details of the implementation and sample examples, have a look at the w
 
 h1. News
 
+2011/09/01: sjson 0.15 released
+    * fixed #37: Problem in typeclass based serialization using Seq
+    * builds in Scala 2.9.1
+
 2011/08/29: sjson 0.14 released
     * fixed a bug with serializing a combo of List, Map and Option
     * fixed #35: Need to distinguish between cases where we have a List of objects or a List of Maps

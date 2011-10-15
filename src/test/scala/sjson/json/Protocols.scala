@@ -215,4 +215,26 @@ object Protocols {
     implicit val DataGridFormat: Format[DataGridResult] =
       asProduct3("totalCount", "success", "results")(DataGridResult)(DataGridResult.unapply(_).get)  
   }
+
+  abstract class C1 {
+    type T
+    val v: T
+  }
+
+  case class CC1(v: String) extends C1 {
+    type T = String
+  }
+
+  object CC1 extends DefaultProtocol {
+    import dispatch.json._
+    import JsonSerialization._
+
+    implicit object CC1Format extends Format[CC1] {
+      def reads(json: JsValue): CC1 = json match {
+        case JsObject(m) => CC1(fromjson[String](m(JsString("v")))) 
+        case _ => throw new RuntimeException("JsObject expected")
+      }
+      def writes(c1: CC1): JsValue = JsObject(List((tojson("v").asInstanceOf[JsString], tojson(c1.v))))
+    }
+  }
 }

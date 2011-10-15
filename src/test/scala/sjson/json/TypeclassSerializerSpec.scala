@@ -253,4 +253,11 @@ class TypeclassSerializerSpec extends Spec with ShouldMatchers {
       fromjson[DataGridResult](tojson(dg)) should equal(dg)
     }
   }
+
+  describe("Serialization of items with abstract types") {
+    it("should serialize") {
+      val c = CC1("debasish ghosh")
+      fromjson[CC1](tojson(c)) should equal(c)
+    }
+  }
 }

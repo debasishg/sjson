@@ -5,23 +5,23 @@ import java.lang.reflect.Modifier
 import java.util.TimeZone
 
 trait JsBean {
-  
+
   implicit def string2Class[T<:AnyRef](name: String)(implicit classLoader: ClassLoader): Class[T] = {
     val clazz = Class.forName(name, true, classLoader)
     clazz.asInstanceOf[Class[T]]
   }
-  
+
   private [json] def lookupType[T](parent: Class[T], name: String): Class[_] = {
     parent.getDeclaredField(name).getType
   }
-  
+
   class NiceObject[T <: AnyRef](x : T) {
     def niceClass : Class[_ <: T] = x.getClass.asInstanceOf[Class[T]]
   }
   implicit def toNiceObject[T <: AnyRef](x : T) = new NiceObject(x)
-  
+
   import java.beans._
-  
+
   import java.lang.reflect.Field
   import dispatch.json._
   import Util._
@@ -33,7 +33,7 @@ trait JsBean {
       val a = field.getAnnotation(classOf[JSONProperty])
       a match {
         case null => (field.getName, field.getName)
-        case x if x.value.length > 0 => 
+        case x if x.value.length > 0 =>
           (x.value, field.getName)
         case x => (field.getName, field.getName)
       }
@@ -88,31 +88,31 @@ trait JsBean {
     case JsNull => null
     case JsObject(m) => f match {
       case Some(fld) => {
-        val ann = fld.getAnnotation(classOf[OptionTypeHint]) 
+        val ann = fld.getAnnotation(classOf[OptionTypeHint])
         ann match {
-          case null => 
+          case null =>
             val jsType = fld.getAnnotation(classOf[JSONTypeHint])
 
             if (jsType != null) {
-              m.map {case (y1: JsValue, y2: JsValue) => 
+              m.map {case (y1: JsValue, y2: JsValue) =>
                 (y1.self, fromJSON(y2, Some(jsType.value)))}
             } else { // just a Map
-              m.map {case (y1: JsValue, y2: JsValue) => 
+              m.map {case (y1: JsValue, y2: JsValue) =>
                 (y1.self, processJsValue(y2))}
             }
 
-          case x => 
+          case x =>
             val jsType = fld.getAnnotation(classOf[JSONTypeHint])
 
             if (jsType != null) {
-              m.map {case (y1: JsValue, y2: JsValue) => 
+              m.map {case (y1: JsValue, y2: JsValue) =>
                 (y1.self, Some(processJsValue(y2)))}
             } else Some(fromJSON(js, Some(x.value)))
         }
       }
       // no field: treat as a Map
-      case None => 
-        m.map {case (y1: JsValue, y2: JsValue) => 
+      case None =>
+        m.map {case (y1: JsValue, y2: JsValue) =>
           (y1.self, processJsValue(y2))
         }
     }
@@ -123,11 +123,11 @@ trait JsBean {
    */
   private def processMap(m: Map[_,_], field: Field) = {
     val ann = field.getAnnotation(classOf[JSONTypeHint])
-    (Some(field), 
-      Map() ++ 
+    (Some(field),
+      Map() ++
         (ann match {
           case null =>
-            m.map {case (y1: JsValue, y2: JsValue) => 
+            m.map {case (y1: JsValue, y2: JsValue) =>
               (y1.self, processJsValue(y2, Some(field)))
             }
           case x if x.value.isPrimitive == true =>
@@ -150,7 +150,7 @@ trait JsBean {
   private def processTuple2(t: Tuple2[_,_], field: Field) = {
     val (t1: JsValue, t2: JsValue) = t
     val ann = field.getAnnotation(classOf[JSONTypeHint])
-    (Some(field), 
+    (Some(field),
       (ann match {
         case null =>
           (t1.self, t2.self)
@@ -166,12 +166,12 @@ trait JsBean {
   private def processSingletonObject[T](fqn: String): Either[Exception, T] = {
     getClassFor(fqn) match {
       case Left(ex) => Left(new Exception("Cannot get class info for :" + fqn))
-      case Right(clazz) => getObjectFor(clazz) 
+      case Right(clazz) => getObjectFor(clazz)
     }
   }
-  
+
   /**
-   * Convert the value to an Enumeration.Value instance using class <tt>enumObjectClass</tt>'s 
+   * Convert the value to an Enumeration.Value instance using class <tt>enumObjectClass</tt>'s
    * valueOf method. Returns an instance of <tt>Enumeration.Value</tt>.
    */
   private def toEnumValue[T](value: Any, enumObjectClass: Class[T]): Enumeration#Value = {
@@ -192,12 +192,12 @@ trait JsBean {
   }
 
   /**
-   * Convert the <tt>JsValue</tt> to an instance of the class <tt>context</tt>, using the parent for 
+   * Convert the <tt>JsValue</tt> to an instance of the class <tt>context</tt>, using the parent for
    * any annotation hints. Returns an instance of <tt>T</tt>.
    */
   private[json] def fromJSON[T](js: JsValue, context: Option[Class[T]], parent: Field): T = {
-    if (context.isDefined && classOf[Enumeration#Value].isAssignableFrom(context.get)) 
-      toEnumValue(js.self, 
+    if (context.isDefined && classOf[Enumeration#Value].isAssignableFrom(context.get))
+      toEnumValue(js.self,
         getEnumObjectClass(context.get.asInstanceOf[Class[Enumeration#Value]], parent)).asInstanceOf[T]
     else fromJSON(js, context)
   }
@@ -210,7 +210,7 @@ trait JsBean {
     if (!js.isInstanceOf[JsObject] || !context.isDefined) {
       js match {
         case JsArray(l) => processJsValue(js).asInstanceOf[T]
-        case JsString(s) if (s endsWith "$") => 
+        case JsString(s) if (s endsWith "$") =>
           processSingletonObject(s) match {
             case Left(ex) => sys.error("Cannot make object for :" + s)
             case Right(obj) => obj.asInstanceOf[T]
@@ -229,14 +229,14 @@ trait JsBean {
       // iterate on name/value pairs of the bean
       val info = bean map {case (JsString(name), value) =>
         value.self match {
-        
+
           // need to ignore properties in json that are not in props
           case x if (props.get(name).isDefined == false) =>
             (None, null)
-        
+
           /**
            * Can be a Map in any of the following cases:
-           * 1. the data member is really a scala.Collection.Map 
+           * 1. the data member is really a scala.Collection.Map
            * 2. tha data member is a Tuple2 which also we serialize as a Map
            * 3. the data member can be an object which comes in JSON as a Map
            */
@@ -264,28 +264,28 @@ trait JsBean {
                 (Some(field), fromJSON(value, Some(inner), field))
             }
           }
-          
+
           case x: List[_] => {
             val field = context.get.getDeclaredField(props.get(name).get)
 
             val ann = field.getAnnotation(classOf[JSONTypeHint])
             ann match {
-              case null => 
-                (Some(field), 
+              case null =>
+                (Some(field),
                   x.map{ case y: JsValue => y.self
                   })
 
-              case a if a.value.isPrimitive == true => 
-                (Some(field), 
-                  x.map{case y: JsValue => 
+              case a if a.value.isPrimitive == true =>
+                (Some(field),
+                  x.map{case y: JsValue =>
                     // remember all numbers are converted to BigDecimal by the JSON parser
                     if (y.isInstanceOf[JsNumber]) mkNum(y.self.asInstanceOf[BigDecimal], ann.value)
                     else y.self
                   })
 
               case _ =>
-                (Some(field), 
-                  x.map{case y: JsValue => 
+                (Some(field),
+                  x.map{case y: JsValue =>
 
                     // list of Maps : can be objects or can be scala.collection.Map
                     if (y.isInstanceOf[JsObject]) {
@@ -307,27 +307,27 @@ trait JsBean {
                   })
              }
           }
-        
-          case x: String if (x endsWith "$") => 
+
+          case x: String if (x endsWith "$") =>
             processSingletonObject(x) match {
               case Left(ex) => sys.error("Cannot make object for :" + x)
               case Right(obj) => (Some(context.get.getDeclaredField(props.get(name).get)), obj)
             }
 
-          case x => 
+          case x =>
             (Some(context.get.getDeclaredField(props.get(name).get)), value.self)
         }
       }
 
       newInstance(context.get) { instance =>
-        info.foreach {x => 
+        info.foreach {x =>
           x match {
             case (None, _) =>
             case (Some(y), z) => {
               y.setAccessible(true)
 
               // type conversion hacks
-              val num = 
+              val num =
                 // json parser makes BigDecimal out of all numbers
                 if (z.isInstanceOf[BigDecimal]) mkNum(z.asInstanceOf[BigDecimal], y.getType)
 
@@ -389,12 +389,12 @@ trait JsBean {
     case (n: Number) => obj.toString
     case (b: java.lang.Boolean) => obj.toString
     case (s: String) => quote(obj.asInstanceOf[String])
-    case (d: java.util.Date) => 
+    case (d: java.util.Date) =>
       quote(obj.asInstanceOf[java.util.Date].getTime.toString)
 
     case (d: java.util.TimeZone) => quote(d.getID)
 
-    case (v: Enumeration#Value) => 
+    case (v: Enumeration#Value) =>
       quote(v toString)
 
     case (s: Seq[AnyRef]) =>
@@ -404,10 +404,10 @@ trait JsBean {
 
     case None => "[]"
 
-    case (s: Array[AnyRef]) => 
+    case (s: Array[AnyRef]) =>
       s.map(e => toJSON(e)).mkString("[", ",", "]")
 
-    case (s: Array[_]) => 
+    case (s: Array[_]) =>
       s.mkString("[", ",", "]")
 
     case (m: Map[AnyRef, AnyRef]) =>
@@ -427,7 +427,7 @@ trait JsBean {
       // just an observation:
       // if the class is not at the top most level, then annotating the class
       // with @BeanInfo does not work. Need to annotate every property with @BeanProperty
-      val pds = 
+      val pds =
         Introspector.getBeanInfo(clazz)
           .getPropertyDescriptors
           .filter(_.getName != "class")
@@ -436,7 +436,7 @@ trait JsBean {
       if (pds.isEmpty) {
         throw new UnsupportedOperationException("Class " + clazz + " not supported for conversion")
       }
-        
+
       val props =
         for {
           pd <- pds
@@ -475,12 +475,12 @@ trait JsBean {
 
 
           val ignore =
-            if (ann != null) 
-              ann.ignore || 
-              (rv == null && ann.ignoreIfNull) || 
+            if (ann != null)
+              ann.ignore ||
+              (rv == null && ann.ignoreIfNull) ||
               (rvIsNone && ann.ignoreIfNull) ||
               (rvIsEmptySeq && ann.ignoreIfNull) ||
-              (rvIsEmptyArray && ann.ignoreIfNull) 
+              (rvIsEmptyArray && ann.ignoreIfNull)
             else false
 
           if ((ignore == false) && (!isOption || (isOption && rval != null)))
@@ -520,9 +520,9 @@ trait DefaultConstructor {
 object JsBean extends JsBean with DefaultConstructor
 
 /**
- * Use this trait with JsBean to instantiate classes using Objenesis. 
+ * Use this trait with JsBean to instantiate classes using Objenesis.
  *
- * This is faster and negates the need for a default no-args constructor. 
+ * This is faster and negates the need for a default no-args constructor.
  * However it adds a runtime dependency on objenesis.jar.
  *
  * @see http://objenesis.googlecode.com/svn/docs/index.html
@@ -530,9 +530,9 @@ object JsBean extends JsBean with DefaultConstructor
  */
 trait Objenesis {
   import org.objenesis.ObjenesisStd
-  
+
   val objenesis = new ObjenesisStd
-  
+
   def newInstance[T](clazz: Class[T])(op: T => Unit): T = {
     val v = objenesis.newInstance(clazz).asInstanceOf[T]
     op(v)

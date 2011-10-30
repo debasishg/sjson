@@ -48,7 +48,7 @@ class TypeclassSerializerSpec extends Spec with ShouldMatchers {
 
   describe("Serialization of composite objects") {
     it("should serialize into json and back") {
-      val contact = Contact("Debasish Ghosh", 
+      val contact = Contact("Debasish Ghosh",
         List(Address("monroe st", "denver", "80231"), Address("pine drive", "santa clara", "95054")))
       fromjson[Contact](tojson(contact)) should equal(contact)
     }
@@ -56,7 +56,7 @@ class TypeclassSerializerSpec extends Spec with ShouldMatchers {
 
   describe("Serialization of composite objects with arrays") {
     it("should serialize into json and back") {
-      val account = Account("123", "Debasish Ghosh", 
+      val account = Account("123", "Debasish Ghosh",
         Array(Address("monroe st", "denver", "80231"), Address("pine drive", "santa clara", "95054")))
 
       val ac = fromjson[Account](tojson(account))
@@ -125,7 +125,7 @@ class TypeclassSerializerSpec extends Spec with ShouldMatchers {
       import scala.collection._
 
       val s = mutable.Set(
-        ("debasish", Address("monroe st", "denver", "80231")), 
+        ("debasish", Address("monroe st", "denver", "80231")),
         ("maulindu", Address("tamarac st", "boulder", "80231")))
       fromjson[mutable.Set[(String, Address)]](tojson(s)) should equal(s)
     }
@@ -147,7 +147,7 @@ class TypeclassSerializerSpec extends Spec with ShouldMatchers {
       import scala.collection._
 
       val s = immutable.Set(
-        ("debasish", Address("monroe st", "denver", "80231")), 
+        ("debasish", Address("monroe st", "denver", "80231")),
         ("maulindu", Address("tamarac st", "boulder", "80231")))
       fromjson[immutable.Set[(String, Address)]](tojson(s)) should equal(s)
     }

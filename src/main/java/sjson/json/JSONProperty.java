@@ -12,7 +12,7 @@ import java.lang.annotation.Retention;
 @Documented
 @Inherited
 @Target(value = ElementType.METHOD)
-public @interface JSONProperty 
+public @interface JSONProperty
 {
     /**
      * JSON property name to use for this property. if not given, the java property name is used.

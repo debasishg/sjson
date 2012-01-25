@@ -1,7 +1,6 @@
 *~
 *#
 src_managed
-activemq-data
 project/plugins/project
 project/boot/*
 */project/build/target
@@ -17,7 +16,6 @@ deploy/*.jar
 data
 out
 logs
-.codefellow
 storage
 .codefellow
 _dump

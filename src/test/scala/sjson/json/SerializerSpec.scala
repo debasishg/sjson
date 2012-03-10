@@ -58,7 +58,7 @@ class SerializerSpec extends Spec with ShouldMatchers {
   describe("Map serialization") {
     it("should serialize to an instance of Map") {
       val l = Map("1" -> "debasish", "2" -> "maulindu", "3" -> "nilanjan")
-      val in = serializer.in[Map[String, String]](serializer.out(l)) 
+      val in = serializer.in[Map[String, String]](serializer.out(l))
       in should equal(l)
     }
   }
@@ -314,7 +314,7 @@ class SerializerSpec extends Spec with ShouldMatchers {
     it ("should serialize properly") {
       val a = MyJsonObject("debasish", Map("debasish" -> 123), List(100), 35)
       serializer.in[MyJsonObject](serializer.out(a)) should equal(a)
-      val obj = serializer.in[MyJsonObject](serializer.out(a)) 
+      val obj = serializer.in[MyJsonObject](serializer.out(a))
       obj should equal(a)
       obj.m.get("debasish").get.isInstanceOf[Int] should equal(true)
       obj.l.head.isInstanceOf[Int] should equal(true)

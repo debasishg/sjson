@@ -6,7 +6,7 @@ package json
  */
 object Serializer {
   trait SJSON extends JsBean {
-  
+
     import dispatch.json._
     import dispatch.json.Js._
     import java.io.{ObjectInputStream, ObjectOutputStream, ByteArrayInputStream, ByteArrayOutputStream}
@@ -16,7 +16,7 @@ object Serializer {
 
     import scala.reflect.Manifest
     def deepClone[T](obj: T)(implicit m: Manifest[T]): T = in[T](out(obj.asInstanceOf[AnyRef]))
-  
+
     /**
      * Serialize out a Scala object. It can be serialized back in to the object using
      * <tt>in</tt> method.
@@ -37,7 +37,7 @@ object Serializer {
         case e: scala.MatchError => toJSON(obj).getBytes("UTF-8")
       }
     }
-  
+
     def in[T: Manifest](bytes: Array[Byte]): T = {
       in[T](new String(bytes, "UTF-8")) // (m)
     }
@@ -53,7 +53,7 @@ object Serializer {
           m.erasure == classOf[Tuple2[_, _]]) extract[T](js)
 
       // beans are also serialized as JsObjects, but need to invoke fromJSON for beans
-      else if (js.isInstanceOf[JsObject]) 
+      else if (js.isInstanceOf[JsObject])
         fromJSON(js, Some(m.erasure)).asInstanceOf[T]
 
       // all other cases
@@ -96,7 +96,7 @@ object Serializer {
 
     /**
      * Serialize in a JSON into a Scala object, specifying a class that can be loaded
-     * through an externally specified class loader. 
+     * through an externally specified class loader.
      * In order to specify the class loader, do the following :
      * <pre>
      * object SJSON extends SJSON {

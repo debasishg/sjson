@@ -12,7 +12,7 @@ object Util {
         .toString
     }
   }
-  
+
   private def escape(c: Char, quoteChar: Char): String = c match {
     case '"' if (c == quoteChar) => "\\" + c
     case '"' => "" + c
@@ -32,7 +32,7 @@ object Util {
     }
     case _ => "" + c
   }
-  
+
   import java.io._
   def readTillNl(in: InputStreamReader): String = {
     var c = -1
@@ -42,7 +42,7 @@ object Util {
       if (c != '\n' && c != -1) {
         str.append(c.toChar)
       }
-    } 
+    }
     while (c != '\n' && c != -1)
     str.toString
   }

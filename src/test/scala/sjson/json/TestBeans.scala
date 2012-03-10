@@ -446,6 +446,10 @@ object TestBeans {
     shops: List[Map[String, Option[String]]]) {
     def this() = this(List.empty[Map[String, Option[String]]])
   }
+
+  @BeanInfo case class User(email: String, pass: String) {
+    def this() = this ("", "")
+  }
 }
 
 object Shape extends Enumeration {

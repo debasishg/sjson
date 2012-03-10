@@ -7,7 +7,7 @@ object SJsonProject extends Build
 
   lazy val commonSettings: Seq[Setting[_]] = Seq(
     organization := "net.debasishg",
-    version := "0.16",
+    version := "0.17",
     scalaVersion := "2.9.1",
     scalacOptions ++= Seq("-deprecation", "-unchecked")
   )
@@ -20,7 +20,6 @@ object SJsonProject extends Build
                                 "junit" % "junit" % "4.8.1" % "test",
                                 "org.scalatest" % "scalatest_2.9.1" % "1.6.1" % "test"),
     parallelExecution in Test := false,
-    // publishTo := Some("Scala Tools Nexus" at "http://nexus.scala-tools.org/content/repositories/releases/"),
     publishTo <<= version { (v: String) => 
       val nexus = "https://oss.sonatype.org/" 
       if (v.trim.endsWith("SNAPSHOT")) Some("snapshots" at nexus + "content/repositories/snapshots")

@@ -308,7 +308,9 @@ trait JsBean {
              }
           }
         
-          case x: String if (x endsWith "$") => 
+          // ending with $ means either a singleton object or it can be a string
+          // containing $ as the last character. Hence the additional check on the type
+          case x: String if ((x endsWith "$") && context.get.getDeclaredField(props.get(name).get).getType.equals(classOf[java.lang.String]) == false) =>
             processSingletonObject(x) match {
               case Left(ex) => sys.error("Cannot make object for :" + x)
               case Right(obj) => (Some(context.get.getDeclaredField(props.get(name).get)), obj)

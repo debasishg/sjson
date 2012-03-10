@@ -495,4 +495,23 @@ class SerializerSpec extends Spec with ShouldMatchers {
       serializer.in[ListOfMapOfOptionalString](out) should equal(t)
     }
   }
+
+  describe("String with $") {
+    it ("should serialize with trailing $") {
+      val u = User("dghosh@acm.org", "123abc$")
+      serializer.in[User](serializer.out(u)) should equal(u)
+    }
+    it ("should serialize with middle $") {
+      val u = User("dghosh@acm.org", "123abc$xyz")
+      serializer.in[User](serializer.out(u)) should equal(u)
+    }
+    it ("should serialize with beginning $") {
+      val u = User("dghosh@acm.org", "$123abc")
+      serializer.in[User](serializer.out(u)) should equal(u)
+    }
+    it ("should serialize with multiple $") {
+      val u = User("dghosh@acm.org", "$123abc$xyz$")
+      serializer.in[User](serializer.out(u)) should equal(u)
+    }
+  }
 }

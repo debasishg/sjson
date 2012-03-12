@@ -29,6 +29,26 @@ object SJsonProject extends Build
     publishMavenStyle := true,
     publishArtifact in Test := false,
     pomIncludeRepository := { repo => false },
+    pomExtra := (
+      <url>https://github.com/timperrett/lift-shiro</url>
+      <licenses>
+        <license>
+          <name>Apache 2.0 License</name>
+          <url>http://www.apache.org/licenses/LICENSE-2.0.html</url>
+          <distribution>repo</distribution>
+        </license>
+      </licenses>
+      <scm>
+        <url>git@github.com:debasishg/sjson.git</url>
+        <connection>scm:git:git@github.com:debasishg/sjson.git</connection>
+      </scm>
+      <developers>
+        <developer>
+          <id>debasishg</id>
+          <name>Debasish Ghosh</name>
+          <url>http://debasishg.blogspot.com</url>
+        </developer>
+      </developers>),
     unmanagedResources in Compile <+= baseDirectory map { _ / "LICENSE" }
   )
 

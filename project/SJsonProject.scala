@@ -30,7 +30,7 @@ object SJsonProject extends Build
     publishArtifact in Test := false,
     pomIncludeRepository := { repo => false },
     pomExtra := (
-      <url>https://github.com/timperrett/lift-shiro</url>
+      <url>https://github.com/debasishg/sjson</url>
       <licenses>
         <license>
           <name>Apache 2.0 License</name>

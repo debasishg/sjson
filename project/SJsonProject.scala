@@ -26,7 +26,7 @@ object SJsonProject extends Build
       if (v.trim.endsWith("SNAPSHOT")) Some("snapshots" at nexus + "content/repositories/snapshots")
       else Some("releases" at nexus + "service/local/staging/deploy/maven2") 
     },
-    credentials += Credentials(Path.userHome / ".ivy2" / ".credentials"),
+    credentials += Credentials(Path.userHome / ".sbt" / "sonatype.credentials"),
     publishMavenStyle := true,
     publishArtifact in Test := false,
     pomIncludeRepository := { repo => false },

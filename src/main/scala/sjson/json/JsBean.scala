@@ -420,7 +420,9 @@ trait JsBean {
         "{" + toJSON(t._1) + ":" + toJSON(t._2) + "}"
 
     // scala case object
-    case x if x.getClass.getName.endsWith("$") => quote(obj.getClass.getCanonicalName)
+    case x if x.getClass.getName.endsWith("$") => {
+      quote(obj.getClass.getName)
+    }
 
     case _ => {
       // handle beans

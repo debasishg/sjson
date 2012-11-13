@@ -1,13 +1,13 @@
 package sjson
 package json
 
-import org.scalatest.Spec
+import org.scalatest.FunSpec
 import org.scalatest.matchers.ShouldMatchers
 import org.scalatest.junit.JUnitRunner
 import org.junit.runner.RunWith
 
 @RunWith(classOf[JUnitRunner])
-class TypeclassSerializerSpec extends Spec with ShouldMatchers {
+class TypeclassSerializerSpec extends FunSpec with ShouldMatchers {
 
   import DefaultProtocol._
   import JsonSerialization._

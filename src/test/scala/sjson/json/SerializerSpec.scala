@@ -2,7 +2,7 @@ package sjson
 package json
 
 import java.util.TimeZone
-import org.scalatest.Spec
+import org.scalatest.FunSpec
 import org.scalatest.matchers.ShouldMatchers
 import org.scalatest.junit.JUnitRunner
 import org.junit.runner.RunWith
@@ -11,7 +11,7 @@ import scala.reflect.BeanInfo
 import TestBeans._
 
 @RunWith(classOf[JUnitRunner])
-class SerializerSpec extends Spec with ShouldMatchers {
+class SerializerSpec extends FunSpec with ShouldMatchers {
 
   import dispatch.json._
   import Js._

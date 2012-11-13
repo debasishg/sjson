@@ -7,18 +7,19 @@ object SJsonProject extends Build
 
   lazy val commonSettings: Seq[Setting[_]] = Seq(
     organization := "net.debasishg",
-    version := "0.17",
-    scalaVersion := "2.9.1",
+    version := "0.18",
+    scalaVersion := "2.9.2",
+    crossScalaVersions := Seq("2.9.2", "2.9.1"),
     scalacOptions ++= Seq("-deprecation", "-unchecked")
   )
 
   lazy val coreSettings = commonSettings ++ template ++ Seq(
     name := "sjson",
-    libraryDependencies ++= Seq("net.databinder" % "dispatch-json_2.9.1" % "0.8.5",
+    libraryDependencies ++= Seq("net.databinder" % "dispatch-json_2.9.2" % "0.8.8",
                                 "commons-io" % "commons-io" % "1.4",
                                 "org.objenesis" % "objenesis" % "1.2",
                                 "junit" % "junit" % "4.8.1" % "test",
-                                "org.scalatest" % "scalatest_2.9.1" % "1.6.1" % "test"),
+                                "org.scalatest" % "scalatest_2.9.2" % "2.0.M4" % "test"),
     parallelExecution in Test := false,
     publishTo <<= version { (v: String) => 
       val nexus = "https://oss.sonatype.org/" 

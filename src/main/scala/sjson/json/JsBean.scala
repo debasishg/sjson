@@ -447,48 +447,23 @@ trait JsBean {
           val rm = pd.getReadMethod
           val rv = rm.invoke(obj)
 
-          // Option[] needs to be treated differently
-          val (rval, isOption) = rv match {
-            case (o: Option[_]) =>
-              if (o.isDefined) (o.get.asInstanceOf[AnyRef], true) else (List(), true) // serialize None as []
-            case x => (x, false)
-          }
-
           val ann = rm.getAnnotation(classOf[JSONProperty])
           val v =
             if (ann == null || ann.value == null || ann.value.length == 0) pd.getName
             else ann.value
 
-          val rvIsNone =
-            if (rv.isInstanceOf[Option[_]]) {
-              val rvo = rv.asInstanceOf[Option[_]]
-              if (!rvo.isDefined) true else false
-            } else false
+          val isNull = rv match {
+            case null => true
+            case o: Option[_] => o.isEmpty
+            case x: Seq[_] => x.isEmpty
+            case a: Array[_] => a.isEmpty 
+            case _ => false
+          }
 
-          val rvIsEmptySeq =
-            if (rv.isInstanceOf[Seq[_]]) {
-              val rvs = rv.asInstanceOf[Seq[_]]
-              if (rvs.isEmpty) true else false
-            } else false
+          if (ann == null || !ann.ignore)
+          if (ann == null || !(ann.ignoreIfNull && isNull))
 
-          val rvIsEmptyArray =
-            if (rv.isInstanceOf[Array[_]]) {
-              val rvs = rv.asInstanceOf[Array[_]]
-              if (rvs.isEmpty) true else false
-            } else false
-
-
-          val ignore =
-            if (ann != null) 
-              ann.ignore || 
-              (rv == null && ann.ignoreIfNull) || 
-              (rvIsNone && ann.ignoreIfNull) ||
-              (rvIsEmptySeq && ann.ignoreIfNull) ||
-              (rvIsEmptyArray && ann.ignoreIfNull) 
-            else false
-
-          if ((ignore == false) && (!isOption || (isOption && rval != null)))
-        } yield toJSON(v) + ":" + toJSON(rval)
+        } yield toJSON(v) + ":" + toJSON(rv)
 
       props.mkString("{", ",", "}")
     }

@@ -323,6 +323,33 @@ class JsonSpec extends FunSpec with ShouldMatchers {
       tr.ins.name should equal(trd.ins.name)
     }
   }
+
+  describe("Generating bean with property annotation set as ignoreIfNull") {
+    val dad = Personz("Dad", 45)
+    val mom = Personz("Mom", 43)
+    val child_1 = Personz("Kid1", 10)
+    val child_2 = Personz("Kid2", 8)
+    val propNull = Family(null, Some(mom), List(child_1, child_2))
+    val optionNull = Family(Some(dad), None, List(child_1, child_2))
+    val listNull = Family(Some(dad), Some(mom), List())
+
+    val expected_prop_null = """{"children":[{"age":10,"name":"Kid1"},{"age":8,"name":"Kid2"}],"mother":{"age":43,"name":"Mom"}}"""
+    val expected_option_null = """{"children":[{"age":10,"name":"Kid1"},{"age":8,"name":"Kid2"}],"father":{"age":45,"name":"Dad"}}"""
+    val expected_list_null = """{"father":{"age":45,"name":"Dad"},"mother":{"age":43,"name":"Mom"}}"""
+    
+    it("should not create null property") {
+      val js = jsBean.toJSON(propNull)
+      js should equal(expected_prop_null)
+    }
+    it("should not create None property") {
+      val js = jsBean.toJSON(optionNull)
+      js should equal(expected_option_null)
+    }
+    it("should not create empty list property") {
+      val js = jsBean.toJSON(listNull)
+      js should equal(expected_list_null)
+    }
+  }
   
   describe("Generating JSON from non-beans") {
     it("should generate correct JSON") {

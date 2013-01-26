@@ -6,7 +6,7 @@ import DefaultProtocol._
 object Protocols {
   case class Person(lastName: String, firstName: String, age: Int)
   object Person extends DefaultProtocol {
-    import dispatch.json._
+    import dispatch.classic.json._
     import JsonSerialization._
     implicit object PersonFormat extends Format[Person] {
       def reads(json: JsValue): Person = json match {
@@ -48,7 +48,7 @@ object Protocols {
     val specialFlag = special
   }
   object Derived extends DefaultProtocol {
-    import dispatch.json._
+    import dispatch.classic.json._
     import JsonSerialization._
     implicit object DerivedFormat extends Format[Derived] {
       def reads(json: JsValue): Derived = {
@@ -75,7 +75,7 @@ object Protocols {
   implicit val HolderFormat: Format[Holder] = wrap[Holder, List[String]]("item")(_.item, Holder)
 
   case class DoubleNanTest(price: Double)
-  import dispatch.json._
+  import dispatch.classic.json._
   implicit val DoubleNanTestFormat: Format[DoubleNanTest] = new Format[DoubleNanTest] {
     def reads(json: JsValue): DoubleNanTest = json match {
       case JsString("Double.NaN") => DoubleNanTest(scala.Double.NaN)
@@ -93,7 +93,7 @@ object Protocols {
     asProduct3("street", "city", "zip")(AddressWithOptionalCity)(AddressWithOptionalCity.unapply(_).get)
 
   // example for inheritance and case objects
-  import dispatch.json._
+  import dispatch.classic.json._
   trait HttpType
   implicit val HttpTypeFormat: Format[HttpType] = new Format[HttpType] {
     def reads(json: JsValue): HttpType = json match {
@@ -172,7 +172,7 @@ object Protocols {
 
   case class P(lastName: String, firstName: String, age: Option[Int] = None)
   object P extends DefaultProtocol {
-    import dispatch.json._
+    import dispatch.classic.json._
     import JsonSerialization._
     implicit object PFormat extends Format[P] {
       def reads(json: JsValue): P = json match {
@@ -206,7 +206,7 @@ object Protocols {
   case class DataGridResult (totalCount: String, success: Boolean, results: Seq[User])
 
   object DataGridResultProtocol extends DefaultProtocol {
-    import dispatch.json._
+    import dispatch.classic.json._
     import JsonSerialization._
 
     implicit val UserFormat: Format[User] =
@@ -226,7 +226,7 @@ object Protocols {
   }
 
   object CC1 extends DefaultProtocol {
-    import dispatch.json._
+    import dispatch.classic.json._
     import JsonSerialization._
 
     implicit object CC1Format extends Format[CC1] {

@@ -1,7 +1,7 @@
 package sjson
 package json
 
-import dispatch.json._
+import dispatch.classic.json._
 
 trait Writes[T] {
   def writes(o: T): JsValue

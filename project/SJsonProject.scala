@@ -17,8 +17,7 @@ object SJsonProject extends Build
 
   lazy val coreSettings = commonSettings ++ template ++ Seq(
     name := "sjson",
-    libraryDependencies ++= Seq("org.scala-lang" % "scala-compiler" % "2.10.0",
-                                "net.databinder" % "dispatch-json_2.10" % "0.8.9",
+    libraryDependencies ++= Seq("net.databinder" % "dispatch-json_2.10" % "0.8.9",
                                 "junit" % "junit" % "4.8.1" % "test",
                                 "org.scalatest" % "scalatest_2.10" % "2.0.M6-SNAP6" % "test"),
     parallelExecution in Test := false,

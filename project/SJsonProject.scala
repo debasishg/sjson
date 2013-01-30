@@ -9,17 +9,20 @@ object SJsonProject extends Build
     organization := "net.debasishg",
     version := "0.19",
     scalaVersion := "2.10.0",
-    scalacOptions <++= scalaVersion.map {sv =>
-      if (sv contains "2.10") Seq("-deprecation", "-unchecked", "-feature", "-language:postfixOps")
-      else Seq("-deprecation", "-unchecked")
-    }
+    scalacOptions ++= Seq("-deprecation", "-unchecked", "-feature", "-language:postfixOps", "-language:implicitConversions", "-language:existentials")
   )
 
-  lazy val coreSettings = commonSettings ++ template ++ Seq(
+  lazy val coreSettings = commonSettings ++ Seq(
     name := "sjson",
-    libraryDependencies ++= Seq("net.databinder" % "dispatch-json_2.10" % "0.8.9",
-                                "junit" % "junit" % "4.8.1" % "test",
-                                "org.scalatest" % "scalatest_2.10" % "2.0.M6-SNAP6" % "test"),
+
+    libraryDependencies ++=
+        Seq(
+          "net.databinder"    %% "dispatch-json"         % "0.8.9",
+          "commons-io"        %  "commons-io"            % "1.4",
+          "org.objenesis"     %  "objenesis"             % "1.2",
+          "junit"             %  "junit"                 % "4.8.1"        % "test",
+          "org.scalatest"     %% "scalatest"             % "2.0.M6-SNAP6" % "test"),
+
     parallelExecution in Test := false,
     publishTo <<= version { (v: String) => 
       val nexus = "https://oss.sonatype.org/" 
@@ -51,7 +54,7 @@ object SJsonProject extends Build
         </developer>
       </developers>),
     unmanagedResources in Compile <+= baseDirectory map { _ / "LICENSE" }
-  )
+  ) ++ template
 
   lazy val fmpp = TaskKey[Seq[File]]("fmpp")
   lazy val fmppOptions = SettingKey[Seq[String]]("fmpp-options")

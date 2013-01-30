@@ -60,15 +60,15 @@ trait CollectionTypes extends BasicTypes with Generic {
     }
   }
 
-  import scala.reflect.{ClassTag, classTag}
-  implicit def arrayFormat[T](implicit fmt : Format[T], mf: ClassTag[T]) : Format[Array[T]] = new Format[Array[T]] {
+  import scala.reflect.Manifest
+  implicit def arrayFormat[T](implicit fmt : Format[T], mf: Manifest[T]) : Format[Array[T]] = new Format[Array[T]] {
     def writes(ts: Array[T]) = JsArray((ts.map(t => tojson(t)(fmt))).toList)
     def reads(json: JsValue) = json match {
       case JsArray(ts) => listToArray(ts.map(t => fromjson(t)(fmt)))
       case _ => throw new RuntimeException("Array expected")
     }
   }
-  def listToArray[T: ClassTag](ls: List[T]): Array[T] = ls.toArray
+  def listToArray[T: Manifest](ls: List[T]): Array[T] = ls.toArray
 
   implicit def mapFormat[K, V](implicit fmtk: Format[K], fmtv: Format[V]) : Format[Map[K, V]] = new Format[Map[K, V]] {
     def writes(ts: Map[K, V]) = JsObject(ts.map{case (k, v) => ((tojson(k.toString)).asInstanceOf[JsString], tojson(v)(fmtv))})

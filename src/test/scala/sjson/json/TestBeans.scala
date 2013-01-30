@@ -1,16 +1,41 @@
 package sjson
 package json
 
+import scala.reflect._
+import scala.annotation.target._
+
 object TestBeans {
-  case class Shop(store: String, item: String, price: Number)
+  @BeanInfo
+  case class Shop(store: String, item: String, price: Number) {
   
-  case class ShopWithNoDefaultConstructor(store: String, item: String, price: Number)
+    private def this() = this(null, null, null)
   
+    override def toString = "shop = " + store + " for item " + item + " @ " + price
+  }
+  
+  @BeanInfo
+  case class ShopWithNoDefaultConstructor(store: String, item: String, price: Number) {
+    override def toString = "shop = " + store + " for item " + item + " @ " + price
+  }
+  
+  @BeanInfo
   case class Contact(name: String, 
-                     addresses: Map[String, Address])
+                     @(JSONTypeHint @field)(value = classOf[Address])
+                     addresses: Map[String, Address]) {
+  
+    private def this() = this(null, null)
+  
+    override def toString = "name = " + name + " addresses = " + addresses.map(a => a._1 + ":" + a._2.toString).mkString(",")
+  }
 
-  case class Address(street: String, city: String, zip: String)
+  @BeanInfo
+  case class Address(street: String, city: String, zip: String) {
+    private def this() = this(null, null, null)
+  
+    override def toString = "address = " + street + "/" + city + "/" + zip
+  }
 
+  @BeanInfo
   class InternationalAddress(st: String, ct: String, zp: String, cnt: String)
     extends Address(st, ct, zp) {
 
@@ -18,141 +43,328 @@ object TestBeans {
     override val city = ct
     override val zip = zp
     val country = cnt
+
+    private def this() = this(null, null, null, null)
+  
+    override def toString = super.toString + "/" + country
   }
   
-  case class AddressWithOptionalCity(street: String, city: Option[String], zip: String)
-
-  case class ContactWithOptionalAddr(name: String, addresses: Option[Map[String, Address]]) 
+  @BeanInfo
+  case class AddressWithOptionalCity(street: String, city: Option[String], zip: String) {
   
+    private def this() = this(null, None, null)
+  
+    override def toString = "address = " + street + "/" + 
+      (city match {
+        case None => ""
+        case Some(c) => c
+      }) + "/" + zip
+  }
+
+
+  @BeanInfo
+  case class ContactWithOptionalAddr(name: String, 
+    @(JSONTypeHint @field)(value = classOf[Address])
+    @(OptionTypeHint @field)(value = classOf[scala.collection.Map[String,Address]])
+    addresses: Option[Map[String, Address]]) {
+  
+    private def this() = this(null, None)
+  
+    override def toString = "name = " + name + " " + 
+      (addresses match {
+        case None => ""
+        case Some(ad) => " addresses = " + ad.map(a => a._1 + ":" + a._2.toString).mkString(",")
+      })
+  }
+
+  
+  @BeanInfo  
   case class Person(lastName: String, 
                firstName: String,
-               addresses: List[Address]) 
+               @(JSONTypeHint @field)(value = classOf[Address])
+               addresses: List[Address]) {
+  
+    def this() = this(null, null, Nil)
+  
+    override def toString = "person = " + lastName + "/" + firstName + "/" + addresses
+  }
 
-  case class Book(id: Number, title: String, isbn: String)
+  @BeanInfo
+  case class Book(id: Number, 
+             title: String, @(JSONProperty @getter)(value = "ISBN") isbn: String) {
+  
+    def this() = this(0, null, null)
+    override def toString = "id = " + id + " title = " + title + " isbn = " + isbn
+  }
 
-  case class Author(lastName: String, firstName: String)
+  @BeanInfo
+  case class Author(lastName: String, firstName: String) {
+  
+    private def this() = this(null, null)
+  }
 
-  case class Book_1(title: String, author: Author)
+  @BeanInfo
+  case class Book_1(title: String, author: Author) {
+  
+    private def this() = this(null, null)
+  }
 
+  @BeanInfo
   case class Journal(id: BigDecimal, 
                      title: String, 
                      author: String, 
-                     issn: String) 
+                     @(JSONProperty @getter)(ignore = true) issn: String) {
 
+    private def this() = this(0, null, null, null)
+    override def toString =
+      "Journal: " + id + "/" + title + "/" + author + 
+        (issn match {
+            case null => ""
+            case _ => "/" + issn
+          })
+  }
+
+  @BeanInfo
   case class Journal_1(id: Int, 
                   title: String, 
                   author: String, 
-                  issn: String)
+                  @(JSONProperty @getter)(ignoreIfNull = true) issn: String) {
+  }
 
+  @BeanInfo
   class Journal_2(i: Int, t: String, au: String, is: String) {
     val id = i
     val title = t
     val author = au
   
+    @(JSONProperty @getter)(value = "ISSN", ignoreIfNull = true)
     val issn = is
   }
 
+  @BeanInfo
   class Item_1(i: String, ps: Map[String, Number]) {
     val item = i
     val prices = ps
+  
+    def this() = this(null, null)
+    override def toString = item + "/" + prices
   }
 
+  @BeanInfo
   class Item_2(i: String, ps: List[Number]) {
     val item = i
     val prices = ps
+  
+    def this() = this(null, null)
   }
   
+  @BeanInfo
   case class Instrument(
     val id: Number, 
     val name: String, 
-    val typ: String)
+    @(JSONProperty @getter)(value = "TYPE", ignoreIfNull = false, ignore = false)
+    val typ: String) {
+    
+    private def this() = this(null, null, null)
+    override def toString = "id: " + id + " name: " + name + " type: " + typ
+  }
   
+  @BeanInfo
   case class Trade(
     val ref: String,
+    @(JSONProperty @getter)(value = "Instrument", ignoreIfNull = false, ignore = false)
     val ins: Instrument,
-    val amount: Number)
+    val amount: Number) {
+      
+    private def this() = this(null, null, null)
+    override def toString = "ref: " + ref + " ins: " + ins + " amount: " + amount
+  }
   
-  case class Salary(val basic: Number, val allowance: Number)
+  @BeanInfo
+  case class Salary(val basic: Number, val allowance: Number) {
+    private def this() = this(null, null)
+  }
   
+  @BeanInfo
   class Employee(
     val id: Number,
     val name: String,
+    
+    @(JSONProperty @getter)(value = "Previous Employer", ignoreIfNull = true, ignore = false)
     val prevEmployer: String,
+    
+    @(JSONProperty @getter)(value = "Addresses")
+    @(JSONTypeHint @field)(value = classOf[Address])
     val addresses: List[Address],
-    val sal: Salary)
+    
+    @(JSONProperty @getter)(value = "Salary")
+    val sal: Salary
+  ) {
+    private def this() = this(null, null, null, Nil, null)
+  }
 
-  case class Foo(str: String, valid: Boolean)
+  @BeanInfo
+  case class Foo(str: String, valid: Boolean) {
+    private def this() = this(null, false)
+  }
 
-  case class Bar(str: String, int: Int, lng: Long, flt: Float, valid: Boolean)
+  @BeanInfo
+  case class Bar(str: String, int: Int, lng: Long, flt: Float, valid: Boolean) {
+    private def this() = this(null, 0, 0l, 0f, false)
+  }
 
   import java.util.Date
-  case class SecurityTrade(no: String, tdate: Date, sdate: Date, amount: BigDecimal) 
+  @BeanInfo
+  case class SecurityTrade(no: String, tdate: Date, sdate: Date, amount: BigDecimal) {
+    private def this() = this(null, null, null, null)
+  }
 
+  @BeanInfo
   case class MyMessage(
     val id: String, 
-    val value: Tuple2[String, Int])
+    val value: Tuple2[String, Int]) {
+    private def this() = this(null, null)
+  }
 
+  @BeanInfo
   case class ArrayTest(
     id: Int,
     name: String,
-    var addresses: Array[String])
+    @(JSONTypeHint @field)(value = classOf[String])
+    var addresses: Array[String]) {
+    def this() = this(0, null, null)
+  }
 
+  @BeanInfo
   case class ObjectArrayTest(
     id: Int,
     name: String,
-    var addresses: Array[Address])
+    @(JSONTypeHint @field)(value = classOf[Address])
+    var addresses: Array[Address]) {
+    def this() = this(0, null, null)
+  }
 
+  @BeanInfo
   case class Market(
     name: String, 
+    @(JSONTypeHint @field)(value = classOf[Shop])
     shops: Map[Int, Shop], 
-    country: String)
+    country: String) {
+    private def this() = this(null, null, null)
+  }
 
+  @BeanInfo
   case class MyTuple2Message(
     val id: String, 
-    val value: Tuple2[String, Shop])
+    @(JSONTypeHint @field)(value = classOf[Shop])
+    val value: Tuple2[String, Shop]) {
+    private def this() = this(null, null)
+  }
 
+  @BeanInfo
   case class View(
+    @(JSONProperty @getter)(ignoreIfNull = true)
     val map: String, 
-    val reduce: String)
+  
+    @(JSONProperty @getter)(ignoreIfNull = true)
+    val reduce: String) {
+  
+    private def this() = this(null, null)
+  
+    override def toString = 
+      "map: " + map + " reduce: " + reduce
+  }
 
+  @BeanInfo
   case class EnumTest(
-    start: WeekDay.Value, 
-    shape: Shape.Value,
+    @(EnumTypeHint @field)(value = "sjson.json.WeekDay") start: WeekDay.Value, 
+    @(EnumTypeHint @field)(value = "sjson.json.Shape") shape: Shape.Value,
     month: Month.Value,
+    @(JSONTypeHint @field)(value = classOf[sjson.json.WeekDay.WeekDay])
+    @(EnumTypeHint @field)(value = "sjson.json.WeekDay") 
     work: List[WeekDay.Value],
-    months: List[Month.Value])
+    @(JSONTypeHint @field)(value = classOf[sjson.json.Month.Value])
+    @(EnumTypeHint @field)(value = "sjson.json.Month")
+    months: List[Month.Value]) {
+    private def this() = this(null, null, null, null, null)
+  }
 
   import java.util.TimeZone
 
-  case class TimeZoneBean(val value: TimeZone)
+  @BeanInfo
+  case class TimeZoneBean(
+    val value: TimeZone
+  ) {
+    private def this() = this(null)
+  }
 
   // an object where we have an Int within a Map and would like to
   // keep it an Int after de-serialization
+  @BeanInfo
   case class MyJsonObject(val key: String, 
+                          @(JSONTypeHint @field)(value = classOf[Int])
                           val m: Map[String, Int], 
+                          @(JSONTypeHint @field)(value = classOf[Int])
                           val l: List[Int], 
-                          val i: Int)
+                          val i: Int) {
+    private def this() = this(null, null, null, -1)
+    override def toString = {
+      val inte: Int = m.getOrElse(key, -1)
+      "key = " + key + " mapping to " + inte + " original int = " + i
+    }
+  }
 
-  case class SampleConfigOption(user: Option[String], names: List[String])
+  @BeanInfo case class SampleConfigOption(user: Option[String], names: List[String]) {
+    def this() = this (Some("default"), List[String]())
+  }
 
+  @BeanInfo
   case class Manager(name: String,
-    age: Option[Long])
+    @(OptionTypeHint@field)(value = classOf[Long]) age: Option[Long]) {
+     private def this() = this ("", None)
+  }
 
+  @BeanInfo
   case class DesignDocument(var _id: String, 
-    _rev: String, 
-    views: Map[String, View],
-    validate_doc_update: Option[String] = None,
-    shows: Option[Map[String, String]] = None,
-    lists: Option[Map[String, String]] = None)
+    @(JSONProperty @getter)(ignoreIfNull = true, ignore = false) _rev: String, 
+    @(JSONTypeHint @field)(value = classOf[View]) views: Map[String, View],
+    @(JSONProperty @getter)(ignoreIfNull = true, ignore = false) validate_doc_update: Option[String] = None,
+    @(JSONProperty @getter)(ignoreIfNull = true, ignore = false) shows: Option[Map[String, String]] = None,
+    @(JSONProperty @getter)(ignoreIfNull = true, ignore = false) lists: Option[Map[String, String]] = None) {
+    private def this() = this(null, null, Map[String, View]())
 
+    override def toString = {
+    "_id = " + _id + " _rev = " + _rev + " " + " validate = " + validate_doc_update + 
+      (views match {
+        case null => ""
+        case v => {
+          v.map(e => 
+            (e._1.toString + ":" + e._2.toString)).mkString(",")
+        }
+      })
+    }
+  }
+
+  @BeanInfo
   case class Family(
-    father: Option[Personz] = None, 
-    mother: Option[Personz] = None, 
-    children: List[Personz] = List())
+    @(JSONProperty @getter)(ignoreIfNull = true)
+    @(OptionTypeHint@field)(value = classOf[Personz]) father: Option[Personz] = None, 
+    @(JSONProperty @getter)(ignoreIfNull = true)
+    @(OptionTypeHint@field)(value = classOf[Personz]) mother: Option[Personz] = None, 
+    @(JSONProperty @getter)(ignoreIfNull = true)
+    @(JSONTypeHint @field)(value = classOf[Personz]) children: List[Personz] = List()) {
+    def this() = this(None, None, List())
+    }
 
-  case class Personz(name: String = "", age: Int = -1)
+  @BeanInfo
+  case class Personz(@(JSONProperty @getter)(ignoreIfNull = true) name: String = "", age: Int = -1) {
+    def this() = this("", -1)
+  }
 
-  case class Security[T <: SecurityType](name: String, securityType: T)
+  @BeanInfo
+  case class Security[T <: SecurityType](name: String, securityType: T) {
+    def this() = this("", null.asInstanceOf[T])
+  }
 
   sealed trait SecurityType
   case object STOCK extends SecurityType
@@ -160,44 +372,85 @@ object TestBeans {
   case object MUTUAL_FUND extends SecurityType
   case object GOVT_BOND extends SecurityType
 
+  @BeanInfo
   case class BondTrade(
     instrument: Security[FI.type],
-    taxFees: Option[Map[String, BigDecimal]] = None,
-    account: String)
+    @(JSONProperty @getter)(ignoreIfNull = true, ignore = false) @(OptionTypeHint@field)(value = classOf[scala.collection.Map[_, _]]) taxFees: Option[Map[String, BigDecimal]] = None,
+    account: String) {
+    def this() = this(null, None, "")
+  }
 
+  @BeanInfo
   case class TradedIn(
-    securityTypes: Map[String, List[SecurityType]])
+    @(JSONTypeHint @field)(value = classOf[SecurityType]) securityTypes: Map[String, List[SecurityType]]) {
+    def this() = this(Map.empty[String, List[SecurityType]])
+  }
 
-  case class MapOfListOfString(securityTypes: Map[String, List[String]])
+  @BeanInfo
+  case class MapOfListOfString(securityTypes: Map[String, List[String]]) {
+    def this() = this(Map.empty[String, List[String]])
+  }
 
+  @BeanInfo
   case class MapOfListOfShop(
-    shops: Map[String, List[Shop]])
+    @(JSONTypeHint @field)(value = classOf[Shop]) shops: Map[String, List[Shop]]) {
+    def this() = this(Map.empty[String, List[Shop]])
+  }
 
+  @BeanInfo
   case class OptionalMapOfListOfString(
-    securityTypes: Option[Map[String, List[String]]])
+    @(OptionTypeHint@field)(value = classOf[scala.collection.Map[_, _]]) securityTypes: Option[Map[String, List[String]]]) {
+    def this() = this(None)
+  }
 
+  @BeanInfo
   case class MapOfOptionalListOfString(
-    securityTypes: Map[String, Option[List[String]]])
+    @(OptionTypeHint@field)(value = classOf[scala.collection.immutable.List[_]]) securityTypes: Map[String, Option[List[String]]]) {
+    def this() = this(Map.empty[String, Option[List[String]]])
+  }
 
+  @BeanInfo
   case class OptionalMapOfListOfShop(
-    shops: Option[Map[String, List[Shop]]])
+    @(OptionTypeHint@field)(value = classOf[scala.collection.Map[_, _]]) 
+    @(JSONTypeHint @field)(value = classOf[Shop]) shops: Option[Map[String, List[Shop]]]) {
+    def this() = this(None)
+  }
 
+  @BeanInfo
   case class MapOfOptionalString(
-    securityTypes: Map[String, Option[String]])
+    @(OptionTypeHint@field)(value = classOf[String]) securityTypes: Map[String, Option[String]]) {
+    def this() = this(Map.empty[String, Option[String]])
+  }
 
+  @BeanInfo
   case class MapOfOptionalShop(
-    shopTypes: Map[String, Option[Shop]])
+    @(OptionTypeHint@field)(value = classOf[Shop]) shopTypes: Map[String, Option[Shop]]) {
+    def this() = this(Map.empty[String, Option[Shop]])
+  }
 
+  @BeanInfo
   case class ListOfMap(
-    shops: List[Map[String, Shop]])
+    @(JSONTypeHint@field)(value = classOf[Shop]) shops: List[Map[String, Shop]]) {
+    def this() = this(List.empty[Map[String, Shop]])
+  }
 
+  @BeanInfo
   case class ListOfMapOfString(
-    shops: List[Map[String, String]])
+    @(JSONTypeHint@field)(value = classOf[String]) shops: List[Map[String, String]]) {
+    def this() = this(List.empty[Map[String, String]])
+  }
 
+  @BeanInfo
   case class ListOfMapOfOptionalString(
-    shops: List[Map[String, Option[String]]])
+    @(OptionTypeHint@field)(value = classOf[String])
+    @(JSONTypeHint@field)(value = classOf[String]) 
+    shops: List[Map[String, Option[String]]]) {
+    def this() = this(List.empty[Map[String, Option[String]]])
+  }
 
-  case class User(email: String, pass: String)
+  @BeanInfo case class User(email: String, pass: String) {
+    def this() = this ("", "")
+  }
 }
 
 object Shape extends Enumeration {

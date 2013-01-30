@@ -147,6 +147,7 @@ object TestBeans {
     val prices = ps
   
     def this() = this(null, null)
+    override def toString = item + "/" + prices
   }
 
   @BeanInfo

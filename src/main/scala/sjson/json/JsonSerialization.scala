@@ -1,7 +1,7 @@
 package sjson
 package json
 
-import dispatch.json._
+import dispatch.classic.json._
 
 object JsonSerialization {
   def tojson[T](o: T)(implicit tjs: Writes[T]): JsValue = tjs.writes(o)

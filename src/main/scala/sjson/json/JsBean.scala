@@ -15,15 +15,15 @@ trait JsBean {
     parent.getDeclaredField(name).getType
   }
   
-  class NiceObject[T <: AnyRef](x : T) {
+  class NiceObject[T](x : T) {
     def niceClass : Class[_ <: T] = x.getClass.asInstanceOf[Class[T]]
   }
-  implicit def toNiceObject[T <: AnyRef](x : T) = new NiceObject(x)
+  implicit def toNiceObject[T](x : T) = new NiceObject(x)
   
   import java.beans._
   
   import java.lang.reflect.Field
-  import dispatch.json._
+  import dispatch.classic.json._
   import Util._
 
   private def getProps[T](clazz: Class[T]) = {
@@ -55,7 +55,8 @@ trait JsBean {
 
   private def makeOptionFromHint[T: Manifest](obj: T, f: Field) = f.getAnnotation(classOf[OptionTypeHint]) match {
     case null => obj
-    case x if (x.value.isAssignableFrom(implicitly[Manifest[T]].erasure)) => Some(obj)
+    // case x if (x.value.isAssignableFrom(implicitly[Manifest[T]].erasure)) => Some(obj)
+    case x if (x.value.isAssignableFrom(implicitly[Manifest[T]].runtimeClass)) => Some(obj)
     case x => obj
   }
 
@@ -127,20 +128,20 @@ trait JsBean {
       Map() ++ 
         (ann match {
           case null =>
-            m.map {case (y1: JsValue, y2: JsValue) => 
+            m.map {(p: ((_, _))) =>  p match {case (y1: JsValue, y2: JsValue) => 
               (y1.self, processJsValue(y2, Some(field)))
-            }
+            }}
           case x if x.value.isPrimitive == true =>
             // remember all numbers are converted to BigDecimal by the JSON parser
-            m.map {case (y1: JsValue, y2: JsValue) =>
+            m.map {(p: ((_, _))) => p match {case (y1: JsValue, y2: JsValue) =>
               if (y2.isInstanceOf[JsNumber]) (y1.self, mkNum(y2.self.asInstanceOf[BigDecimal], ann.value))
               else (y1.self, y2.self)
-            }
+            }}
           case _ =>
-            m.map {case (y1: JsValue, y2: JsValue) => y2 match {
+            m.map {(p: ((_, _))) => p match {case (y1: JsValue, y2: JsValue) => y2 match {
               case JsArray(l) => (y1.self, l.map(j => fromJSON(j, Some(ann.value), field)))
               case _ => (y1.self, fromJSON(y2, Some(ann.value), field))
-            }}
+            }}}
          }))
   }
 
@@ -163,11 +164,9 @@ trait JsBean {
        }))
   }
 
-  private def processSingletonObject[T](fqn: String): Either[Exception, T] = {
-    getClassFor(fqn) match {
-      case Left(ex) => Left(new Exception("Cannot get class info for :" + fqn))
-      case Right(clazz) => getObjectFor(clazz) 
-    }
+  private def processSingletonObject[T](fqn: String): Either[Exception, T] = getClassFor(fqn) match {
+    case Left(ex) => Left(new Exception("Cannot get class info for :" + fqn))
+    case Right(clazz) => getObjectFor[T](clazz.asInstanceOf[Class[T]]) 
   }
   
   /**
@@ -211,7 +210,8 @@ trait JsBean {
       js match {
         case JsArray(l) => processJsValue(js).asInstanceOf[T]
         case JsString(s) if (s endsWith "$") => 
-          processSingletonObject(s) match {
+          val h: Either[Exception, T] = processSingletonObject(s)
+          h match {
             case Left(ex) => sys.error("Cannot make object for :" + s)
             case Right(obj) => obj.asInstanceOf[T]
           }
@@ -311,7 +311,8 @@ trait JsBean {
           // ending with $ means either a singleton object or it can be a string
           // containing $ as the last character. Hence the additional check on the type
           case x: String if ((x endsWith "$") && context.get.getDeclaredField(props.get(name).get).getType.equals(classOf[java.lang.String]) == false) =>
-            processSingletonObject(x) match {
+            val h: Either[Exception, T] = processSingletonObject(x)
+            h match {
               case Left(ex) => sys.error("Cannot make object for :" + x)
               case Right(obj) => (Some(context.get.getDeclaredField(props.get(name).get)), obj)
             }
@@ -386,7 +387,7 @@ trait JsBean {
   /**
    * Generate a JSON representation of the object <tt>obj</tt> and return the string.
    */
-  def toJSON[T <: AnyRef](obj: T): String = obj match {
+  def toJSON[T](obj: T): String = obj match {
     case null => "null"
     case (n: Number) => obj.toString
     case (b: java.lang.Boolean) => obj.toString
@@ -399,7 +400,7 @@ trait JsBean {
     case (v: Enumeration#Value) => 
       quote(v toString)
 
-    case (s: Seq[AnyRef]) =>
+    case (s: Seq[_]) =>
       s.map(e => toJSON(e)).mkString("[", ",", "]")
 
     case Some(s) => toJSON(s.asInstanceOf[AnyRef])
@@ -412,11 +413,11 @@ trait JsBean {
     case (s: Array[_]) => 
       s.mkString("[", ",", "]")
 
-    case (m: Map[AnyRef, AnyRef]) =>
+    case (m: Map[_, _]) =>
       m.map(e => toJSON(e._1.toString) + ":" + toJSON(e._2))
        .mkString("{", ",", "}")
 
-    case (t: Tuple2[AnyRef, AnyRef]) =>
+    case (t: Tuple2[_, _]) =>
         "{" + toJSON(t._1) + ":" + toJSON(t._2) + "}"
 
     // scala case object
@@ -444,41 +445,39 @@ trait JsBean {
       val props =
         for {
           pd <- pds
-          val rm = pd.getReadMethod
-          val rv = rm.invoke(obj)
+          rm = pd.getReadMethod
+          rv = rm.invoke(obj)
 
           // Option[] needs to be treated differently
-          val (rval, isOption) = rv match {
+          (rval, isOption) = rv match {
             case (o: Option[_]) =>
               if (o.isDefined) (o.get.asInstanceOf[AnyRef], true) else (List(), true) // serialize None as []
             case x => (x, false)
           }
 
-          val ann = rm.getAnnotation(classOf[JSONProperty])
-          val v =
-            if (ann == null || ann.value == null || ann.value.length == 0) pd.getName
-            else ann.value
+          ann = rm.getAnnotation(classOf[JSONProperty])
+          v = if (ann == null || ann.value == null || ann.value.length == 0) pd.getName else ann.value
 
-          val rvIsNone =
+          rvIsNone =
             if (rv.isInstanceOf[Option[_]]) {
               val rvo = rv.asInstanceOf[Option[_]]
               if (!rvo.isDefined) true else false
             } else false
 
-          val rvIsEmptySeq =
+          rvIsEmptySeq =
             if (rv.isInstanceOf[Seq[_]]) {
               val rvs = rv.asInstanceOf[Seq[_]]
               if (rvs.isEmpty) true else false
             } else false
 
-          val rvIsEmptyArray =
+          rvIsEmptyArray =
             if (rv.isInstanceOf[Array[_]]) {
               val rvs = rv.asInstanceOf[Array[_]]
               if (rvs.isEmpty) true else false
             } else false
 
 
-          val ignore =
+          ignore =
             if (ann != null) 
               ann.ignore || 
               (rv == null && ann.ignoreIfNull) || 

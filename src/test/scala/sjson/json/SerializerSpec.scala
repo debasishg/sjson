@@ -13,7 +13,7 @@ import TestBeans._
 @RunWith(classOf[JUnitRunner])
 class SerializerSpec extends FunSpec with ShouldMatchers {
 
-  import dispatch.json._
+  import dispatch.classic.json._
   import Js._
 
   private[this] val serializer = Serializer.SJSON

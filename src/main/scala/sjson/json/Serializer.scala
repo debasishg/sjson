@@ -7,8 +7,8 @@ package json
 object Serializer {
   trait SJSON extends JsBean {
   
-    import dispatch.json._
-    import dispatch.json.Js._
+    import dispatch.classic.json._
+    import dispatch.classic.json.Js._
     import java.io.{ObjectInputStream, ObjectOutputStream, ByteArrayInputStream, ByteArrayOutputStream}
     import org.apache.commons.io.input.ClassLoaderObjectInputStream
 
@@ -49,12 +49,12 @@ object Serializer {
     def in[T: Manifest](js: JsValue): T = {
       val m = implicitly[Manifest[T]]
       // Map and Tuple2 both are serialized as Maps wrapped within a JsObject
-      if (m.erasure == classOf[collection.immutable.Map[_, _]] ||
-          m.erasure == classOf[Tuple2[_, _]]) extract[T](js)
+      if (m.runtimeClass == classOf[collection.immutable.Map[_, _]] ||
+          m.runtimeClass == classOf[Tuple2[_, _]]) extract[T](js)
 
       // beans are also serialized as JsObjects, but need to invoke fromJSON for beans
       else if (js.isInstanceOf[JsObject]) 
-        fromJSON(js, Some(m.erasure)).asInstanceOf[T]
+        fromJSON(js, Some(m.runtimeClass)).asInstanceOf[T]
 
       // all other cases
       else extract[T](js)
@@ -77,7 +77,7 @@ object Serializer {
           val targs = m.typeArguments
           val (km, vm) = (targs.head, targs.last)
 
-          if (m.erasure == classOf[Tuple2[_, _]]) {
+          if (m.runtimeClass == classOf[Tuple2[_, _]]) {
             val tup = mp.toList.head
             val deserl_1 = in(tup._1)(km)
             val deserl_2 = in(tup._2)(vm)

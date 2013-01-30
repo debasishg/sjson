@@ -12,7 +12,7 @@ import TestBeans._
 
 @RunWith(classOf[JUnitRunner])
 class JsonSpec extends FunSpec with ShouldMatchers {
-  import dispatch.json._
+  import dispatch.classic.json._
   import Js._
   
   implicit def ignoreProps = List[String]("class")
@@ -214,7 +214,7 @@ class JsonSpec extends FunSpec with ShouldMatchers {
   }"""
 
   val itemBean_1 = jsBean.fromJSON(Js(itemStr_1), Some(classOf[Item_1]))
-  val expected_item_1 = new Item_1("apple", Map("Fresh Mart" -> 1.59, "Price Max" -> 5.99, "Apples Express" -> 0.79))
+  val expected_item_1 = new Item_1("apple", Map("Fresh Mart" -> BigDecimal(1.59), "Price Max" -> BigDecimal(5.99), "Apples Express" -> BigDecimal(0.79)))
   
   describe("Bean with Map data member from Json string") {
     it("should equal expected_item_1") {
@@ -233,7 +233,7 @@ class JsonSpec extends FunSpec with ShouldMatchers {
   }"""
 
   val itemBean_2 = jsBean.fromJSON(Js(itemStr_2), Some(classOf[Item_2]))
-  val expected_item_2 = new Item_2("apple", List(1.59, 5.99, 0.79))
+  val expected_item_2 = new Item_2("apple", List(BigDecimal(1.59), BigDecimal(5.99), BigDecimal(0.79)))
   
   describe("Bean with List data member from Json string") {
     it("should equal expected_item_2") {

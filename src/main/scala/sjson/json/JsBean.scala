@@ -56,7 +56,7 @@ trait JsBean {
   private def makeOptionFromHint[T: Manifest](obj: T, f: Field) = f.getAnnotation(classOf[OptionTypeHint]) match {
     case null => obj
     // case x if (x.value.isAssignableFrom(implicitly[Manifest[T]].erasure)) => Some(obj)
-    case x if (x.value.isAssignableFrom(implicitly[Manifest[T]].runtimeClass)) => Some(obj)
+    case x if (x.value.isAssignableFrom(implicitly[Manifest[T]].erasure)) => Some(obj)
     case x => obj
   }
 

@@ -128,5 +128,22 @@ object Util {
   } catch {
     case e: Exception ⇒ Left(e)
   }
+
+/**
+  import scala.reflect.runtime.universe._
+  def getParamTypes[A](x: A)(implicit ev: TypeTag[A]) = {
+    ev.tpe match {
+      case TypeRef(_, _, args) => args
+    }
+  }
+
+  // get Java class from Scala type (scala.reflect.runtime.universe.Type)
+  // use mirrors
+  // http://stackoverflow.com/questions/12901823/any-way-to-obtain-a-java-class-from-a-scala-2-10-type-tag-or-symbol
+  def getClassFromScalaType(t: Type) = {
+    val m = runtimeMirror(getClass.getClassLoader)
+    m.runtimeClass(t.typeSymbol.asClass)
+  }
+**/
 }
 

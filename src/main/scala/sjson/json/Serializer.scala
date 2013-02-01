@@ -1,6 +1,8 @@
 package sjson
 package json
 
+import Util._
+
 /**
  * @author <a href="http://debasishg.blogspot.com">Debasish Ghosh</a>
  */
@@ -14,8 +16,8 @@ object Serializer {
 
     val classLoader: Option[ClassLoader]
 
-    import scala.reflect.Manifest
-    def deepClone[T](obj: T)(implicit m: Manifest[T]): T = in[T](out(obj.asInstanceOf[AnyRef]))
+    // import scala.reflect.Manifest
+    def deepClone[T: Manifest](obj: T): T = in[T](out(obj.asInstanceOf[AnyRef]))
   
     /**
      * Serialize out a Scala object. It can be serialized back in to the object using
@@ -59,6 +61,7 @@ object Serializer {
       // all other cases
       else extract[T](js)
     }
+
 
     private[json] def extract[T: Manifest](jsv: JsValue): T = {
       val m = implicitly[Manifest[T]]

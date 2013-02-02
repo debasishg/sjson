@@ -129,7 +129,6 @@ object Util {
     case e: Exception ⇒ Left(e)
   }
 
-/**
   import scala.reflect.runtime.universe._
   def getParamTypes[A](x: A)(implicit ev: TypeTag[A]) = {
     ev.tpe match {
@@ -144,6 +143,5 @@ object Util {
     val m = runtimeMirror(getClass.getClassLoader)
     m.runtimeClass(t.typeSymbol.asClass)
   }
-**/
 }
 

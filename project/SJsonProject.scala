@@ -17,6 +17,7 @@ object SJsonProject extends Build
 
     libraryDependencies ++=
         Seq(
+          "org.scala-lang"    %  "scala-compiler"         % "2.10.0",
           "net.databinder"    %% "dispatch-json"         % "0.8.9",
           "commons-io"        %  "commons-io"            % "1.4",
           "org.objenesis"     %  "objenesis"             % "1.2",

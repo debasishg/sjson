@@ -1,6 +1,7 @@
 package sjson
 package json
 
+import scala.reflect.runtime.universe._
 import Util._
 
 /**
@@ -16,8 +17,7 @@ object Serializer {
 
     val classLoader: Option[ClassLoader]
 
-    // import scala.reflect.Manifest
-    def deepClone[T: Manifest](obj: T): T = in[T](out(obj.asInstanceOf[AnyRef]))
+    def deepClone[T: TypeTag](obj: T): T = in[T](out(obj.asInstanceOf[AnyRef]))
   
     /**
      * Serialize out a Scala object. It can be serialized back in to the object using
@@ -40,55 +40,58 @@ object Serializer {
       }
     }
   
-    def in[T: Manifest](bytes: Array[Byte]): T = {
+    def in[T: TypeTag](bytes: Array[Byte]): T = {
       in[T](new String(bytes, "UTF-8")) // (m)
     }
 
-    def in[T: Manifest](json: String): T = {
+    def in[T: TypeTag](json: String): T = {
       in[T](Js(json)) // (m)
     }
 
-    def in[T: Manifest](js: JsValue): T = {
-      val m = implicitly[Manifest[T]]
+    def in[T: TypeTag](js: JsValue): T = {
+      in_impl[T](js, typeOf[T])
+    }
+
+    def in_impl[T: TypeTag](js: JsValue, tpe: Type): T = {
       // Map and Tuple2 both are serialized as Maps wrapped within a JsObject
-      if (m.runtimeClass == classOf[collection.immutable.Map[_, _]] ||
-          m.runtimeClass == classOf[Tuple2[_, _]]) extract[T](js)
+      if (tpe <:< typeOf[collection.immutable.Map[_, _]] ||
+          tpe <:< typeOf[Tuple2[_, _]]) extract[T](js, tpe)
 
       // beans are also serialized as JsObjects, but need to invoke fromJSON for beans
       else if (js.isInstanceOf[JsObject]) 
-        fromJSON(js, Some(m.runtimeClass)).asInstanceOf[T]
+        fromJSON(js, Some(getClassFromScalaType(tpe).asInstanceOf[Class[T]]))
 
       // all other cases
-      else extract[T](js)
+      else extract[T](js, tpe)
     }
 
 
-    private[json] def extract[T: Manifest](jsv: JsValue): T = {
-      val m = implicitly[Manifest[T]]
+    private[json] def extract[T: TypeTag](jsv: JsValue, tpe: Type): T = {
       val ex = jsv match {
         case JsNumber(n) => n
         case JsString(s) => s
         case JsArray(l) => {
           // deep serialization
-          val inm = m.typeArguments.head
-          l.map(in(_)(inm))
+          val intpe = tpe.typeSymbol.asType.typeParams.head.asType.toTypeIn(tpe)
+          l.map(in_impl(_, intpe))
         }
         case JsBoolean(b) => b
         case JsNull => null
         case JsObject(mp) => { // either Map or a Tuple2
           // deep serialization
-          val targs = m.typeArguments
+          val targs = tpe.typeSymbol.asType.typeParams.map(_.asType.toTypeIn(tpe))
           val (km, vm) = (targs.head, targs.last)
 
-          if (m.runtimeClass == classOf[Tuple2[_, _]]) {
+          if (tpe <:< typeOf[Tuple2[_, _]]) {
             val tup = mp.toList.head
-            val deserl_1 = in(tup._1)(km)
-            val deserl_2 = in(tup._2)(vm)
+            val deserl_1 = in_impl(tup._1, km)
+            val deserl_2 = in_impl(tup._2, vm)
+
             (deserl_1, deserl_2)
           } else { // Map
             mp.map { case (k, v) =>
-              val deserl_k = in(k)(km)
-              val deserl_v = in(v)(vm)
+              val deserl_k = in_impl(k, km)
+              val deserl_v = in_impl(v, vm)
               (deserl_k, deserl_v)
             }
           }

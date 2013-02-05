@@ -3,6 +3,9 @@ package json
 
 import java.lang.reflect.Modifier
 import java.util.TimeZone
+import scala.reflect.{ClassTag, classTag}
+import scala.reflect.runtime.universe._
+
 
 trait JsBean {
   
@@ -201,6 +204,29 @@ trait JsBean {
     else fromJSON(js, context)
   }
 
+  def fromJSON_n[T: TypeTag](js: JsValue): T = 
+    fromJSON_impl(js, typeOf[T])
+
+  import Serializer.SJSON._
+  private def fromJSON_impl[T: TypeTag](js: JsValue, tpe: Type): T = js match {
+    case JsObject(m) => {
+      val props =
+        tpe.members
+           .filter(!_.isMethod)
+           .map(e => (substringFromLastSep(e.fullName, "."), e.typeSignature))
+
+      val nvs = 
+        props.map {prop =>
+          val name = prop._1
+          val tp = prop._2
+          (newTermName(name), m.get(JsString(name)).map(in_impl(_, tp)).get)
+        }
+      val obj = instantiate(tpe, nvs.toMap)
+      obj.asInstanceOf[T]
+    }
+    case _ => sys.error("Must be a JsObject")
+  }
+
   /**
    * Convert the <tt>JsValue</tt> to an instance of the class <tt>context</tt>. Returns an instance of
    * <tt>T</tt>.
@@ -382,6 +408,59 @@ trait JsBean {
       i += 1
     }
     a.asInstanceOf[Array[_]]
+  }
+
+  def toJSON_n[T: TypeTag](obj: T): String = {
+    toJSON_impl(obj, typeOf[T])
+  }
+
+  private def toJSON_impl[T](obj: T, tpe: Type): String = obj match {
+    case s: String => quote(obj.toString)
+    case x if tpe <:< definitions.AnyValTpe => obj.toString
+    case n: Number => obj.toString
+    case d: java.util.Date => quote(d.getTime.toString)
+    case d: java.util.TimeZone => quote(d.getID)
+    case v: Enumeration#Value => quote(v.toString)
+    case s: Seq[_] => {
+      val intpe = tpe.typeSymbol.asType.typeParams.head.asType.toTypeIn(tpe)
+      s.map(toJSON_impl(_, intpe)).mkString("[", ",", "]")
+    }
+    case Some(s) => {
+      val intpe = tpe.typeSymbol.asType.typeParams.head.asType.toTypeIn(tpe)
+      toJSON_impl(s, intpe)
+    }
+    case None => "[]"
+    case s: Array[_] => {
+      val intpe = tpe.typeSymbol.asType.typeParams.head.asType.toTypeIn(tpe)
+      s.map(toJSON_impl(_, intpe)).mkString("[", ",", "]")
+    }
+    case m: Map[_, _] => {
+      val intpe = tpe.typeSymbol.asType.typeParams.map(_.asType.toTypeIn(tpe))
+      val (k, v) = (intpe.head, intpe.last)
+      m.map(e => toJSON_impl(e._1.toString, typeOf[String]) + ":" + toJSON_impl(e._2, v)).mkString("{", ",", "}")
+    }
+    case (t: Tuple2[_, _]) => {
+      val intpe = tpe.typeSymbol.asType.typeParams.map(_.asType.toTypeIn(tpe))
+      val (t1, t2) = (intpe.head, intpe.last)
+      "{" + toJSON_impl(t._1, t1) + ":" + toJSON_impl(t._2, t2) + "}"
+    }
+    // scala case object
+    case x if x.getClass.getName.endsWith("$") => {
+      quote(obj.getClass.getName)
+    }
+
+    case _ => {  // bean
+      val props =
+        tpe.members
+           .filter(!_.isMethod)
+           .map(e => (substringFromLastSep(e.fullName, "."), e.typeSignature))
+      val kvs =
+        props.map {p => 
+          val result = getPropertyValue(obj, tpe, p._1)
+          toJSON_impl(p._1, typeOf[String]) ++ ":" ++ toJSON_impl(result, p._2)
+        }
+      kvs.mkString("{", ",", "}")
+    }
   }
 
   /**

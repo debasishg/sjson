@@ -143,5 +143,58 @@ object Util {
     val m = runtimeMirror(getClass.getClassLoader)
     m.runtimeClass(t.typeSymbol.asClass)
   }
+
+  def substringFromLastSep(s: String, sep: String) = s.substring(s.lastIndexOf(sep) + 1, s.length)
+
+  /** Invoke method <tt>method</tt> on object <tt>obj</tt> of type <tt>typ</tt>.
+   *  You will have a nasty surprise if <tt>method</tt> is not a valid method of
+   *  <tt>obj</tt>.
+   */
+  def getPropertyValue(obj: Any, typ: Type, property: String) = {
+    val t = typ.declaration(newTermName(property)).asTerm.accessed.asTerm
+    val m = scala.reflect.runtime.universe.runtimeMirror(getClass.getClassLoader)
+    val im = m.reflect(obj)
+    im.reflectField(t).get
+  }
+
+  def setPropertyValue(obj: Any, typ: Type, property: String, value: Any) = {
+    val t = typ.declaration(newTermName(property)).asTerm.accessed.asTerm
+    val m = scala.reflect.runtime.universe.runtimeMirror(getClass.getClassLoader)
+    val im = m.reflect(obj)
+    im.reflectField(t).set(value)
+  }
+
+  /** Instantiate a class of type <tt>typ</tt> using the various mirrors
+   *  available.
+   */
+  def instantiate(typ: Type, params: Map[Name, Any]) = {
+    println(params)
+    // get runtime mirror (JavaMirror)
+    val m = runtimeMirror(getClass.getClassLoader)
+
+    // get class
+    val cls = typ.typeSymbol.asClass
+
+    // get class mirror
+    val cm = m.reflectClass(cls)
+
+    // get all constructors
+    val alts = typ.declaration(nme.CONSTRUCTOR).asTerm.alternatives
+
+    // get the no of params that the constructor need to have &
+    // match the appropriate constructor
+    val pcount = params.size
+
+    // get the constructor and the params that match in count with the 
+    // size of params list passed as argument
+    val cps = alts.collect {case ms: MethodSymbol if ms.paramss.head.size == pcount => (ms, ms.paramss)}
+
+    val ctor = cps.head._1
+    val prms = cps.head._2
+
+    // get the param details & the type signature
+    val ps = prms.head.map(e => (e.name, e.typeSignature))
+    cm.reflectConstructor(ctor)(ps.map(e => params.get(e._1).get): _*)
+  }
 }
 

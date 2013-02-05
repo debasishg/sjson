@@ -52,7 +52,7 @@ object Serializer {
       in_impl[T](js, typeOf[T])
     }
 
-    def in_impl[T: TypeTag](js: JsValue, tpe: Type): T = {
+    private[json] def in_impl[T: TypeTag](js: JsValue, tpe: Type): T = {
       // Map and Tuple2 both are serialized as Maps wrapped within a JsObject
       if (tpe <:< typeOf[collection.immutable.Map[_, _]] ||
           tpe <:< typeOf[Tuple2[_, _]]) extract[T](js, tpe)

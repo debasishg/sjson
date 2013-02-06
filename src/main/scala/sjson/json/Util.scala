@@ -1,6 +1,7 @@
 package sjson
 package json
 
+import java.util.{Date, TimeZone}
 object Util {
   def quote(s: String): String = s match {
     case null => "null"
@@ -60,7 +61,6 @@ object Util {
     }
   }
 
-  import java.util.Date
   def mkDate(v: String): Date = {
     new Date(v.toLong.longValue)
   }
@@ -165,10 +165,60 @@ object Util {
   }
 
   /** Instantiate a class of type <tt>typ</tt> using the various mirrors
-   *  available.
+   *  available. 
+   *
+   *  Need to invoke the proper constructor that matches the parameters specified
+   *  by <tt>params</tt>. The current implementation just matches by length of
+   *  param list for the constructor.
    */
   def instantiate(typ: Type, params: Map[Name, Any]) = {
-    println(params)
+
+    /** Constructor parameters may have to be pre-processed before
+     *  passing to the constructor. e.g. Options are serialized with
+     *  the actual value, if present. But during de-serialization, we
+     *  need to pass the <tt>Some</tt> if the data is present.
+     */
+    def prepareConstructorParams(ps: List[(Name, Type)]) = {
+      ps.map {p =>
+        val v = params.get(p._1).get
+        if (p._2 <:< typeOf[Option[_]]) {
+          v match {
+            case List() => None // remember we serialize None as empty list []
+            case _ => Some(v)
+          }
+        } else if (p._2 =:= typeOf[java.util.Date]) {
+          mkDate(v.asInstanceOf[String])
+        } else if (p._2 =:= typeOf[java.util.TimeZone]) {
+          TimeZone.getTimeZone(v.asInstanceOf[String])
+        } else if (v.isInstanceOf[BigDecimal]) {
+          makeNumber(v.asInstanceOf[BigDecimal], p._2)
+        // } else if (p._2 <:< typeOf[Array[_]]) {
+          // makeArray(v)
+        } else v
+      }
+    }
+
+/**
+    import reflect.{ClassTag, classTag}
+    def makeArray[T: ClassTag](l: Any) = l match {
+      case m: Seq[T] => Array[T](m:_*)
+      case _ => sys.error("error")
+      // val ar = classTag[T].newArray(len = l.size)
+      // Array[T](l:_*)
+      // ar(l:_*)
+    }
+**/
+
+
+    def makeNumber(n: BigDecimal, tpe: Type) = {
+      if (tpe =:= typeOf[Int]) n.intValue
+      else if (tpe =:= typeOf[Long]) n.longValue
+      else if (tpe =:= typeOf[Float]) n.floatValue
+      else if (tpe =:= typeOf[Double]) n.doubleValue
+      else if (tpe =:= typeOf[Short]) n.shortValue
+      else n
+    }
+
     // get runtime mirror (JavaMirror)
     val m = runtimeMirror(getClass.getClassLoader)
 
@@ -194,7 +244,13 @@ object Util {
 
     // get the param details & the type signature
     val ps = prms.head.map(e => (e.name, e.typeSignature))
-    cm.reflectConstructor(ctor)(ps.map(e => params.get(e._1).get): _*)
+    val paramsToCtor = prepareConstructorParams(ps)
+
+    println(params)
+    ps.foreach(println)
+    paramsToCtor.foreach(println)
+    cm.reflectConstructor(ctor)(paramsToCtor: _*)
   }
+
 }
 

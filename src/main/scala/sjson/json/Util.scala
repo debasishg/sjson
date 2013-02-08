@@ -181,34 +181,21 @@ object Util {
     def prepareConstructorParams(ps: List[(Name, Type)]) = {
       ps.map {p =>
         val v = params.get(p._1).get
-        if (p._2 <:< typeOf[Option[_]]) {
-          v match {
-            case List() => None // remember we serialize None as empty list []
-            case _ => Some(v)
-          }
-        } else if (p._2 =:= typeOf[java.util.Date]) {
+        // if (p._2 <:< typeOf[Option[_]]) {
+          // v match {
+            // case List() => None // remember we serialize None as empty list []
+            // case _ => Some(v)
+          // }
+        // } else if (p._2 =:= typeOf[java.util.Date]) {
+        if (p._2 =:= typeOf[java.util.Date]) {
           mkDate(v.asInstanceOf[String])
         } else if (p._2 =:= typeOf[java.util.TimeZone]) {
           TimeZone.getTimeZone(v.asInstanceOf[String])
         } else if (v.isInstanceOf[BigDecimal]) {
           makeNumber(v.asInstanceOf[BigDecimal], p._2)
-        // } else if (p._2 <:< typeOf[Array[_]]) {
-          // makeArray(v)
         } else v
       }
     }
-
-/**
-    import reflect.{ClassTag, classTag}
-    def makeArray[T: ClassTag](l: Any) = l match {
-      case m: Seq[T] => Array[T](m:_*)
-      case _ => sys.error("error")
-      // val ar = classTag[T].newArray(len = l.size)
-      // Array[T](l:_*)
-      // ar(l:_*)
-    }
-**/
-
 
     def makeNumber(n: BigDecimal, tpe: Type) = {
       if (tpe =:= typeOf[Int]) n.intValue
@@ -246,11 +233,45 @@ object Util {
     val ps = prms.head.map(e => (e.name, e.typeSignature))
     val paramsToCtor = prepareConstructorParams(ps)
 
-    println(params)
-    ps.foreach(println)
-    paramsToCtor.foreach(println)
     cm.reflectConstructor(ctor)(paramsToCtor: _*)
   }
 
+  def getEnumType(str: String, tpe: Type) = {
+    val ru = runtimeMirror(getClass.getClassLoader)
+    val obj = tpe.termSymbol.asModule
+    val mm = ru.reflectModule(obj)
+    val instance = mm.instance
+    instance.asInstanceOf[Enumeration].withName(str)
+  }
 }
 
+/**
+scala> val m = typeOf[WeekDay.Value].members.filter(!_.isMethod).head.typeSignat
+ure.members.filter(a => a.isMethod && a.name == newTermName("withName"))
+m: Iterable[reflect.runtime.universe.Symbol] = SynchronizedOps(method withName)
+
+scala> val ru = runtimeMirror(getClass.getClassLoader)
+ru: reflect.runtime.universe.Mirror = JavaMirror with scala.tools.nsc.interprete
+r.IMain$TranslatingClassLoader@5472184f of type class scala.tools.nsc.interprete
+r.IMain$TranslatingClassLoader with classpath [(memory)] and parent being scala.
+tools.nsc.util.ScalaClassLoader$URLClassLoader@e9a15d9 of type class scala.tools
+.nsc.util.ScalaClassLoader$URLClassLoader with classpath [file:/D:/software/java
+7/jre/lib/resources.jar,file:/D:/software/java7/jre/lib/rt.jar,file:/D:/software
+/java7/jre/lib/jsse.jar,file:/D:/software/java7/jre/lib/jce.jar,file:/D:/softwar
+e/java7/jre/lib/charsets.jar,file:/D:/software/java7/jre/lib/ext/dnsns.jar,file:
+/D:/software/java7/jre/lib/ext/localedata.jar,file:/D:/software/java7/jre/lib/ex
+t/sunec.jar,file:/D:/software/java7/jre/lib/ext/sunjce_provider.jar,file:/D:/...
+
+scala> val im = ru.reflect(WeekDay)
+im: reflect.runtime.universe.InstanceMirror = instance mirror for WeekDay
+
+scala> m.head match {
+     |   case ms: MethodSymbol => im.reflectMethod(ms)
+     |   case _ => sys.error("error")
+     | }
+res45: reflect.runtime.universe.MethodMirror = method mirror for scala.Enumerati
+on.withName(s: String): Enumeration.this.Value (bound to WeekDay)
+
+scala> res45("Monday")
+res50: Any = Monday
+**/

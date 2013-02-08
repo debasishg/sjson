@@ -308,10 +308,6 @@ object TestBeans {
                           val l: List[Int], 
                           val i: Int) {
     private def this() = this(null, null, null, -1)
-    override def toString = {
-      val inte: Int = m.getOrElse(key, -1)
-      "key = " + key + " mapping to " + inte + " original int = " + i
-    }
   }
 
   @BeanInfo case class SampleConfigOption(user: Option[String], names: List[String]) {

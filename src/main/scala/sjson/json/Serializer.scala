@@ -55,18 +55,18 @@ object Serializer {
     private[json] def in_impl[T: TypeTag](js: JsValue, tpe: Type): T = {
       // Map and Tuple2 both are serialized as Maps wrapped within a JsObject
       if (tpe <:< typeOf[collection.immutable.Map[_, _]] ||
-          tpe <:< typeOf[Tuple2[_, _]]) extract[T](js, tpe)
+          tpe <:< typeOf[Tuple2[_, _]]) extractFromJs[T](js, tpe)
 
       // beans are also serialized as JsObjects, but need to invoke fromJSON for beans
       else if (js.isInstanceOf[JsObject]) 
         fromJSON(js, Some(getClassFromScalaType(tpe).asInstanceOf[Class[T]]))
 
       // all other cases
-      else extract[T](js, tpe)
+      else extractFromJs[T](js, tpe)
     }
 
 
-    private[json] def extract[T: TypeTag](jsv: JsValue, tpe: Type): T = {
+    private[json] def extractFromJs[T: TypeTag](jsv: JsValue, tpe: Type): T = {
       val ex = jsv match {
         case JsNumber(n) => n
         case JsString(s) => s

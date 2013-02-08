@@ -11,8 +11,7 @@ import TestBeans._
 
 @RunWith(classOf[JUnitRunner])
 class JsSpec extends FunSpec with ShouldMatchers {
-  val jsBean = new Object with JsBean with DefaultConstructor 
-  import jsBean._
+  import Jsons._
 
   describe("to json of a number") {
     it("should serialize to json") {
@@ -137,30 +136,30 @@ class JsSpec extends FunSpec with ShouldMatchers {
       // simple object
       val s = Shop("kmart", "fridge", 100)
       val js1 = Js("""{"price":100,"item":"fridge","store":"kmart"}""")
-      fromJSON_n[Shop](js1) should equal(s)
+      fromJsObject[Shop](js1) should equal(s)
 
       // object with an Option data type
       // Case 1: Some
       val oa1 = AddressWithOptionalCity("Tamarac Street", Some("Denver"), "80231")
       val js2 = Js(toJSON_n(oa1))
-      fromJSON_n[AddressWithOptionalCity](js2) should equal(oa1)
+      fromJsObject[AddressWithOptionalCity](js2) should equal(oa1)
 
       // Case 2: None
       val oa2 = AddressWithOptionalCity("Tamarac Street", None, "80231")
       val js3 = Js(toJSON_n(oa2))
-      fromJSON_n[AddressWithOptionalCity](js3) should equal(oa2)
+      fromJsObject[AddressWithOptionalCity](js3) should equal(oa2)
 
       // object with an embedded Map with objects as values
       val c = Contact("debasish ghosh", Map("primary" -> Address("Tamarac Street", "Denver", "80231"), 
                                             "secondary" -> Address("Garden Street", "Cupertino", "95054")))
       val js4 = Js(toJSON_n(c))
-      fromJSON_n[Contact](js4) should equal(c)
+      fromJsObject[Contact](js4) should equal(c)
 
       // object with an embedded List of objects
       val p = Person("ghosh", "debasish", 
                      List(Address("Tamarac Street", "Denver", "80231"), Address("Garden Street", "Cupertino", "95054")))
       val js5 = Js(toJSON_n(p))
-      fromJSON_n[Person](js5) should equal(p)
+      fromJsObject[Person](js5) should equal(p)
 
       // a complex object
       val addresses = List(Address("10 Market Street", "San Francisco, CA", "94111"),
@@ -171,7 +170,7 @@ class JsSpec extends FunSpec with ShouldMatchers {
                            addresses,
                            Salary(4500, 245))
       val js6 = Js(toJSON_n(e))
-      val em = fromJSON_n[Employee](js6)
+      val em = fromJsObject[Employee](js6)
       em.id should equal(e.id)
       em.name should equal(e.name) 
       em.prevEmployer should equal(e.prevEmployer)
@@ -185,20 +184,30 @@ class JsSpec extends FunSpec with ShouldMatchers {
       // object containing Date
       val s = SecurityTrade("trd-001", Calendar.getInstance.getTime, Calendar.getInstance.getTime, BigDecimal(100.45))
       val js1 = Js(toJSON_n(s))
-      fromJSON_n[SecurityTrade](js1) should equal(s)
+      fromJsObject[SecurityTrade](js1) should equal(s)
 
       // object containing various types of numeric data 
       val b = Bar("debasish", 12, 100l, 45.65f, true)
       val js2 = Js(toJSON_n(b))
-      fromJSON_n[Bar](js2) should equal(b)
+      fromJsObject[Bar](js2) should equal(b)
 
       val f = Foo("debasish", true)
       val js3 = Js(toJSON_n(f))
-      fromJSON_n[Foo](js3) should equal(f)
+      fromJsObject[Foo](js3) should equal(f)
+
+      val t = MyTuple2Message("i001", ("debasish", Shop("KMart", "dress-material", 100)))
+      val js4 = Js(toJSON_n(t))
+      fromJsObject[MyTuple2Message](js4) should equal(t)
+
+      val c = new ContactWithOptionalAddr("Debasish Ghosh",
+        Some(Map("primary" -> new Address("10 Market Street", "San Francisco, CA", "94111"),
+            "secondary" -> new Address("3300 Tamarac Drive", "Denver, CO", "98301"))))
+      val js5 = Js(toJSON_n(c))
+      fromJsObject[ContactWithOptionalAddr](js5) should equal(c)
 
       // val arr = ArrayTest(100, "debasish", Array("abc", "def", "ghi"))
       // val js4 = Js(toJSON_n(arr))
-      // println(fromJSON_n[ArrayTest](js4))   // should equal(f)
+      // println(fromJsObject[ArrayTest](js4))   // should equal(f)
     }
   }
 }

@@ -33,8 +33,7 @@ trait Jsons {
           val tp = prop._2
           (newTermName(name), m.get(JsString(name)).map(in_impl(_, tp)).get)
         }
-      val obj = instantiate(tpe, nvs.toMap)
-      obj   // .asInstanceOf[T]
+      instantiate(tpe, nvs.toMap)
     }
     case _ => sys.error("Must be a JsObject")
   }
@@ -49,6 +48,7 @@ trait Jsons {
           val intpe = tpe.typeSymbol.asType.typeParams.head.asType.toTypeIn(tpe)
           l.map(in_impl(_, intpe))
         } else {
+          // none is serialized as empty list
           List()
         }
       }

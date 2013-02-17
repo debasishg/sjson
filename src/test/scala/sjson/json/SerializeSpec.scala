@@ -349,6 +349,11 @@ class SerializeSpec extends FunSpec with ShouldMatchers {
   }
 
   describe("Serialization of classes containing collections of singleton objects") {
+    it("should serialize a list of case objects") {
+      val l = List(STOCK, FI)
+      in[List[SecurityType]](out(l)) should equal(l)
+    }
+
     it("should serialize an object with a Map containing lists of case objects") {
       val t = TradedIn(Map("New York" -> List(STOCK, FI), "Hong Kong" -> List(STOCK, MUTUAL_FUND)))
       val o = out(t)

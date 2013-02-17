@@ -49,28 +49,48 @@ object Serialize {
   }
 
   private[json] def in_impl(js: JsValue, tpe: Type): Any = {
+
+    // special case: need to handle option differently
+    // if option, then get the wrapped type
     val intpe =
       if (tpe <:< typeOf[Option[_]]) tpe.typeSymbol.asType.typeParams.head.asType.toTypeIn(tpe)
       else tpe
 
+    // this is a kludge since we serialize "none" as an empty list
     val kludge =
       js match {
         case JsArray(l) if l.isEmpty => true
         case _ => false
       }
 
+    // handle singleton types
+    val single = js match {
+      case JsString(s) if s.endsWith("$") => processSingleton(s) match {
+        case Left(e) => None
+        case Right(o) => Some(o)
+      }
+      case _ => None
+    }
+
     if (tpe <:< typeOf[Option[_]] && kludge) None
     else {
 
       val ret =
+        if (single.isDefined) single.get
+
+        else if (intpe <:< typeOf[Enumeration#Value]) {
+          js match {
+            case JsString(s) => getEnumValue(s, intpe)
+            case _ => sys.error("Expected String for enum value")
+          }
+        }
+
         // Map and Tuple2 both are serialized as Maps wrapped within a JsObject
-        if (intpe <:< typeOf[collection.immutable.Map[_, _]] ||
+        else if (intpe <:< typeOf[collection.immutable.Map[_, _]] ||
             intpe <:< typeOf[Tuple2[_, _]]) extract(js, intpe)
 
         // beans are also serialized as JsObjects, but need to invoke fromJSON for beans
-        else if (js.isInstanceOf[JsObject]) {
-          fromJsObject_impl(js, intpe)
-        }
+        else if (js.isInstanceOf[JsObject]) fromJsObject_impl(js, intpe)
 
         // all other cases
         else extract(js, intpe)

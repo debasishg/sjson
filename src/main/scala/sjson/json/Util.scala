@@ -164,6 +164,14 @@ object Util {
     im.reflectField(t).set(value)
   }
 
+  // this is ugly!
+  // need to figure out how to do this using Scala 2.10 reflection
+  def processSingleton[T](fqn: String): Either[Exception, Any] = getClassFor(fqn) match {
+    case Left(ex) => Left(new Exception("Cannot get class info for :" + fqn))
+    case Right(clazz) => getObjectFor[T](clazz.asInstanceOf[Class[T]]) 
+  }
+
+
   /** Instantiate a class of type <tt>typ</tt> using the various mirrors
    *  available. 
    *
@@ -181,20 +189,24 @@ object Util {
     def prepareConstructorParams(ps: List[(Name, Type)]) = {
       ps.map {p =>
         val v = params.get(p._1).get
-        // if (p._2 <:< typeOf[Option[_]]) {
-          // v match {
-            // case List() => None // remember we serialize None as empty list []
-            // case _ => Some(v)
-          // }
-        // } else if (p._2 =:= typeOf[java.util.Date]) {
         if (p._2 =:= typeOf[java.util.Date]) {
           mkDate(v.asInstanceOf[String])
         } else if (p._2 =:= typeOf[java.util.TimeZone]) {
           TimeZone.getTimeZone(v.asInstanceOf[String])
         } else if (v.isInstanceOf[BigDecimal]) {
           makeNumber(v.asInstanceOf[BigDecimal], p._2)
-        } else v
+        } // else if (p._2 <:< typeOf[Enumeration#Value]) {
+          // getEnumValue(v.asInstanceOf[String], p._2)
+        // }
+        else v
       }
+    }
+
+    def singleton(fqn: String, typ: Type) = {
+      val m = runtimeMirror(getClass.getClassLoader)
+      val obj = typ.termSymbol.asModule
+      val mm = m.reflectModule(obj)
+      mm.instance
     }
 
     def makeNumber(n: BigDecimal, tpe: Type) = {
@@ -236,42 +248,12 @@ object Util {
     cm.reflectConstructor(ctor)(paramsToCtor: _*)
   }
 
-  def getEnumType(str: String, tpe: Type) = {
-    val ru = runtimeMirror(getClass.getClassLoader)
-    val obj = tpe.termSymbol.asModule
-    val mm = ru.reflectModule(obj)
-    val instance = mm.instance
-    instance.asInstanceOf[Enumeration].withName(str)
+  /** Get the enum value corresponding to the string <tt>str</tt>. The implementation is
+   *  as ugly as it gets.
+   */
+  def getEnumValue(str: String, tpe: Type) = {
+    val moduleClass = tpe.asInstanceOf[TypeRef].pre.typeSymbol
+    val module = moduleClass.owner.typeSignature.member(moduleClass.name.toTermName)
+    reflect.runtime.currentMirror.reflectModule(module.asModule).instance.asInstanceOf[Enumeration].withName(str)
   }
 }
-
-/**
-scala> val m = typeOf[WeekDay.Value].members.filter(!_.isMethod).head.typeSignat
-ure.members.filter(a => a.isMethod && a.name == newTermName("withName"))
-m: Iterable[reflect.runtime.universe.Symbol] = SynchronizedOps(method withName)
-
-scala> val ru = runtimeMirror(getClass.getClassLoader)
-ru: reflect.runtime.universe.Mirror = JavaMirror with scala.tools.nsc.interprete
-r.IMain$TranslatingClassLoader@5472184f of type class scala.tools.nsc.interprete
-r.IMain$TranslatingClassLoader with classpath [(memory)] and parent being scala.
-tools.nsc.util.ScalaClassLoader$URLClassLoader@e9a15d9 of type class scala.tools
-.nsc.util.ScalaClassLoader$URLClassLoader with classpath [file:/D:/software/java
-7/jre/lib/resources.jar,file:/D:/software/java7/jre/lib/rt.jar,file:/D:/software
-/java7/jre/lib/jsse.jar,file:/D:/software/java7/jre/lib/jce.jar,file:/D:/softwar
-e/java7/jre/lib/charsets.jar,file:/D:/software/java7/jre/lib/ext/dnsns.jar,file:
-/D:/software/java7/jre/lib/ext/localedata.jar,file:/D:/software/java7/jre/lib/ex
-t/sunec.jar,file:/D:/software/java7/jre/lib/ext/sunjce_provider.jar,file:/D:/...
-
-scala> val im = ru.reflect(WeekDay)
-im: reflect.runtime.universe.InstanceMirror = instance mirror for WeekDay
-
-scala> m.head match {
-     |   case ms: MethodSymbol => im.reflectMethod(ms)
-     |   case _ => sys.error("error")
-     | }
-res45: reflect.runtime.universe.MethodMirror = method mirror for scala.Enumerati
-on.withName(s: String): Enumeration.this.Value (bound to WeekDay)
-
-scala> res45("Monday")
-res50: Any = Monday
-**/

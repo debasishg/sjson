@@ -2,7 +2,8 @@ package sjson
 package json
 
 import scala.reflect._
-import scala.annotation.target._
+import scala.beans.BeanInfo
+import scala.annotation.meta._
 
 object TestBeans {
   @BeanInfo
@@ -343,7 +344,7 @@ object TestBeans {
 
   @BeanInfo
   case class Family(
-    @(JSONProperty @getter)(ignoreIfNull = true)
+    @(JSONProperty @beanGetter)(ignoreIfNull = true)
     @(OptionTypeHint@field)(value = classOf[Personz]) father: Option[Personz] = None, 
     @(JSONProperty @getter)(ignoreIfNull = true)
     @(OptionTypeHint@field)(value = classOf[Personz]) mother: Option[Personz] = None, 

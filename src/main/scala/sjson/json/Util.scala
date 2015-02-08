@@ -151,14 +151,14 @@ object Util {
    *  <tt>obj</tt>.
    */
   def getPropertyValue(obj: Any, typ: Type, property: String) = {
-    val t = typ.declaration(newTermName(property)).asTerm.accessed.asTerm
+    val t = typ.decl(TermName(property)).asTerm.accessed.asTerm
     val m = scala.reflect.runtime.universe.runtimeMirror(getClass.getClassLoader)
     val im = m.reflect(obj)
     im.reflectField(t).get
   }
 
   def setPropertyValue(obj: Any, typ: Type, property: String, value: Any) = {
-    val t = typ.declaration(newTermName(property)).asTerm.accessed.asTerm
+    val t = typ.decl(TermName(property)).asTerm.accessed.asTerm
     val m = scala.reflect.runtime.universe.runtimeMirror(getClass.getClassLoader)
     val im = m.reflect(obj)
     im.reflectField(t).set(value)
@@ -228,7 +228,7 @@ object Util {
     val cm = m.reflectClass(cls)
 
     // get all constructors
-    val alts = typ.declaration(nme.CONSTRUCTOR).asTerm.alternatives
+    val alts = typ.decl(termNames.CONSTRUCTOR).asTerm.alternatives
 
     // get the no of params that the constructor need to have &
     // match the appropriate constructor
@@ -236,7 +236,7 @@ object Util {
 
     // get the constructor and the params that match in count with the 
     // size of params list passed as argument
-    val cps = alts.collect {case ms: MethodSymbol if ms.paramss.head.size == pcount => (ms, ms.paramss)}
+    val cps = alts.collect {case ms: MethodSymbol if ms.paramLists.head.size == pcount => (ms, ms.paramLists)}
 
     val ctor = cps.head._1
     val prms = cps.head._2

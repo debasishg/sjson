@@ -31,7 +31,7 @@ trait Jsons {
         props.map {prop =>
           val name = prop._1
           val tp = prop._2
-          (newTermName(name), m.get(JsString(name)).map(in_impl(_, tp)).get)
+          (TermName(name), m.get(JsString(name)).map(in_impl(_, tp)).get)
         }
       instantiate(tpe, nvs.toMap)
     }

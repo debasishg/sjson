@@ -2,16 +2,16 @@ package sjson
 package json
 
 import org.scalatest.FunSpec
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.MustMatchers
 import org.scalatest.junit.JUnitRunner
 import org.junit.runner.RunWith
-import scala.reflect.BeanInfo
+import scala.beans.BeanInfo
 
 import TestBeans._
 
 
 @RunWith(classOf[JUnitRunner])
-class JsonSpec extends FunSpec with ShouldMatchers {
+class JsonSpec extends FunSpec with MustMatchers {
   import dispatch.classic.json._
   import Js._
   
@@ -100,31 +100,31 @@ class JsonSpec extends FunSpec with ShouldMatchers {
   
   describe("Json from simple Bean") {
     it("should equal expected_map") {
-      jsAddr.self should equal (expected_map)
+      jsAddr.self must equal (expected_map)
     }
     it("should equal expected_book_map") {
-      jsBook.self should equal (expected_book_map)
+      jsBook.self must equal (expected_book_map)
     }
     it("should match annotated property value for isbn") {
-      jsBook.self.asInstanceOf[Map[JsString, JsValue]].get(JsString("ISBN")).get.self should equal ("012-456372")
+      jsBook.self.asInstanceOf[Map[JsString, JsValue]].get(JsString("ISBN")).get.self must equal ("012-456372")
     }
     it("should ignore annotated property and equal expected_journal_map") {
-      jsJournal.self should equal (expected_journal_map)
+      jsJournal.self must equal (expected_journal_map)
     }
     it("should ignore issn since it is null equal expected_journal_1_map") {
-      jsJournal_1.self should equal (expected_journal_1_map)
+      jsJournal_1.self must equal (expected_journal_1_map)
     }
     it("should not ignore issn since it is not null, but emit the changed property name and equal expected_journal_2_map") {
-      jsJournal_2.self should equal (expected_journal_2_map)
+      jsJournal_2.self must equal (expected_journal_2_map)
     }
   }
   
   describe("Json from bean with aggregate members") {
     it("should equal expected_person_map") {
-      jsPerson.self should equal (expected_person_map)
+      jsPerson.self must equal (expected_person_map)
     }
     it("should equal expected_book_1_map") {
-      jsBook_1.self should equal (expected_book_1_map)
+      jsBook_1.self must equal (expected_book_1_map)
     }
   }
   
@@ -134,9 +134,9 @@ class JsonSpec extends FunSpec with ShouldMatchers {
   describe("Simple bean from Json string") {
     it("should equal addr") {
       val a = addrBean.asInstanceOf[Address] 
-      a.street should equal (addr.street)
-      a.city should equal (addr.city)
-      a.zip should equal (addr.zip)
+      a.street must equal (addr.street)
+      a.city must equal (addr.city)
+      a.zip must equal (addr.zip)
     }
   }
   
@@ -147,9 +147,9 @@ class JsonSpec extends FunSpec with ShouldMatchers {
   describe("Simple bean with Option from Json string") {
     it("should equal addrOptCity") {
       val a = addrOptCityBean.asInstanceOf[AddressWithOptionalCity] 
-      a.street should equal (addrOptCity.street)
-      a.city.get should equal (addrOptCity.city.get)
-      a.zip should equal (addrOptCity.zip)
+      a.street must equal (addrOptCity.street)
+      a.city.get must equal (addrOptCity.city.get)
+      a.zip must equal (addrOptCity.zip)
     }
   }
   
@@ -159,9 +159,9 @@ class JsonSpec extends FunSpec with ShouldMatchers {
   describe("Bean from Json string with additional key/values") {
     it("should equal addr and ignore additional properties from json") {
       val a = addrBean1.asInstanceOf[Address] 
-      a.street should equal (addr.street)
-      a.city should equal (addr.city)
-      a.zip should equal (addr.zip)
+      a.street must equal (addr.street)
+      a.city must equal (addr.city)
+      a.zip must equal (addr.zip)
     }
   }
   
@@ -178,12 +178,12 @@ class JsonSpec extends FunSpec with ShouldMatchers {
   describe("Bean with aggregate member from Json string") {
     it("should equal person") {
       val p = personBean.asInstanceOf[Person] 
-      p.lastName should equal (person.lastName)
-      p.firstName should equal (person.firstName)
-      p.addresses.size should equal (person.addresses.size)
-      p.addresses.map(_.street).mkString(",") should equal (person.addresses.map(_.street).mkString(","))
-      p.addresses.map(_.city).mkString(",") should equal (person.addresses.map(_.city).mkString(","))
-      p.addresses.map(_.zip).mkString(",") should equal (person.addresses.map(_.zip).mkString(","))
+      p.lastName must equal (person.lastName)
+      p.firstName must equal (person.firstName)
+      p.addresses.size must equal (person.addresses.size)
+      p.addresses.map(_.street).mkString(",") must equal (person.addresses.map(_.street).mkString(","))
+      p.addresses.map(_.city).mkString(",") must equal (person.addresses.map(_.city).mkString(","))
+      p.addresses.map(_.zip).mkString(",") must equal (person.addresses.map(_.zip).mkString(","))
     }
   }
   
@@ -200,9 +200,9 @@ class JsonSpec extends FunSpec with ShouldMatchers {
   describe("Bean with class object data member from Json string") {
     it("should equal expected_book") {
       val b = bookBean.asInstanceOf[Book_1] 
-      b.title should equal (expected_book.title)
-      b.author.firstName should equal (expected_book.author.firstName)
-      b.author.lastName should equal (expected_book.author.lastName)
+      b.title must equal (expected_book.title)
+      b.author.firstName must equal (expected_book.author.firstName)
+      b.author.lastName must equal (expected_book.author.lastName)
     }
   }
   
@@ -219,9 +219,9 @@ class JsonSpec extends FunSpec with ShouldMatchers {
   describe("Bean with Map data member from Json string") {
     it("should equal expected_item_1") {
       val i = itemBean_1.asInstanceOf[Item_1] 
-      i.item should equal (expected_item_1.item)
-      i.prices.get("Fresh Mart") should equal (expected_item_1.prices.get("Fresh Mart"))
-      i.prices should equal (expected_item_1.prices)
+      i.item must equal (expected_item_1.item)
+      i.prices.get("Fresh Mart") must equal (expected_item_1.prices.get("Fresh Mart"))
+      i.prices must equal (expected_item_1.prices)
     }
   }
   
@@ -238,8 +238,8 @@ class JsonSpec extends FunSpec with ShouldMatchers {
   describe("Bean with List data member from Json string") {
     it("should equal expected_item_2") {
       val i = itemBean_2.asInstanceOf[Item_2] 
-      i.item should equal (expected_item_2.item)
-      i.prices should equal (expected_item_2.prices)
+      i.item must equal (expected_item_2.item)
+      i.prices must equal (expected_item_2.prices)
     }
   }
   
@@ -260,9 +260,9 @@ class JsonSpec extends FunSpec with ShouldMatchers {
   describe("Bean with Map data member that has an object as value from Json string") {
     it("should equal expected_contact") {
       val c = contactBean.asInstanceOf[Contact] 
-      c.name should equal (expected_contact.name)
+      c.name must equal (expected_contact.name)
       c.addresses.map(_._2).forall(x => x.isInstanceOf[Address] == true)
-      c.addresses.map(a => a._1 + ":" + a._2).mkString(",") should equal (expected_contact.addresses.map(a => a._1 + ":" + a._2).mkString(","))
+      c.addresses.map(a => a._1 + ":" + a._2).mkString(",") must equal (expected_contact.addresses.map(a => a._1 + ":" + a._2).mkString(","))
     }
   }
   
@@ -275,9 +275,9 @@ class JsonSpec extends FunSpec with ShouldMatchers {
   describe("Bean with Optional Map data member that has an object as value from Json string") {
     it("should equal expected_contact_with_addr") {
       val c = contactBeanOptionalAddr.asInstanceOf[ContactWithOptionalAddr] 
-      c.name should equal (expected_contact_with_addr.name)
+      c.name must equal (expected_contact_with_addr.name)
       c.addresses.get.map(_._2).forall(x => x.isInstanceOf[Address] == true)
-      c.addresses.get.map(a => a._1 + ":" + a._2).mkString(",") should equal (expected_contact_with_addr.addresses.get.map(a => a._1 + ":" + a._2).mkString(","))
+      c.addresses.get.map(a => a._1 + ":" + a._2).mkString(",") must equal (expected_contact_with_addr.addresses.get.map(a => a._1 + ":" + a._2).mkString(","))
     }
   }
   
@@ -289,15 +289,15 @@ class JsonSpec extends FunSpec with ShouldMatchers {
     
     it("should equal expected_js_str") {
       val js = jsBean.toJSON(ins)
-      js should equal(expected_js_str)
+      js must equal(expected_js_str)
       j = Js(js)
       val s = (Symbol("TYPE") ? str)
       val s(_s) = j
-      _s should equal("Equity")
+      _s must equal("Equity")
     }
     it("should create the bean and be equal to ins") {
       val in = jsBean.fromJSON(j, Some(classOf[Instrument]))
-      in.typ should equal(ins.typ)
+      in.typ must equal(ins.typ)
     }
   }
   
@@ -309,40 +309,40 @@ class JsonSpec extends FunSpec with ShouldMatchers {
     
     it("should equal expected_js_str") {
       val js = jsBean.toJSON(trd)
-      js should equal(expected_js_str)
+      js must equal(expected_js_str)
       j = Js(js)
       val s = (Symbol("Instrument") ? obj)
       val s(_s) = j
-      _s should equal(Js("""{"id":123,"name":"IBM Securities","TYPE":"Equity"}"""))
+      _s must equal(Js("""{"id":123,"name":"IBM Securities","TYPE":"Equity"}"""))
     }
     it("should create the bean and be equal to ins") {
       val tr = jsBean.fromJSON(j, Some(classOf[Trade]))
-      tr.ref should equal(trd.ref)
-      tr.amount should equal(trd.amount)
-      tr.ins.id should equal(trd.ins.id)
-      tr.ins.name should equal(trd.ins.name)
+      tr.ref must equal(trd.ref)
+      tr.amount must equal(trd.amount)
+      tr.ins.id must equal(trd.ins.id)
+      tr.ins.name must equal(trd.ins.name)
     }
   }
   
   describe("Generating JSON from non-beans") {
     it("should generate correct JSON") {
-      jsBean.toJSON("Debasish Ghosh") should equal("\"Debasish Ghosh\"")
-      jsBean.toJSON(new java.math.BigDecimal("120.98")) should equal("120.98")
-      jsBean.toJSON(List(1, 2, 3)) should equal("[1,2,3]")
-      jsBean.toJSON(Map("1" -> "dg", "2" -> "mc")) should equal("""{"1":"dg","2":"mc"}""")
+      jsBean.toJSON("Debasish Ghosh") must equal("\"Debasish Ghosh\"")
+      jsBean.toJSON(new java.math.BigDecimal("120.98")) must equal("120.98")
+      jsBean.toJSON(List(1, 2, 3)) must equal("[1,2,3]")
+      jsBean.toJSON(Map("1" -> "dg", "2" -> "mc")) must equal("""{"1":"dg","2":"mc"}""")
     }
     it("should pass for empty Map") {
-      jsBean.toJSON(Map()) should equal("{}")
+      jsBean.toJSON(Map()) must equal("{}")
     }
     it("should pass for empty List in value") {
-      jsBean.toJSON(Map("nil" -> Nil)) should equal("""{"nil":[]}""")
+      jsBean.toJSON(Map("nil" -> Nil)) must equal("""{"nil":[]}""")
     }
     it("should pass for empty Map in value") {
-      jsBean.toJSON(Map("empty" -> Map())) should equal("""{"empty":{}}""")
+      jsBean.toJSON(Map("empty" -> Map())) must equal("""{"empty":{}}""")
     }
     it("should serialize primitives") {
-      jsBean.toJSON(Array(1, 2, 3)) should equal("[1,2,3]")
-      jsBean.toJSON(Map("data1" -> Array(1, 2, 3), "data2" -> Array(4, 5, 6))) should equal("""{"data1":[1,2,3],"data2":[4,5,6]}""")
+      jsBean.toJSON(Array(1, 2, 3)) must equal("[1,2,3]")
+      jsBean.toJSON(Map("data1" -> Array(1, 2, 3), "data2" -> Array(4, 5, 6))) must equal("""{"data1":[1,2,3],"data2":[4,5,6]}""")
     }
   }
   
@@ -361,12 +361,12 @@ class JsonSpec extends FunSpec with ShouldMatchers {
           Salary(4500, 245)
         )
       js = jsBean.toJSON(e)
-      js should equal(expected_e_js)
+      js must equal(expected_e_js)
     }
     it("generating bean from js should give back e") { 
       val e_b = jsBean.fromJSON(Js(js), Some(classOf[Employee]))
-      e_b.name should equal(e.name)
-      e_b.addresses.size should equal(e.addresses.size)
+      e_b.name must equal(e.name)
+      e_b.addresses.size must equal(e.addresses.size)
     }
     it("should match expected_e_js_1") {
       val expected_e_js_1 = """{"Addresses":[{"city":"San Francisco, CA","street":"10 Market Street","zip":"94111"},{"city":"Denver, CO","street":"3300 Tamarac Drive","zip":"98301"}],"id":100,"name":"Jason Alexander","Salary":{"allowance":245,"basic":4500}}"""
@@ -379,47 +379,47 @@ class JsonSpec extends FunSpec with ShouldMatchers {
           Salary(4500, 245)
         )
       js = jsBean.toJSON(e)
-      js should equal(expected_e_js_1)
+      js must equal(expected_e_js_1)
     }
   }
   
   describe("Testing JSON suite of Twitter scala-json") {
     it("should match xml") {
       val JsString(x) = JsValue.fromString("\"<xml>sucks</xml>\"")
-      x should equal("<xml>sucks</xml>")
+      x must equal("<xml>sucks</xml>")
     }
     
     it("should parse strings in double slashes like the ones found in URLs") {
       val JsArray(x) = JsValue.fromString("""["hey! http:\/\/www.lollerskates.com"]""")
-      x should equal(List(JsString("hey! http://www.lollerskates.com")))
+      x must equal(List(JsString("hey! http://www.lollerskates.com")))
     }
     
     it("should parse strings with quoted newline") {
       val JsArray(x) = JsValue.fromString("""["hi\njerk"]""")
-      x should equal(List(JsString("hi\njerk")))
+      x must equal(List(JsString("hi\njerk")))
     }
     
     it("should parse strings with quoted quote") {
       val JsArray(x) = JsValue.fromString("""["x\"x"]""")
-      x should equal(List(JsString("x\"x")))                                    
+      x must equal(List(JsString("x\"x")))                                    
     }
   }
 
   describe("Testing tuples") {
     it("should convert tuple2[string, string] properly") {
-      jsBean.toJSON(("dg", "gh")) should equal("{\"dg\":\"gh\"}")
+      jsBean.toJSON(("dg", "gh")) must equal("{\"dg\":\"gh\"}")
     }
     it("should convert tuple2[string, List] properly") {
-      jsBean.toJSON(("dg", List(1,2,3,4))) should equal("{\"dg\":[1,2,3,4]}")
+      jsBean.toJSON(("dg", List(1,2,3,4))) must equal("{\"dg\":[1,2,3,4]}")
     }
     it("should convert tuple2[string, Map] properly") {
-      jsBean.toJSON(("dg", Map("1"->"a", "2"->"b"))) should equal("""{"dg":{"1":"a","2":"b"}}""")
+      jsBean.toJSON(("dg", Map("1"->"a", "2"->"b"))) must equal("""{"dg":{"1":"a","2":"b"}}""")
     }
     it("should convert tuple2[string, Int] properly") {
-      jsBean.toJSON(("dg", 100)) should equal("""{"dg":100}""")
+      jsBean.toJSON(("dg", 100)) must equal("""{"dg":100}""")
     }
     it("should convert tuple2[int, Int] properly") {
-      jsBean.toJSON((100, 1000)) should equal("""{100:1000}""")
+      jsBean.toJSON((100, 1000)) must equal("""{100:1000}""")
     }
     it("should convert tuple2[string, bean] properly") {
       val e = 
@@ -431,14 +431,14 @@ class JsonSpec extends FunSpec with ShouldMatchers {
           Salary(4500, 245)
         )
       val expected_e_js_1 = """{"Addresses":[{"city":"San Francisco, CA","street":"10 Market Street","zip":"94111"},{"city":"Denver, CO","street":"3300 Tamarac Drive","zip":"98301"}],"id":100,"name":"Jason Alexander","Salary":{"allowance":245,"basic":4500}}"""
-      jsBean.toJSON(("dg", e)) should equal("""{"dg":""" + expected_e_js_1 + "}")
+      jsBean.toJSON(("dg", e)) must equal("""{"dg":""" + expected_e_js_1 + "}")
     }
     it("should throw UnsupportedOperationException") {
       try {
         jsBean.toJSON((100, 1000, 2000))
       } catch {
         case e: Exception =>
-          e.isInstanceOf[UnsupportedOperationException] should equal(true)
+          e.isInstanceOf[UnsupportedOperationException] must equal(true)
       }
     }
   }
@@ -449,9 +449,9 @@ class JsonSpec extends FunSpec with ShouldMatchers {
         Map(1 -> Shop("st-1", "it-1", 100.00), 2 -> Shop("st-2", "it-2", 200)),
         "USA")
       val json = jsBean.toJSON(m)
-      json should equal("""{"country":"USA","name":"Uncle Sam Shop","shops":{"1":{"item":"it-1","price":100.0,"store":"st-1"},"2":{"item":"it-2","price":200,"store":"st-2"}}}""")
+      json must equal("""{"country":"USA","name":"Uncle Sam Shop","shops":{"1":{"item":"it-1","price":100.0,"store":"st-1"},"2":{"item":"it-2","price":200,"store":"st-2"}}}""")
       val obj = jsBean.fromJSON(Js(json), Some(classOf[Market]))
-      obj.name should equal("Uncle Sam Shop")
+      obj.name must equal("Uncle Sam Shop")
     }
   }
 
@@ -459,12 +459,12 @@ class JsonSpec extends FunSpec with ShouldMatchers {
     it("should serialize the embedded oject too") {
       val m = MyTuple2Message("debasish", ("message-1", Shop("mum shop", "refrigerator", 1000)))
       val json = jsBean.toJSON(m)
-      json should equal("""{"id":"debasish","value":{"message-1":{"item":"refrigerator","price":1000,"store":"mum shop"}}}""")
+      json must equal("""{"id":"debasish","value":{"message-1":{"item":"refrigerator","price":1000,"store":"mum shop"}}}""")
       val obj = jsBean.fromJSON(Js(json), Some(classOf[MyTuple2Message]))
-      obj.id should equal("debasish")
-      obj.value._1 should equal("message-1")
-      obj.value._2.store should equal("mum shop")
-      obj.value._2.item should equal("refrigerator")
+      obj.id must equal("debasish")
+      obj.value._1 must equal("message-1")
+      obj.value._2.store must equal("mum shop")
+      obj.value._2.item must equal("refrigerator")
     }
   }
 
@@ -476,11 +476,11 @@ class JsonSpec extends FunSpec with ShouldMatchers {
       val x = EnumTest(Mon, Circle, March, List(Mon, Tue, Wed), List(February, December))
       val js = jsBean.toJSON(x)
       val o = jsBean.fromJSON(Js(js), Some(classOf[EnumTest])).asInstanceOf[EnumTest]
-      o.start should equal(x.start)
-      o.shape should equal(x.shape)
-      o.month should equal(x.month)
-      o.work should equal(x.work)
-      o.months should equal(x.months)
+      o.start must equal(x.start)
+      o.shape must equal(x.shape)
+      o.month must equal(x.month)
+      o.work must equal(x.work)
+      o.months must equal(x.months)
     }
   }
 
@@ -491,14 +491,14 @@ class JsonSpec extends FunSpec with ShouldMatchers {
       val json1 = jsBean.toJSON(d1)
       val s = ('validate_doc_update ? str)
       val s(_s) = Js(json1)
-      _s should equal("function(newDoc, oldDoc, userCtx) {}")
+      _s must equal("function(newDoc, oldDoc, userCtx) {}")
       val o1 = jsBean.fromJSON(Js(json1), Some(classOf[DesignDocument])).asInstanceOf[DesignDocument]
-      o1.validate_doc_update.isDefined should equal(true)
+      o1.validate_doc_update.isDefined must equal(true)
 
       val d2 = DesignDocument("foo_valid", null, Map[String, View](), None)
       val json2 = jsBean.toJSON(d2)
       val o2 = jsBean.fromJSON(Js(json2), Some(classOf[DesignDocument])).asInstanceOf[DesignDocument]
-      o2.validate_doc_update.isDefined should equal(false)
+      o2.validate_doc_update.isDefined must equal(false)
     }
 
     it("should process optional shows correctly") {
@@ -508,7 +508,7 @@ class JsonSpec extends FunSpec with ShouldMatchers {
       val bar = "function(head, rec) {}"
       val zoom = "function(head, rec) {}"
       val d1 = DesignDocument("foo_valid", null, Map[String, View](), Some(all_pass), Some(Map("summary" -> summary, "detail" -> detail)), Some(Map("zoom" -> zoom, "bar" -> bar)))
-      jsBean.toJSON(d1) should equal("""{"_id":"foo_valid","lists":{"zoom":"function(head, rec) {}","bar":"function(head, rec) {}"},"shows":{"summary":"function(doc, rec) {}","detail":"function(doc, rec) {}"},"validate_doc_update":"function(newDoc, oldDoc, userCtx) {}","views":{}}""")
+      jsBean.toJSON(d1) must equal("""{"_id":"foo_valid","lists":{"zoom":"function(head, rec) {}","bar":"function(head, rec) {}"},"shows":{"summary":"function(doc, rec) {}","detail":"function(doc, rec) {}"},"validate_doc_update":"function(newDoc, oldDoc, userCtx) {}","views":{}}""")
     }
   }
 
@@ -516,21 +516,21 @@ class JsonSpec extends FunSpec with ShouldMatchers {
     it("should generate proper json for case objects") {
       val sec = Security("Google", FI)
       val fitrade1 = BondTrade(sec, Some(Map("TradeTax" -> BigDecimal(10.00), "Commission" -> BigDecimal(23))), "a-123")
-      jsBean.toJSON(fitrade1) should equal("""{"account":"a-123","instrument":{"name":"Google","securityType":"sjson.json.TestBeans$FI$"},"taxFees":{"TradeTax":10.0,"Commission":23}}""")
+      jsBean.toJSON(fitrade1) must equal("""{"account":"a-123","instrument":{"name":"Google","securityType":"sjson.json.TestBeans$FI$"},"taxFees":{"TradeTax":10.0,"Commission":23}}""")
 
       val fitrade2 = BondTrade(sec, None, "a-123")
-      jsBean.toJSON(fitrade2) should equal("""{"account":"a-123","instrument":{"name":"Google","securityType":"sjson.json.TestBeans$FI$"}}""")
+      jsBean.toJSON(fitrade2) must equal("""{"account":"a-123","instrument":{"name":"Google","securityType":"sjson.json.TestBeans$FI$"}}""")
     }
 
     it("should deserialize json to construct case objects") {
       val sec = Security("Google", FI)
       val fitrade1 = BondTrade(sec, Some(Map("TradeTax" -> BigDecimal(10.00), "Commission" -> BigDecimal(23))), "a-123")
       val json1 = jsBean.toJSON(fitrade1) 
-      jsBean.fromJSON(Js(json1), Some(classOf[BondTrade])) should equal(fitrade1)
+      jsBean.fromJSON(Js(json1), Some(classOf[BondTrade])) must equal(fitrade1)
 
       val fitrade2 = BondTrade(sec, None, "a-123")
       val json2 = jsBean.toJSON(fitrade2) 
-      jsBean.fromJSON(Js(json2), Some(classOf[BondTrade])) should equal(fitrade2)
+      jsBean.fromJSON(Js(json2), Some(classOf[BondTrade])) must equal(fitrade2)
     }
   }
 }

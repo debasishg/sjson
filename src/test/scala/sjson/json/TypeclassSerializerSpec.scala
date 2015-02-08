@@ -2,12 +2,12 @@ package sjson
 package json
 
 import org.scalatest.FunSpec
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.MustMatchers
 import org.scalatest.junit.JUnitRunner
 import org.junit.runner.RunWith
 
 @RunWith(classOf[JUnitRunner])
-class TypeclassSerializerSpec extends FunSpec with ShouldMatchers {
+class TypeclassSerializerSpec extends FunSpec with MustMatchers {
 
   import DefaultProtocol._
   import JsonSerialization._
@@ -16,33 +16,33 @@ class TypeclassSerializerSpec extends FunSpec with ShouldMatchers {
   describe("Serialization using verbose protocol") {
     it ("should serialize a Person") {
       val p = Person("ghosh", "debasish", 20)
-      fromjson[Person](tojson[Person](p)) should equal(p)
+      fromjson[Person](tojson[Person](p)) must equal(p)
     }
   }
 
   describe("Serialization of simple objects") {
     it("should serialize into json and back") {
       val shop = Shop("Shoppers Stop", "dress material", 1000)
-      fromjson[Shop](tojson(shop)) should equal(shop)
+      fromjson[Shop](tojson(shop)) must equal(shop)
     }
   }
 
   describe("Serialization of lists") {
     it ("should serialize list of Ints") {
       val l1 = List(100, 200, 300, 400)
-      fromjson[List[Int]](tojson(l1)) should equal(l1)
+      fromjson[List[Int]](tojson(l1)) must equal(l1)
     }
 
     it ("should serialize list of Strings") {
       val l2 = List("dg", "mc", "rc", "nd")
-      fromjson[List[String]](tojson(l2)) should equal(l2)
+      fromjson[List[String]](tojson(l2)) must equal(l2)
     }
   }
 
   describe("Serialization of Maps") {
     it ("should serialize Map of Strings & Strings") {
       val m = Map("100" -> "dg", "200" -> "mc")
-      fromjson[Map[String, String]](tojson(m)) should equal(m)
+      fromjson[Map[String, String]](tojson(m)) must equal(m)
     }
   }
 
@@ -50,7 +50,7 @@ class TypeclassSerializerSpec extends FunSpec with ShouldMatchers {
     it("should serialize into json and back") {
       val contact = Contact("Debasish Ghosh", 
         List(Address("monroe st", "denver", "80231"), Address("pine drive", "santa clara", "95054")))
-      fromjson[Contact](tojson(contact)) should equal(contact)
+      fromjson[Contact](tojson(contact)) must equal(contact)
     }
   }
 
@@ -60,52 +60,52 @@ class TypeclassSerializerSpec extends FunSpec with ShouldMatchers {
         Array(Address("monroe st", "denver", "80231"), Address("pine drive", "santa clara", "95054")))
 
       val ac = fromjson[Account](tojson(account))
-      ac.no should equal(account.no)
-      ac.name should equal(account.name)
-      ac.addresses should be === account.addresses
+      ac.no must equal(account.no)
+      ac.name must equal(account.name)
+      ac.addresses must === (account.addresses)
     }
   }
 
   describe("Serialization of Option") {
     it("should serialize an option field") {
       val str = Some("debasish")
-      fromjson[Option[String]](tojson[Option[String]](str)) should equal(str)
-      fromjson[Option[String]](tojson[Option[String]](None)) should equal(None)
+      fromjson[Option[String]](tojson[Option[String]](str)) must equal(str)
+      fromjson[Option[String]](tojson[Option[String]](None)) must equal(None)
 
       val i = Some(200)
-      fromjson[Option[Int]](tojson[Option[Int]](i)) should equal(i)
+      fromjson[Option[Int]](tojson[Option[Int]](i)) must equal(i)
     }
     it("should serialize AddressWithOptionalCity") {
       import TestBeans._
       val ad = AddressWithOptionalCity("garer math", Some("mumbai"), "400087")
-      fromjson[AddressWithOptionalCity](tojson(ad)) should equal(ad)
+      fromjson[AddressWithOptionalCity](tojson(ad)) must equal(ad)
     }
     it("should serialize AddressWithOptionalCity without city") {
       import TestBeans._
       val ad = AddressWithOptionalCity("garer math", None, "400087")
-      fromjson[AddressWithOptionalCity](tojson(ad)) should equal(ad)
+      fromjson[AddressWithOptionalCity](tojson(ad)) must equal(ad)
     }
     it("should serialize None properly") {
       import TestBeans._
       val str = None
-      fromjson[Option[String]](tojson[Option[String]](str)) should equal(str)
+      fromjson[Option[String]](tojson[Option[String]](str)) must equal(str)
     }
     it("should serialize P that contains an Option with default value as None") {
       val p = P("ghosh", "debasish")
-      fromjson[P](tojson[P](p)) should equal(p)
+      fromjson[P](tojson[P](p)) must equal(p)
     }
   }
 
   describe("Serialization of tuples") {
     it("should serialize tuples of primitive types") {
       val t1 = ("debasish", 12)
-      fromjson[Tuple2[String, Int]](tojson(t1)) should equal(t1)
+      fromjson[Tuple2[String, Int]](tojson(t1)) must equal(t1)
       val t2 = ("debasish", 12, "jonas")
-      fromjson[Tuple3[String, Int, String]](tojson(t2)) should equal(t2)
+      fromjson[Tuple3[String, Int, String]](tojson(t2)) must equal(t2)
     }
     it("should serialize tuples of user defined types") {
       val t1 = ("debasish", Address("monroe st", "denver", "80231"))
-      fromjson[Tuple2[String, Address]](tojson[Tuple2[String, Address]](t1)) should equal(t1)
+      fromjson[Tuple2[String, Address]](tojson[Tuple2[String, Address]](t1)) must equal(t1)
     }
   }
 
@@ -113,13 +113,13 @@ class TypeclassSerializerSpec extends FunSpec with ShouldMatchers {
     it("should serialize mutable sets of primitive types") {
       import scala.collection._
       val s = mutable.Set(12, 13, 10, 23, 25)
-      fromjson[mutable.Set[Int]](tojson(s)) should equal(s)
+      fromjson[mutable.Set[Int]](tojson(s)) must equal(s)
     }
     it("should serialize mutable sets of addresses") {
       import scala.collection._
 
       val s = mutable.Set(Address("monroe st", "denver", "80231"), Address("tamarac st", "boulder", "80231"))
-      fromjson[mutable.Set[Address]](tojson(s)) should equal(s)
+      fromjson[mutable.Set[Address]](tojson(s)) must equal(s)
     }
     it("should serialize mutable sets of custom data types") {
       import scala.collection._
@@ -127,7 +127,7 @@ class TypeclassSerializerSpec extends FunSpec with ShouldMatchers {
       val s = mutable.Set(
         ("debasish", Address("monroe st", "denver", "80231")), 
         ("maulindu", Address("tamarac st", "boulder", "80231")))
-      fromjson[mutable.Set[(String, Address)]](tojson(s)) should equal(s)
+      fromjson[mutable.Set[(String, Address)]](tojson(s)) must equal(s)
     }
   }
 
@@ -135,13 +135,13 @@ class TypeclassSerializerSpec extends FunSpec with ShouldMatchers {
     it("should serialize immutable sets of primitive types") {
       import scala.collection._
       val s = immutable.Set(12, 13, 10, 23, 25)
-      fromjson[immutable.Set[Int]](tojson(s)) should equal(s)
+      fromjson[immutable.Set[Int]](tojson(s)) must equal(s)
     }
     it("should serialize immutable sets of addresses") {
       import scala.collection._
 
       val s = immutable.Set(Address("monroe st", "denver", "80231"), Address("tamarac st", "boulder", "80231"))
-      fromjson[immutable.Set[Address]](tojson(s)) should equal(s)
+      fromjson[immutable.Set[Address]](tojson(s)) must equal(s)
     }
     it("should serialize immutable sets of custom data types") {
       import scala.collection._
@@ -149,25 +149,25 @@ class TypeclassSerializerSpec extends FunSpec with ShouldMatchers {
       val s = immutable.Set(
         ("debasish", Address("monroe st", "denver", "80231")), 
         ("maulindu", Address("tamarac st", "boulder", "80231")))
-      fromjson[immutable.Set[(String, Address)]](tojson(s)) should equal(s)
+      fromjson[immutable.Set[(String, Address)]](tojson(s)) must equal(s)
     }
   }
 
   describe("Serialization of complex types") {
     it("should serialize complex types") {
       val l = List(Map("1"->"dg", "2"->"mc"), Map("1"->"irc", "2"->"rc", "3"->"nd"))
-      fromjson[List[Map[String, String]]](tojson(l)) should equal(l)
+      fromjson[List[Map[String, String]]](tojson(l)) must equal(l)
     }
   }
 
   describe("Serialization of wrappers") {
     it("should serialize") {
       val n = Name("debasish ghosh")
-      fromjson[Name](tojson(n)) should equal(n)
+      fromjson[Name](tojson(n)) must equal(n)
     }
     it("should serialize list wrappers") {
       val n = Holder(List("debasish ghosh", "jonas boner", "stephan schmidt"))
-      fromjson[Holder](tojson(n)) should equal(n)
+      fromjson[Holder](tojson(n)) must equal(n)
     }
   }
 
@@ -175,10 +175,10 @@ class TypeclassSerializerSpec extends FunSpec with ShouldMatchers {
     it("should serialize") {
       val sa = new Derived("123", "debasish ghosh", Array(Address("monroe st", "denver", "80231"), Address("tamarac st", "boulder", "80231")), true)
       val acc = fromjson[Derived](tojson(sa))
-      acc.no should equal(sa.no)
-      acc.name should equal(sa.name)
-      acc.specialFlag should equal(sa.specialFlag)
-      acc.addresses should be === sa.addresses
+      acc.no must equal(sa.no)
+      acc.name must equal(sa.name)
+      acc.specialFlag must equal(sa.specialFlag)
+      acc.addresses must === (sa.addresses)
     }
   }
 
@@ -186,18 +186,18 @@ class TypeclassSerializerSpec extends FunSpec with ShouldMatchers {
     it("should serialize") {
       val h = Http("http://www.google.com", Get)
       val h1 = fromjson[Http](tojson(h))
-      h1 should equal(h)
+      h1 must equal(h)
     }
   }
 
   describe("Serialization of mutually recursive types") {
     it("should serialize without recursion") {
       val f = Foo("testFoo", List(Bar("test1", None), Bar("test2", None)))
-      fromjson[Foo](tojson(f)) should equal(f)
+      fromjson[Foo](tojson(f)) must equal(f)
     }
     it("should serialize with recursion") {
       val fBar = Foo("testFoo", List(Bar("test1", Some(List(Foo("barList", List(Bar("test", None), Bar("test2", None))))))))
-      fromjson[Foo](tojson(fBar)) should equal(fBar)
+      fromjson[Foo](tojson(fBar)) must equal(fBar)
     }
   }
 
@@ -205,7 +205,7 @@ class TypeclassSerializerSpec extends FunSpec with ShouldMatchers {
     it("should serialize") {
       import TestBeans._
       val js = JobStart("Debasish", WeekDay.Mon)
-      fromjson[JobStart](tojson(js)) should equal(js)
+      fromjson[JobStart](tojson(js)) must equal(js)
     }
   }
 
@@ -216,15 +216,15 @@ class TypeclassSerializerSpec extends FunSpec with ShouldMatchers {
         Person("chatterjee", "maulindu", 23),
         Person("roy", "kuku", 25))
 
-      fromjson[List[Person]](tojson(persons)) should equal(persons)
+      fromjson[List[Person]](tojson(persons)) must equal(persons)
     }
   }
 
   describe("Serialization of double NaN") {
     it ("should serialize") {
       val x = DoubleNanTest(scala.Double.NaN)
-      x.price.isNaN should equal(true)
-      fromjson[DoubleNanTest](tojson(x)).price.isNaN should equal(true)
+      x.price.isNaN must equal(true)
+      fromjson[DoubleNanTest](tojson(x)).price.isNaN must equal(true)
     }
   }
 
@@ -238,8 +238,8 @@ class TypeclassSerializerSpec extends FunSpec with ShouldMatchers {
     val d3 = Dept("Systems", e2, List(d1, d2))
 
     it ("should serialize") {
-      fromjson[Dept](tojson(d1)) should equal(d1)
-      fromjson[Dept](tojson(d3)) should equal(d3)
+      fromjson[Dept](tojson(d1)) must equal(d1)
+      fromjson[Dept](tojson(d3)) must equal(d3)
     }
   }
 
@@ -250,14 +250,14 @@ class TypeclassSerializerSpec extends FunSpec with ShouldMatchers {
       val u2 = User(Some("2"), "barrykaplan", "ibm", "barry", "kaplan")
       val u3 = User(Some("3"), "peterscott", "ibm", "peter", "scott")
       val dg = DataGridResult("10", true, Seq(u1, u2, u3))
-      fromjson[DataGridResult](tojson(dg)) should equal(dg)
+      fromjson[DataGridResult](tojson(dg)) must equal(dg)
     }
   }
 
   describe("Serialization of items with abstract types") {
     it("should serialize") {
       val c = CC1("debasish ghosh")
-      fromjson[CC1](tojson(c)) should equal(c)
+      fromjson[CC1](tojson(c)) must equal(c)
     }
   }
 }
